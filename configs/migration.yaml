@@ -1,0 +1,4 @@
+role_request_timeout_seconds: 3.0
+barrier_timeout_seconds: 3.0
+verification_timeout_seconds: 3.0
+allow_simulated_failure: true

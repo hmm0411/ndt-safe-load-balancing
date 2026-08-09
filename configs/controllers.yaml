@@ -1,0 +1,21 @@
+controllers:
+  c1:
+    rest_url: "http://127.0.0.1:8081"
+    openflow_port: 6653
+  c2:
+    rest_url: "http://127.0.0.1:8082"
+    openflow_port: 6654
+
+switches:
+  s1: {dpid: 1}
+  s2: {dpid: 2}
+  s3: {dpid: 3}
+  s4: {dpid: 4}
+
+initial_ownership:
+  s1: c1
+  s2: c1
+  s3: c2
+  s4: c2
+
+topology_version: 1
