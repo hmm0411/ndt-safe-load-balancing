@@ -1,12 +1,11 @@
 import time
 import requests
-from typing import Any, Dict
 
 class ControllerAPIError(RuntimeError):
     pass
 
 class ControllerClient:
-    def __init__(self, controller_urls: Dict[str, str], request_timeout_seconds=3.0):
+    def __init__(self, controller_urls: dict[str, str], request_timeout_seconds=3.0):
         self.controller_urls = controller_urls
         self.request_timeout_seconds = request_timeout_seconds
 
