@@ -1,14 +1,15 @@
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any
+from typing import Any, Optional
 from uuid import uuid4
 from src.common.enums import TransactionState
+from typing import Optional
 
 @dataclass(frozen=True)
 class TransactionEvent:
     state: TransactionState
     at: datetime
-    detail: str | None = None
+    detail: Optional[str] = None
 
     def to_dict(self):
         return {
