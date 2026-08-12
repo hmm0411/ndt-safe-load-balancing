@@ -108,8 +108,11 @@ class ReactiveController(app_manager.RyuApp):
 
         pkt = packet.Packet(msg.data)
         eth = pkt.get_protocol(ethernet.ethernet)
+
         if eth is None or eth.ethertype == ether_types.ETH_TYPE_LLDP:
             return
+
+        self.telemetry.record_processed_packet_in(dpid)
 
         dst, src = eth.dst, eth.src
         in_port = msg.match["in_port"]
