@@ -289,9 +289,7 @@ def migrate(request: MigrationRequest):
         raise HTTPException(400, "Target controller already owns the switch")
 
     try:
-        tx = transaction_manager.create(
-            request.switch_id, source, request.target_controller
-        )
+        tx = transaction_manager.create(request.switch_id, source, request.target_controller)
     except TransactionConflict as exc:
         raise HTTPException(409, str(exc))
 
@@ -301,24 +299,21 @@ def migrate(request: MigrationRequest):
         gen = generation_ids.next_generation_id()
         tx.generation_id = gen
         transaction_manager.transition(tx, TransactionState.ROLE_SWITCHING)
-
         migration_executor.promote_target(dpid, request.target_controller, gen)
 
         transaction_manager.transition(tx, TransactionState.VERIFYING)
-
         verification = verifier.verify_migration(
             dpid=dpid,
             source_controller=source,
             target_controller=request.target_controller,
             simulate_flow_mod_failure=(request.simulate_failure == "flow_mod"),
         )
+
         if not verification.ok:
             raise RuntimeError("Verification failed: " + ",".join(verification.reasons))
-        
+
         ownership_manager.commit_migration(request.switch_id, request.target_controller, gen)
-        transaction_manager.transition(
-            tx, TransactionState.COMMITTED, json.dumps(verification.to_dict())
-        )
+        transaction_manager.transition(tx, TransactionState.COMMITTED, json.dumps(verification.to_dict()))
         transaction_manager.finish(tx)
 
         return {
@@ -330,25 +325,23 @@ def migrate(request: MigrationRequest):
 
     except Exception as migration_error:
         transaction_manager.fail(tx, str(migration_error))
+
         try:
             transaction_manager.transition(tx, TransactionState.ROLLING_BACK)
             rollback_gen = generation_ids.next_generation_id()
             rollback_executor.restore_source(dpid, source, rollback_gen)
 
-            rollback_verification = verifier.verify_roles(
-                dpid, request.target_controller, source
+            rollback_verification = verifier.verify_rollback(
+                dpid=dpid,
+                restored_controller=source,
+                other_controller=request.target_controller,
             )
+
             if not rollback_verification.ok:
-                raise RuntimeError(
-                    "Rollback verification failed: "
-                    + ",".join(rollback_verification.reasons)
-                )
+                raise RuntimeError("Rollback verification failed: " + ",".join(rollback_verification.reasons))
 
             ownership_manager.mark_restored(request.switch_id, source, rollback_gen)
-            transaction_manager.transition(
-                tx, TransactionState.RESTORED,
-                json.dumps(rollback_verification.to_dict())
-            )
+            transaction_manager.transition(tx, TransactionState.RESTORED, json.dumps(rollback_verification.to_dict()))
             transaction_manager.finish(tx)
 
             return {
@@ -360,10 +353,10 @@ def migrate(request: MigrationRequest):
             }
 
         except Exception as rollback_error:
-            transaction_manager.finish(tx)
+            transaction_manager.fail(tx, str(rollback_error))
             raise HTTPException(
-                500,
-                {
+                status_code=500,
+                detail={
                     "migration_error": str(migration_error),
                     "rollback_error": str(rollback_error),
                     "transaction": tx.to_dict(),
