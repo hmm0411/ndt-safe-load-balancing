@@ -74,19 +74,17 @@ class MigrationVerifier:
         before_switch = self._switch_telemetry(before, dpid)
         if before_switch is None:
             return False, "target_switch_telemetry_missing"
-        before_total = int(before_switch.get("packet_in_total", 0))
+        before_total = int(before_switch.get("processed_packet_in_total", 0))
         deadline = time.monotonic() + self.timeout_seconds
-
         while time.monotonic() < deadline:
             current = self.client.telemetry(target_controller)
             current_switch = self._switch_telemetry(current, dpid)
             if current_switch is not None:
-                current_total = int(current_switch.get("packet_in_total", 0))
-
+                current_total = int(current_switch.get("processed_packet_in_total", 0))
                 if current_total > before_total:
                     return True, None
             time.sleep(0.1)
-        return False, "target_no_new_packet_in"
+        return False, "target_no_new_processed_packet_in"
 
     def verify_flow_mod(self, dpid, target_controller, simulate_failure=False):
         before = self.client.telemetry(target_controller)
@@ -142,7 +140,6 @@ class MigrationVerifier:
         other_switch = self._switch_state(other_state, dpid)
         restored_connected = bool(restored_switch and restored_switch.get("connected") is True)
         other_connected = bool(other_switch and other_switch.get("connected") is True)
-
         reasons = []
         if restored_role != "MASTER":
             reasons.append("restored_controller_not_MASTER")
@@ -152,13 +149,4 @@ class MigrationVerifier:
             reasons.append("restored_controller_disconnected")
         if not other_connected:
             reasons.append("other_controller_disconnected")
-        return VerificationResult(
-            ok=not reasons,
-            source_role=restored_role,
-            target_role=other_role,
-            source_connected=restored_connected,
-            target_connected=other_connected,
-            packet_in_verified=False,
-            flow_mod_verified=False,
-            reasons=reasons,
-        )
+        return VerificationResult(ok=not reasons, source_role=restored_role, target_role=other_role, source_connected=restored_connected, target_connected=other_connected, packet_in_verified=False, flow_mod_verified=False, reasons=reasons)
