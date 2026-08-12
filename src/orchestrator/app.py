@@ -75,7 +75,7 @@ class GenerationIdGenerator:
         self._value = time.time_ns()
         self._lock = threading.Lock()
 
-    def next(self):
+    def next_generation_id(self):
         with self._lock:
             self._value = max(self._value + 1, time.time_ns())
             return self._value & ((1 << 64) - 1)
@@ -85,7 +85,7 @@ generation_ids = GenerationIdGenerator()
 class MigrationRequest(BaseModel):
     switch_id: str
     target_controller: str
-    simulate_failure: bool = False
+    simulate_failure: str = "none"
 
 class TelemetryStore:
     def __init__(self):
@@ -245,7 +245,7 @@ def init_roles():
             for cid in CONTROLLERS:
                 if cid == owner:
                     continue
-                gen = generation_ids.next()
+                gen = generation_ids.next_generation_id()
                 role = client.set_role(
                     cid, dpid, "SLAVE", gen,
                     float(migration_cfg["role_request_timeout_seconds"])
@@ -257,7 +257,7 @@ def init_roles():
                 results.append({"switch_id": sid, "controller_id": cid,
                                 "role": role, "barrier": barrier})
 
-            gen = generation_ids.next()
+            gen = generation_ids.next_generation_id()
             role = client.set_role(
                 owner, dpid, "MASTER", gen,
                 float(migration_cfg["role_request_timeout_seconds"])
@@ -298,20 +298,23 @@ def migrate(request: MigrationRequest):
     dpid = switch_dpids[request.switch_id]
 
     try:
-        gen = generation_ids.next()
+        gen = generation_ids.next_generation_id()
         tx.generation_id = gen
         transaction_manager.transition(tx, TransactionState.ROLE_SWITCHING)
 
         migration_executor.promote_target(dpid, request.target_controller, gen)
 
         transaction_manager.transition(tx, TransactionState.VERIFYING)
-        if request.simulate_failure:
-            raise RuntimeError("Simulated verification failure")
 
-        verification = verifier.verify_roles(dpid, source, request.target_controller)
+        verification = verifier.verify_migration(
+            dpid=dpid,
+            source_controller=source,
+            target_controller=request.target_controller,
+            simulate_flow_mod_failure=(request.simulate_failure == "flow_mod"),
+        )
         if not verification.ok:
             raise RuntimeError("Verification failed: " + ",".join(verification.reasons))
-
+        
         ownership_manager.commit_migration(request.switch_id, request.target_controller, gen)
         transaction_manager.transition(
             tx, TransactionState.COMMITTED, json.dumps(verification.to_dict())
@@ -329,7 +332,7 @@ def migrate(request: MigrationRequest):
         transaction_manager.fail(tx, str(migration_error))
         try:
             transaction_manager.transition(tx, TransactionState.ROLLING_BACK)
-            rollback_gen = generation_ids.next()
+            rollback_gen = generation_ids.next_generation_id()
             rollback_executor.restore_source(dpid, source, rollback_gen)
 
             rollback_verification = verifier.verify_roles(
