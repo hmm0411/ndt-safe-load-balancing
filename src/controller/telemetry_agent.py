@@ -25,6 +25,8 @@ class TelemetryAgent:
         self._flow_mod_total = 0
         self._packet_in_by_switch = defaultdict(int)
         self._flow_mod_by_switch = defaultdict(int)
+        self._processed_packet_in_total = 0
+        self._processed_packet_in_by_switch = defaultdict(int)
         self._response_times_ms: list[float] = []
 
         self._prev_packet_in_total = 0
@@ -40,6 +42,11 @@ class TelemetryAgent:
         with self._lock:
             self._packet_in_total += 1
             self._packet_in_by_switch[dpid] += 1
+
+    def record_processed_packet_in(self, dpid: int) -> None:
+        with self._lock:
+            self._processed_packet_in_total += 1
+            self._processed_packet_in_by_switch[dpid] += 1
 
     def record_flow_mod(self, dpid: int) -> None:
         with self._lock:
@@ -68,6 +75,7 @@ class TelemetryAgent:
                 "observed_at": observed_at.isoformat(),
                 "packet_in_total": self._packet_in_total,
                 "packet_in_rate": pin_rate,
+                "processed_packet_in_total": self._processed_packet_in_total,
                 "flow_mod_total": self._flow_mod_total,
                 "flow_mod_rate": fm_rate,
                 "process_cpu_percent": float(self._process.cpu_percent(interval=None)),
@@ -79,13 +87,14 @@ class TelemetryAgent:
             }
 
             switch_samples = []
-            switch_ids = sorted(set(self._packet_in_by_switch) | set(self._flow_mod_by_switch))
+            switch_ids = sorted(set(self._packet_in_by_switch) | set(self._processed_packet_in_by_switch) | set(self._flow_mod_by_switch))
             for dpid in switch_ids:
                 pin_total = self._packet_in_by_switch[dpid]
                 fm_total = self._flow_mod_by_switch[dpid]
                 s_pin_rate = (pin_total - self._prev_packet_in_by_switch[dpid]) / interval_s
                 s_fm_rate = (fm_total - self._prev_flow_mod_by_switch[dpid]) / interval_s
                 share = s_pin_rate / pin_rate if pin_rate > 0 else 0.0
+                processed_pin_total = self._processed_packet_in_by_switch[dpid]
 
                 switch_samples.append({
                     "switch_id": f"s{dpid}",
@@ -93,6 +102,7 @@ class TelemetryAgent:
                     "observed_at": observed_at.isoformat(),
                     "packet_in_total": pin_total,
                     "packet_in_rate": s_pin_rate,
+                    "processed_packet_in_total": processed_pin_total,
                     "flow_mod_total": fm_total,
                     "flow_mod_rate": s_fm_rate,
                     "control_load_share": share,

@@ -108,8 +108,11 @@ class ReactiveController(app_manager.RyuApp):
 
         pkt = packet.Packet(msg.data)
         eth = pkt.get_protocol(ethernet.ethernet)
+
         if eth is None or eth.ethertype == ether_types.ETH_TYPE_LLDP:
             return
+
+        self.telemetry.record_processed_packet_in(dpid)
 
         dst, src = eth.dst, eth.src
         in_port = msg.match["in_port"]
@@ -212,3 +215,19 @@ class NDTRestController(ControllerBase):
     def barrier_request(self, req, xid, **kwargs):
         item = self.app.barrier_manager.get_request(int(xid))
         return json_response(item, 200) if item else json_response({"error": "unknown_xid"}, 404)
+
+    @route(REST_INSTANCE, "/api/v1/switches/{dpid}/flow-test", methods=["POST"])
+    def flow_test(self, req, dpid, **kwargs):
+        dp = self.app.get_datapath(int(dpid))
+
+        if dp is None:
+            return json_response({"error": "datapath_not_connected"}, 404)
+        role = self.app.role_manager.get_cached_role(dp.id)
+        if role != "MASTER":
+            return json_response({"error": "controller_not_master", "role": role,}, 409,)
+
+        parser = dp.ofproto_parser
+        match = parser.OFPMatch(eth_type=0x88B5)
+        self.app.add_flow(dp, priority=100, match=match, actions=[], idle_timeout=5,)
+
+        return json_response({"status": "FLOW_MOD_SENT", "dpid": int(dpid), "role": role,})

@@ -22,6 +22,12 @@ class ControllerClient:
         r.raise_for_status()
         return r.json()
 
+    def install_test_flow(self, cid, dpid):
+        base = self._base(cid)
+        r = requests.post(f"{base}/api/v1/switches/{dpid}/flow-test", timeout=self.request_timeout_seconds,)
+        r.raise_for_status()
+        return r.json()
+
     def _wait(self, url, timeout_seconds):
         deadline = time.monotonic() + timeout_seconds
         latest = {}

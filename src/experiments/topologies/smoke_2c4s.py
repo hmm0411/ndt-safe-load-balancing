@@ -34,8 +34,7 @@ def main():
     c1 = net.addController("c1", controller=RemoteController, ip="127.0.0.1", port=6653)
     c2 = net.addController("c2", controller=RemoteController, ip="127.0.0.1", port=6654)
     net.build()
-    for switch in net.switches:
-        switch.start([c1, c2])
+    net.start()
 
     print("*** Topology ready. DO NOT generate traffic yet.")
     print("*** Run: curl -X POST http://127.0.0.1:9000/api/v1/init-roles")
