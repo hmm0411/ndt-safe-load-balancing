@@ -1,0 +1,23 @@
+name: Manual MVP Deploy Check
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy-check:
+    runs-on: [self-hosted, linux, x64, sdn]
+    timeout-minutes: 15
+    steps:
+      - name: Checkout requested revision
+        uses: actions/checkout@v6
+
+      - name: Unit tests before deploy check
+        run: |
+          source "$HOME/ndt-venv/bin/activate"
+          pip install -r requirements-orchestrator.txt
+          python -m unittest discover -s tests/unit -v
+
+      - name: End-to-end deployment smoke check
+        env:
+          RUN_ID: deploy-${{ github.run_id }}-${{ github.run_attempt }}
+        run: ./scripts/ci/smoke_test.sh

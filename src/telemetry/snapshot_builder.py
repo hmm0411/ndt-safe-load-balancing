@@ -1,18 +1,31 @@
 from datetime import datetime, timezone
 from uuid import uuid4
+
 from src.schemas.snapshot import NetworkSnapshot
+
 
 class SnapshotBuilder:
     def __init__(self, validator):
         self.validator = validator
 
-    def build(self, topology_version, ownership_version, controllers, switches, ownership):
+    def build(
+        self,
+        topology_version,
+        ownership_version,
+        controllers,
+        switches,
+        ownership,
+        role_matrix=None,
+    ):
         created_at = datetime.now(timezone.utc)
-        mapping = {x.switch_id: x.owner_controller_id for x in ownership}
+        ownership_mapping = {
+            item.switch_id: item.owner_controller_id for item in ownership
+        }
         quality = self.validator.validate(
             controllers=controllers,
             switches=switches,
-            ownership_mapping=mapping,
+            ownership_mapping=ownership_mapping,
+            role_matrix=role_matrix,
             now=created_at,
         )
         return NetworkSnapshot(
