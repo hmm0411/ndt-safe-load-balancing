@@ -3,7 +3,6 @@ from datetime import datetime
 from typing import Any, Optional
 from uuid import uuid4
 from src.common.enums import TransactionState
-from typing import Optional
 
 @dataclass(frozen=True)
 class TransactionEvent:

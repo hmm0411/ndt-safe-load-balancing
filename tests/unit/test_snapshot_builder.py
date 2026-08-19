@@ -1,11 +1,13 @@
 import unittest
 from datetime import datetime, timezone
 
+from src.schemas.snapshot import OwnershipState
 from src.schemas.telemetry import ControllerTelemetry
+from src.telemetry.snapshot_builder import SnapshotBuilder
 from src.telemetry.snapshot_validator import SnapshotValidator
 
 
-def sample(controller_id: str):
+def controller(controller_id):
     now = datetime.now(timezone.utc)
     return ControllerTelemetry(
         controller_id=controller_id,
@@ -21,25 +23,27 @@ def sample(controller_id: str):
         process_memory_rss_mb=0.0,
         response_mean_ms=0.0,
         response_p95_ms=0.0,
-        managed_switch_count=0,
+        managed_switch_count=1,
     )
 
 
-class SnapshotTests(unittest.TestCase):
-    def test_valid_quiet_state(self):
-        validator = SnapshotValidator({"c1", "c2"}, {"s1", "s2"}, 5000)
-        quality = validator.validate(
-            [sample("c1"), sample("c2")],
-            [],
-            {"s1": "c1", "s2": "c2"},
+class SnapshotBuilderTests(unittest.TestCase):
+    def test_build_valid_snapshot(self):
+        validator = SnapshotValidator({"c1", "c2"}, {"s1"}, 2500)
+        builder = SnapshotBuilder(validator)
+        snapshot = builder.build(
+            topology_version=1,
+            ownership_version=2,
+            controllers=[controller("c1"), controller("c2")],
+            switches=[],
+            ownership=[OwnershipState("s1", "c1", "MASTER", "SLAVE", 1, 2)],
             role_matrix={
                 ("s1", "c1"): {"role": "MASTER", "connected": True},
                 ("s1", "c2"): {"role": "SLAVE", "connected": True},
-                ("s2", "c1"): {"role": "SLAVE", "connected": True},
-                ("s2", "c2"): {"role": "MASTER", "connected": True},
             },
         )
-        self.assertTrue(quality.valid)
+        self.assertEqual(snapshot.ownership_version, 2)
+        self.assertTrue(snapshot.quality.valid)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,39 @@
+name: SDN Integration
+
+on:
+  push:
+    branches: [dev]
+  workflow_dispatch:
+
+concurrency:
+  group: sdn-integration
+  cancel-in-progress: false
+
+jobs:
+  smoke-2c4s:
+    runs-on: [self-hosted, linux, x64, sdn]
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install Python dependencies into existing venvs
+        run: |
+          source "$HOME/ryu-venv/bin/activate"
+          pip install -r requirements-controller-extra.txt
+          deactivate
+          source "$HOME/ndt-venv/bin/activate"
+          pip install -r requirements-orchestrator.txt
+
+      - name: SDN smoke test
+        env:
+          RUN_ID: ci-${{ github.run_id }}-${{ github.run_attempt }}
+        run: ./scripts/ci/smoke_test.sh
+
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: sdn-smoke-logs
+          path: logs/ci/
+          retention-days: 7

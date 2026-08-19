@@ -58,6 +58,7 @@ class ReactiveController(app_manager.RyuApp):
         if ev.state == MAIN_DISPATCHER:
             self.datapaths[dp.id] = dp
             self.role_manager.register_datapath(dp)
+            self.telemetry.register_switch(dp.id)
             self.logger.info("CHANNEL_UP controller=%s dpid=%016x", self.controller_id, dp.id)
         elif ev.state == DEAD_DISPATCHER:
             self.datapaths.pop(dp.id, None)
@@ -67,6 +68,7 @@ class ReactiveController(app_manager.RyuApp):
     def switch_features_handler(self, ev):
         dp = ev.msg.datapath
         self.role_manager.register_datapath(dp)
+        self.telemetry.register_switch(dp.id)
         ofp = dp.ofproto
         parser = dp.ofproto_parser
         self.add_flow(
@@ -103,7 +105,8 @@ class ReactiveController(app_manager.RyuApp):
         dpid = dp.id
 
         self.telemetry.record_packet_in(dpid)
-        if self.role_manager.get_cached_role(dpid) == "SLAVE":
+        current_role = self.role_manager.get_cached_role(dpid)
+        if current_role != "MASTER":
             return
 
         pkt = packet.Packet(msg.data)
