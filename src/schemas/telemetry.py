@@ -1,8 +1,7 @@
+from __future__ import annotations
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from typing import Any
-from __future__ import annotations
-
 
 @dataclass(frozen=True)
 class ControllerTelemetry:

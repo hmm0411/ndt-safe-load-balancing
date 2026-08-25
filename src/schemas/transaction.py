@@ -1,9 +1,9 @@
+from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Optional
 from uuid import uuid4
 from src.common.enums import TransactionState
-from __future__ import annotations
 
 @dataclass(frozen=True)
 class TransactionEvent:
