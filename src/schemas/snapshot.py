@@ -2,6 +2,7 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from typing import Any
 from src.schemas.telemetry import ControllerTelemetry, SwitchTelemetry
+from __future__ import annotations
 
 @dataclass(frozen=True)
 class OwnershipState:
