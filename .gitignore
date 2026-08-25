@@ -30,3 +30,9 @@ data/snapshots/*
 
 logs/ci/*
 !logs/ci/.gitkeep
+
+data/experiment_runs/*
+!data/experiment_runs/.gitkeep
+
+data/benchmarks/*
+!data/benchmarks/.gitkeep

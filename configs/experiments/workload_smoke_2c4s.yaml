@@ -1,0 +1,41 @@
+experiment_type: workload_smoke
+
+topology: smoke_2c4s
+
+protocol: udp
+workload_pattern: stable
+
+target_port: 9000
+
+duration_seconds: 20
+sample_interval_seconds: 1.0
+
+source_port_start: 12000
+source_port_end: 65000
+
+target_new_flow_rates:
+  - 10
+  - 20
+  - 50
+  - 100
+
+benchmark_flow:
+  enabled: true
+  priority: 20
+  cookie: 0x30
+  idle_timeout_seconds: 5
+
+scenarios:
+  c1:
+    target_controller: c1
+    source_host: h1
+    source_ip: 10.0.0.1
+    target_host: h2
+    target_ip: 10.0.0.2
+
+  c2:
+    target_controller: c2
+    source_host: h3
+    source_ip: 10.0.0.3
+    target_host: h4
+    target_ip: 10.0.0.4
