@@ -8,7 +8,7 @@ from ryu.base import app_manager
 from ryu.controller import ofp_event
 from ryu.controller.handler import CONFIG_DISPATCHER, DEAD_DISPATCHER, MAIN_DISPATCHER, set_ev_cls
 from ryu.lib import hub
-from ryu.lib.packet import ethernet, ether_types, packet
+from ryu.lib.packet import ethernet, ether_types, packet, ipv4, udp
 from ryu.ofproto import ofproto_v1_3
 from webob import Response
 
@@ -17,6 +17,17 @@ from src.controller.role_manager import RoleManager
 from src.controller.telemetry_agent import TelemetryAgent
 
 REST_INSTANCE = "ndt_controller"
+BENCHMARK_UDP_PORT = 9000
+COOKIE_TABLE_MISS = 0x0
+COOKIE_REACTIVE = 0x10
+COOKIE_BENCHMARK = 0x30
+
+PRIORITY_TABLE_MISS = 0
+PRIORITY_REACTIVE = 10
+PRIORITY_BENCHMARK = 20
+
+IDLE_TIMEOUT_BENCHMARK = 5
+IDLE_TIMEOUT_REACTIVE = 30
 
 def json_response(payload, status=200):
     return Response(
@@ -73,22 +84,24 @@ class ReactiveController(app_manager.RyuApp):
         parser = dp.ofproto_parser
         self.add_flow(
             dp,
-            priority=0,
+            priority=PRIORITY_TABLE_MISS,
             match=parser.OFPMatch(),
             actions=[parser.OFPActionOutput(ofp.OFPP_CONTROLLER, ofp.OFPCML_NO_BUFFER)],
+            cookie=COOKIE_TABLE_MISS,
         )
 
-    def add_flow(self, dp, priority, match, actions, buffer_id=None, idle_timeout=30):
+    def add_flow(self, dp, priority, match, actions, buffer_id=None, idle_timeout=IDLE_TIMEOUT_REACTIVE, cookie=COOKIE_TABLE_MISS):
         parser = dp.ofproto_parser
         ofp = dp.ofproto
         kwargs = {
             "datapath": dp,
             "priority": priority,
+            "cookie": cookie,
             "match": match,
             "instructions": [
                 parser.OFPInstructionActions(ofp.OFPIT_APPLY_ACTIONS, actions)
             ],
-            "idle_timeout": 0 if priority == 0 else idle_timeout,
+            "idle_timeout": 0 if priority == PRIORITY_TABLE_MISS else idle_timeout,
         }
         if buffer_id is not None:
             kwargs["buffer_id"] = buffer_id
@@ -120,20 +133,40 @@ class ReactiveController(app_manager.RyuApp):
         dst, src = eth.dst, eth.src
         in_port = msg.match["in_port"]
 
+        # 1. Detect UDP benchmark traffic
+        ip_pkt = pkt.get_protocol(ipv4.ipv4)
+        udp_pkt = pkt.get_protocol(udp.udp)
+        is_benchmark = (ip_pkt is not None and udp_pkt is not None and udp_pkt.dst_port == BENCHMARK_UDP_PORT)
+
+        # 2. MAC learning
         self.mac_to_port.setdefault(dpid, {})
         self.mac_to_port[dpid][src] = in_port
         out_port = self.mac_to_port[dpid].get(dst, ofp.OFPP_FLOOD)
         actions = [parser.OFPActionOutput(out_port)]
 
+        # 3. Install flow only when destination is known
         if out_port != ofp.OFPP_FLOOD:
-            match = parser.OFPMatch(in_port=in_port, eth_dst=dst, eth_src=src)
+            if is_benchmark:
+                match = parser.OFPMatch(
+                    in_port=in_port, eth_type=ether_types.ETH_TYPE_IP,
+                    ipv4_src=ip_pkt.src, ipv4_dst=ip_pkt.dst,
+                    ip_proto=17, udp_src=udp_pkt.src_port, udp_dst=udp_pkt.dst_port)
+                priority = PRIORITY_BENCHMARK
+                cookie = COOKIE_BENCHMARK
+                idle_timeout = IDLE_TIMEOUT_BENCHMARK
+            else:
+                match = parser.OFPMatch(in_port=in_port, eth_dst=dst, eth_src=src)
+                priority = PRIORITY_REACTIVE
+                cookie = COOKIE_REACTIVE
+                idle_timeout = IDLE_TIMEOUT_REACTIVE
+
             if msg.buffer_id != ofp.OFP_NO_BUFFER:
-                self.add_flow(dp, 10, match, actions, buffer_id=msg.buffer_id)
+                self.add_flow(dp, priority, match, actions, buffer_id=msg.buffer_id, idle_timeout=idle_timeout, cookie=cookie)
                 self.telemetry.record_response_time(
                     (time.perf_counter_ns() - start_ns) / 1_000_000.0
                 )
                 return
-            self.add_flow(dp, 10, match, actions)
+            self.add_flow(dp, priority, match, actions, idle_timeout=idle_timeout, cookie=cookie)
 
         data = msg.data if msg.buffer_id == ofp.OFP_NO_BUFFER else None
         dp.send_msg(parser.OFPPacketOut(
