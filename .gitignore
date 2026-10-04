@@ -60,3 +60,7 @@ data/outcome/splits/*
 
 data/outcome/reports/*
 !data/outcome/reports/.gitkeep
+
+# Local MLflow tracking
+mlflow.db
+mlruns/
