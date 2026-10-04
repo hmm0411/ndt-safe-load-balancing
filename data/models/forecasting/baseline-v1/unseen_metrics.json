@@ -1,7 +1,7 @@
 {
   "linear_regression": {
-    "inference_per_sample_ms": 0.013463760441737974,
-    "inference_total_ms": 22.484479937702417,
+    "inference_per_sample_ms": 0.013396456910152277,
+    "inference_total_ms": 22.372083039954305,
     "mae": 1.1215588861052022,
     "mape": 1354.1313808078382,
     "p95_absolute_error": 1.30821015378609,
@@ -9,17 +9,17 @@
     "rmse": 1.1501254660349274
   },
   "moving_average_w3": {
-    "inference_per_sample_ms": 0.013314579574469321,
-    "inference_total_ms": 22.235347889363766,
-    "mae": 0.021371316707488826,
-    "mape": 21.640218865376198,
-    "p95_absolute_error": 0.09543150587779847,
-    "r2": -0.6674467801101047,
-    "rmse": 0.042388370124498566
+    "inference_per_sample_ms": 0.0031900958821712852,
+    "inference_total_ms": 5.327460123226047,
+    "mae": 0.021106910348982405,
+    "mape": 21.305345858453244,
+    "p95_absolute_error": 0.09432270533237917,
+    "r2": -0.556955251124668,
+    "rmse": 0.04095989101381036
   },
   "persistence": {
-    "inference_per_sample_ms": 0.003052735422364252,
-    "inference_total_ms": 5.098068155348301,
+    "inference_per_sample_ms": 0.0030093292376684572,
+    "inference_total_ms": 5.025579826906323,
     "mae": 0.02365852839573608,
     "mape": 23.69083132809052,
     "p95_absolute_error": 0.10942931960773396,

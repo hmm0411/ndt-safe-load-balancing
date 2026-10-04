@@ -1,6 +1,7 @@
 {
   "dataset_version": "forecast-dataset-v1-h3-provisional",
   "feature_count": 29,
+  "horizon_effective_seconds": 3.0,
   "horizon_status": "provisional",
   "horizon_steps": 3,
   "ma_candidates": [
