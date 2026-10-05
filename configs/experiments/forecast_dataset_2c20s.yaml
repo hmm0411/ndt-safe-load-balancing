@@ -5,10 +5,10 @@ experiment:
   topology: capacity_2c20s
   output_root: data/experiment_runs
 
+duration_seconds: 180
 sampling_interval_seconds: 1.0
 
 timing:
-  duration_seconds: 180
   warmup_seconds: 10
   cooldown_seconds: 10
 
@@ -35,6 +35,14 @@ seeds:
   - 104
   - 105
 
+# Official plan: 5 workloads x 5 repeats = 25 runs.
+# Nominal samples = 25 runs x 180 samples x 2 controllers = 9000.
+# Deterministic run id: stable-r01-s101 ... hot-switch-r05-s105.
+official_plan:
+  expected_runs: 25
+  nominal_samples: 9000
+  run_id_pattern: "{workload}-r{repeat:02d}-s{seed}"
+
 validation:
   require_fixed_ownership: true
   require_capacity_version: true
@@ -43,3 +51,45 @@ validation:
   min_sample_coverage_ratio: 0.95
   max_gap_seconds: 2.5
   max_send_error_ratio: 0.01
+  utilization_tolerance: 1.0e-6
+
+# All official runs must use one frozen environment.
+environment_freeze:
+  require_clean_git: true
+  require_git_tag: true
+  fingerprint_fields:
+    - git_commit
+    - git_tag
+    - hostname
+    - kernel
+    - python_version
+    - cpu_count
+    - mem_total_kb
+    - mininet_version
+    - ovs_version
+    - ryu_version
+    - capacity_artifact_sha256
+    - controllers_config_sha256
+    - topology_sha256
+    - experiment_config_sha256
+
+# Fields every official run metadata.json must contain.
+# Aliases accepted by the validator:
+# controller_ids/controllers and repeat/repeat_index.
+metadata:
+  required_fields:
+    - run_id
+    - workload_type
+    - repeat
+    - seed
+    - duration_seconds
+    - sampling_interval_seconds
+    - controller_ids
+    - migration_enabled
+    - git_commit
+    - git_tag
+    - safe_capacity_c1
+    - safe_capacity_c2
+    - started_at
+    - finished_at
+    - topology
