@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import json
+import os
+import statistics
 import subprocess
 import time
 import uuid
@@ -19,9 +21,7 @@ from src.experiments.runners.forecast_data_runner import (
     ForecastDataRunner,
     ForecastRunConfig,
 )
-from src.experiments.workloads.capacity_mapper import (
-    CapacityWorkloadMapper,
-)
+from src.twin.capacity.model import CapacityModel
 from src.experiments.workloads.hot_switch import (
     HotSwitchWorkload,
 )
@@ -43,15 +43,57 @@ HOT_HOST = {
 }
 
 
-def build_distribution(
-    mapper: CapacityWorkloadMapper,
-    controller_id: str,
-) -> dict[int, float]:
-    total_rate = (
-        mapper.offered_rate_for_utilization(
-            controller_id,
-            TARGET_UTILIZATION,
+# Packet-In messages generated per new flow on the LOCAL path h_i -> s_i -> hs_i.
+#
+# CapacityWorkloadMapper must not be used here: it inverts the capacity
+# benchmark, whose flows cross the whole 10-switch chain (~10.4 Packet-In per
+# flow). A local flow crosses one switch, so the mapper's rate produced only
+# ~9% utilization instead of the 80% target.
+#
+# 1.175 was measured on the local path at low load
+# (run forecast-hot-switch-2c20s-r04: 63.2 flows/s -> 74.25 Packet-In/s).
+# Re-check it with a 60 s smoke run after any controller change and override
+# with NDT_HOT_SWITCH_PIN_PER_FLOW if the achieved utilization is off.
+DEFAULT_LOCAL_PACKET_IN_PER_FLOW = 1.175
+
+# Accepted |achieved - target| mean utilization for the run to count.
+UTILIZATION_TOLERANCE = 0.10
+
+# Samples skipped at the start of the run before checking achieved load.
+ACHIEVED_SKIP_SECONDS = 10
+
+
+def local_packet_in_per_flow() -> float:
+    raw = os.environ.get("NDT_HOT_SWITCH_PIN_PER_FLOW")
+    value = (
+        float(raw)
+        if raw
+        else DEFAULT_LOCAL_PACKET_IN_PER_FLOW
+    )
+
+    if value <= 0:
+        raise ValueError(
+            "packet-in per flow must be > 0"
         )
+
+    return value
+
+
+def build_distribution(
+    safe_capacity_pps: float,
+    controller_id: str,
+    packet_in_per_flow: float,
+) -> dict[int, float]:
+    """Per-host new-flow rates that load one controller to the target."""
+    if safe_capacity_pps <= 0 or packet_in_per_flow <= 0:
+        raise ValueError(
+            "safe_capacity_pps and packet_in_per_flow must be > 0"
+        )
+
+    total_rate = (
+        TARGET_UTILIZATION
+        * safe_capacity_pps
+        / packet_in_per_flow
     )
 
     hosts = CONTROLLER_HOSTS[controller_id]
@@ -83,6 +125,63 @@ def build_distribution(
         for host in hosts
     }
 
+
+def achieved_utilization(
+    samples_path: Path,
+    sampling_interval_seconds: float,
+) -> dict[str, float]:
+    """Mean measured utilization per controller, skipping the warm-up."""
+    skip = int(
+        ACHIEVED_SKIP_SECONDS
+        / sampling_interval_seconds
+    )
+
+    by_controller: dict[str, list[float]] = {}
+
+    with samples_path.open(encoding="utf-8") as handle:
+        for line in handle:
+            if not line.strip():
+                continue
+
+            row = json.loads(line)
+
+            by_controller.setdefault(
+                str(row["controller_id"]),
+                [],
+            ).append(float(row["utilization"]))
+
+    return {
+        controller_id: statistics.fmean(values[skip:])
+        for controller_id, values in by_controller.items()
+        if len(values) > skip
+    }
+
+
+def check_achieved_utilization(
+    achieved: dict[str, float],
+) -> list[str]:
+    """Problems that make the run unusable as an 80%-load hot-switch run."""
+    problems: list[str] = []
+
+    for controller_id in CONTROLLER_IDS:
+        value = achieved.get(controller_id)
+
+        if value is None:
+            problems.append(
+                f"{controller_id}: no utilization samples"
+            )
+        elif (
+            abs(value - TARGET_UTILIZATION)
+            > UTILIZATION_TOLERANCE
+        ):
+            problems.append(
+                f"{controller_id}: achieved utilization "
+                f"{value:.3f}, target "
+                f"{TARGET_UTILIZATION:.2f} "
+                f"+/- {UTILIZATION_TOLERANCE:.2f}"
+            )
+
+    return problems
 
 
 def validate_local_connectivity(
@@ -143,18 +242,21 @@ def run_forecast_hot_switch(
             "duration_seconds >= 60"
         )
 
-    mapper = CapacityWorkloadMapper(
-        capacity_runs_path=capacity_runs_path,
-        controller_capacity_path=(
-            controller_capacity_path
-        ),
-        range_policy="reject",
+    # capacity_runs_path is kept in the signature for the shared runtime CLI,
+    # but the chain benchmark does not describe the local path (see above).
+    capacity_model = CapacityModel.from_file(
+        controller_capacity_path
     )
+
+    packet_in_per_flow = local_packet_in_per_flow()
 
     distributions = {
         controller_id: build_distribution(
-            mapper,
+            capacity_model.safe_capacity(
+                controller_id
+            ),
             controller_id,
+            packet_in_per_flow,
         )
         for controller_id in CONTROLLER_IDS
     }
@@ -202,6 +304,9 @@ def run_forecast_hot_switch(
         ),
         "traffic_model": (
             "local-source-to-local-sink"
+        ),
+        "packet_in_per_flow": (
+            packet_in_per_flow
         ),
         "controllers": {},
     }
@@ -446,6 +551,37 @@ def run_forecast_hot_switch(
                 )
             except subprocess.TimeoutExpired:
                 pass
+
+        achieved = achieved_utilization(
+            result / "forecast_samples.jsonl",
+            sampling_interval_seconds,
+        )
+
+        problems = check_achieved_utilization(
+            achieved
+        )
+
+        evidence["achieved_mean_utilization"] = achieved
+        evidence["achieved_load_valid"] = not problems
+
+        (
+            run_dir
+            / "hot_switch_distribution.json"
+        ).write_text(
+            json.dumps(
+                evidence,
+                indent=2,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+
+        if problems:
+            raise RuntimeError(
+                "hot-switch run did not reach its target load "
+                "(adjust NDT_HOT_SWITCH_PIN_PER_FLOW): "
+                + "; ".join(problems)
+            )
 
         return result
 

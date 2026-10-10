@@ -355,7 +355,7 @@ class ReactiveController(app_manager.RyuApp):
             "eth_type=%s "
             "ip_src=%s ip_dst=%s ip_proto=%s "
             "udp_src=%s udp_dst=%s "
-            "is_benchmark=%s",
+            "is_benchmark=%s "
             "is_qos=%s",
             self.controller_id,
             dpid,
