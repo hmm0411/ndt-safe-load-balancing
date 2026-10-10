@@ -448,35 +448,18 @@ def run_capacity_experiment(
             metadata.to_dict(),
         )
 
+        # Stop polling before aggregation so the JSONL streams are final and
+        # no collector thread survives into the next run of the matrix.
+        collector.stop()
         collector = None
 
-        post_state = validate_runtime_state(
-            config,
-            controller_id,
-        )
-
-        if any(
-            post_state["ownership"].get(
-                switch
-            )
-            != controller_id
-            for switch
-            in scenario["path_switches"]
-        ):
-            raise RuntimeError(
-                "ownership changed during "
-                "capacity experiment"
-            )
-
-        summary = aggregate_run(
-            run_dir
-        )
-
-        write_json(metadata_path, metadata.to_dict())
-        collector = None
         post_state = validate_runtime_state(config, controller_id)
-        if any(post_state["ownership"].get(switch) != controller_id for switch in scenario["path_switches"]):
+        if any(
+            post_state["ownership"].get(switch) != controller_id
+            for switch in scenario["path_switches"]
+        ):
             raise RuntimeError("ownership changed during capacity experiment")
+
         summary = aggregate_run(run_dir)
         write_json(run_dir / "summary.json", summary)
         validation = validate_summary(summary, config)

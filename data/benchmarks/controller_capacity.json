@@ -1,0 +1,41 @@
+{
+  "schema_version": "1.0",
+  "method": {
+    "experiment": "capacity-2c20s-fine",
+    "repeats_per_rate": 5,
+    "critical_definition": "minimum observed limiting capacity among setup, throughput, and response",
+    "setup_knee_rate_fps": 90.0,
+    "throughput_knee_rate_fps": 100.0,
+    "safe_reference_rate_fps": 80.0,
+    "safe_definition": "one-sided 95% lower confidence bound at the highest healthy pre-knee operating point",
+    "student_t": 2.132
+  },
+  "controllers": {
+    "c1": {
+      "c_throughput_pps": 1031.4430681305807,
+      "c_setup_pps": 932.452383737682,
+      "c_response_pps": null,
+      "c_critical_pps": 932.452383737682,
+      "c_safe_pps": 830.912131857993,
+      "safe_reference": {
+        "target_rate_fps": 80.0,
+        "processed_mean_pps": 832.0519144348568,
+        "processed_std_pps": 1.1954180682163802,
+        "sample_count": 5
+      }
+    },
+    "c2": {
+      "c_throughput_pps": 1029.2420712322576,
+      "c_setup_pps": 933.103063336618,
+      "c_response_pps": null,
+      "c_critical_pps": 933.103063336618,
+      "c_safe_pps": 832.9337985006983,
+      "safe_reference": {
+        "target_rate_fps": 80.0,
+        "processed_mean_pps": 833.0357373120653,
+        "processed_std_pps": 0.10691468656750418,
+        "sample_count": 5
+      }
+    }
+  }
+}

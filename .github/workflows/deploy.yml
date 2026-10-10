@@ -20,4 +20,4 @@ jobs:
       - name: End-to-end deployment smoke check
         env:
           RUN_ID: deploy-${{ github.run_id }}-${{ github.run_attempt }}
-        run: ./scripts/ci/smoke_test.sh
+        run: ./scripts/smoke_test.sh
