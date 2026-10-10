@@ -20,19 +20,26 @@ FINE_PREFIX = "capacity-2c20s-fine-"
 
 EXPECTED_REPEATS = 5
 
-# Derived from the fine-sweep knee analysis:
+# Derived from the fine-sweep knee analysis of the re-run taken after the
+# controller log-format fix (rates 60..240 flows/s, 5 repeats each).
 #
-# 80 fps:
-#   highest clearly healthy pre-knee operating point
+# 110 fps (both controllers):
+#   highest rate below which every rate is healthy
+#   (QoS success >= 99%, setup p95 ~120-130 ms, CPU p95 ~94%)
 #
-# 90 fps:
-#   setup/QoS degradation region
+# 120 fps (c1) / 140 fps (c2):
+#   first rate whose mean QoS success drops below 95%
+#   (setup/QoS degradation region; noisy above this point)
 #
-# 100 fps:
-#   throughput saturation region
-SAFE_REFERENCE_RATE = 80.0
-SETUP_KNEE_RATE = 90.0
-THROUGHPUT_KNEE_RATE = 100.0
+# 180 fps (both controllers):
+#   processed Packet-In stops following the offered load
+#   (~1700-1800 pkt/s plateau, QoS success 0%)
+SAFE_REFERENCE_RATE = 110.0
+SETUP_KNEE_RATE = {
+    "c1": 120.0,
+    "c2": 140.0,
+}
+THROUGHPUT_KNEE_RATE = 180.0
 
 # One-sided 95% Student-t critical value,
 # df = n - 1 = 4.
@@ -182,10 +189,15 @@ def main() -> None:
             )
         )
 
+        if controller not in SETUP_KNEE_RATE:
+            raise RuntimeError(
+                f"no setup knee configured for {controller}"
+            )
+
         setup_group = groups.get(
             (
                 controller,
-                SETUP_KNEE_RATE,
+                SETUP_KNEE_RATE[controller],
             )
         )
 
@@ -284,6 +296,9 @@ def main() -> None:
 
             "c_safe_pps":
                 c_safe,
+
+            "setup_knee_rate_fps":
+                SETUP_KNEE_RATE[controller],
 
             "safe_reference": {
                 "target_rate_fps":
