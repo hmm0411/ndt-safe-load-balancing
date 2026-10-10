@@ -17,8 +17,13 @@ from src.twin.forecasting.evaluator import (
     evaluate_by_workload,
     evaluate_predictor,
 )
+from src.twin.forecasting.features import (
+    feature_names as expected_feature_names,
+)
 from src.twin.forecasting.linear_model import (
+    feature_shift_report,
     fit_linear_regression,
+    near_constant_features,
 )
 from src.twin.forecasting.splitter import (
     split_records,
@@ -140,10 +145,57 @@ def main() -> None:
             "dataset effective horizon must be positive"
         )
 
-    if len(feature_names) != 29:
+    # The dataset must have been built with the current feature schema;
+    # a stale processed CSV would silently train on dropped columns.
+    if feature_names != list(expected_feature_names()):
         raise RuntimeError(
-            "expected exactly 29 features"
+            "processed dataset feature schema is stale; "
+            "rebuild it with build_forecast_dataset.py"
         )
+
+    constant_features = near_constant_features(
+        splits["train"],
+        feature_names,
+    )
+
+    if constant_features:
+        print(
+            "WARNING near-constant training features: "
+            + ", ".join(constant_features)
+        )
+
+    # Distribution shift of every evaluation split against TRAIN.
+    # Written before any model is fitted so it cannot be skipped.
+    shift_report = {
+        split_name: feature_shift_report(
+            splits["train"],
+            splits[split_name],
+            feature_names,
+        )
+        for split_name in ("validation", "test", "unseen")
+        if splits[split_name]
+    }
+
+    write_json(
+        MODEL_ROOT / "feature_shift_report.json",
+        {
+            "near_constant_training_features": constant_features,
+            "splits": shift_report,
+        },
+    )
+
+    for split_name, report in shift_report.items():
+        shifted = sorted(
+            name
+            for name, item in report.items()
+            if item["max_abs_z"] > 10.0
+        )
+
+        if shifted:
+            print(
+                f"WARNING {split_name}: features far outside the "
+                "training distribution: " + ", ".join(shifted)
+            )
 
     validation_results: dict[
         str,

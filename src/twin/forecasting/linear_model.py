@@ -118,3 +118,85 @@ def fit_linear_regression(
         scaler=scaler,
         model=model,
     )
+
+
+def near_constant_features(
+    train_records: list[dict[str, Any]],
+    feature_names: list[str],
+    *,
+    min_relative_std: float = 0.05,
+) -> list[str]:
+    """
+    Features whose training spread is below min_relative_std of their scale.
+
+    Such a column carries almost no signal in training, yet any different
+    value at inference time becomes a huge standardized input.
+    """
+    features = records_to_matrix(
+        train_records,
+        feature_names,
+    )
+
+    std = features.std(axis=0)
+    scale = np.maximum(
+        np.abs(features.mean(axis=0)),
+        1e-12,
+    )
+
+    return [
+        name
+        for name, ratio in zip(
+            feature_names,
+            std / scale,
+            strict=True,
+        )
+        if ratio < min_relative_std
+    ]
+
+
+def feature_shift_report(
+    train_records: list[dict[str, Any]],
+    records: list[dict[str, Any]],
+    feature_names: list[str],
+) -> dict[str, dict[str, float]]:
+    """
+    How far an evaluation split sits outside the training distribution.
+
+    For every feature: the largest |z-score| against the training mean/std
+    and the fraction of rows outside the training [min, max] range.
+    """
+    train = records_to_matrix(
+        train_records,
+        feature_names,
+    )
+    other = records_to_matrix(
+        records,
+        feature_names,
+    )
+
+    mean = train.mean(axis=0)
+    std = np.where(
+        train.std(axis=0) > 0,
+        train.std(axis=0),
+        1.0,
+    )
+
+    max_abs_z = np.abs((other - mean) / std).max(axis=0)
+
+    outside = (
+        (other < train.min(axis=0))
+        | (other > train.max(axis=0))
+    ).mean(axis=0)
+
+    return {
+        name: {
+            "max_abs_z": float(z),
+            "fraction_outside_train_range": float(fraction),
+        }
+        for name, z, fraction in zip(
+            feature_names,
+            max_abs_z,
+            outside,
+            strict=True,
+        )
+    }

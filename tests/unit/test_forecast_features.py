@@ -188,7 +188,17 @@ class ForecastFeatureTests(unittest.TestCase):
 
         self.assertEqual(
             len(names),
-            29,
+            27,
+        )
+
+        # Near-constant in training; kept for auditing only.
+        self.assertNotIn(
+            "max_switch_control_load_share",
+            names,
+        )
+        self.assertNotIn(
+            "managed_switch_count",
+            names,
         )
 
         self.assertIn(

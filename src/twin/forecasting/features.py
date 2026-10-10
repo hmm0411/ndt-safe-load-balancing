@@ -16,6 +16,19 @@ CURRENT_FEATURES = (
     "max_switch_control_load_share",
 )
 
+# Kept in the processed dataset for auditing, but NOT fed to models.
+#
+# With fixed ownership and chain traffic these columns are (near-)constant in
+# every training run: managed_switch_count is always 10 and the load share
+# stays at 0.102 +/- 0.003. A standardized model then sees z-scores above 100
+# as soon as one switch carries more load (hot-switch: share ~0.51), which
+# shifted baseline-v1 predictions by -1.1 utilization. Re-enable a column only
+# once the training runs actually vary it (migration / hot-switch in train).
+AUDIT_ONLY_FEATURES = (
+    "managed_switch_count",
+    "max_switch_control_load_share",
+)
+
 LAG_STEPS = tuple(range(1, 11))
 
 ROLLING_WINDOWS = (3, 5, 10)
@@ -279,7 +292,11 @@ def build_features(
     return output
 
 def feature_names() -> tuple[str, ...]:
-    names: list[str] = list(CURRENT_FEATURES)
+    names: list[str] = [
+        name
+        for name in CURRENT_FEATURES
+        if name not in AUDIT_ONLY_FEATURES
+    ]
 
     names.extend(
         f"utilization_lag_{lag}"
