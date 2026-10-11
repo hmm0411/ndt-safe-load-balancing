@@ -50,11 +50,10 @@ HOT_HOST = {
 # flow). A local flow crosses one switch, so the mapper's rate produced only
 # ~9% utilization instead of the 80% target.
 #
-# 1.175 was measured on the local path at low load
-# (run forecast-hot-switch-2c20s-r04: 63.2 flows/s -> 74.25 Packet-In/s).
-# Re-check it with a 60 s smoke run after any controller change and override
+# 1.03 was measured on the local path at the target load after the
+# controller log-format fix (60 s smoke run: target 0.80, achieved 0.802).
 # with NDT_HOT_SWITCH_PIN_PER_FLOW if the achieved utilization is off.
-DEFAULT_LOCAL_PACKET_IN_PER_FLOW = 1.175
+DEFAULT_LOCAL_PACKET_IN_PER_FLOW = 1.03
 
 # Accepted |achieved - target| mean utilization for the run to count.
 UTILIZATION_TOLERANCE = 0.10
