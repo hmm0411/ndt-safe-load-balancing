@@ -11,6 +11,18 @@ horizon:
   finalized: false
   runtime_inputs_path: data/benchmarks/runtime/forecast_horizon_inputs.json
 
+  # Week 9 provisional labeling policy.
+  #
+  # The measured runtime currently contains collection and migration
+  # latency, but the final decision pipeline does not yet exist.
+  # Therefore this is a lower-bound horizon for dataset construction,
+  # NOT the final deployment horizon.
+  provisional:
+    enabled: true
+    horizon_steps: 3
+    effective_horizon_seconds: 3.0
+    reason: decision_p95_ms_not_yet_available
+
 training:
   require_valid_snapshot: true
 

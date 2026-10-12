@@ -1,0 +1,20 @@
+{
+  "dataset_version": "forecast-dataset-v1-h3-provisional",
+  "feature_count": 29,
+  "horizon_effective_seconds": 3.0,
+  "horizon_status": "provisional",
+  "horizon_steps": 3,
+  "ma_candidates": [
+    3,
+    5,
+    10
+  ],
+  "ma_selection_metric": "validation_rmse",
+  "model_version": "baseline-v1",
+  "random_shuffle": false,
+  "scaler_fit_scope": "train_only",
+  "schema_version": "1.0",
+  "selected_ma_window": 3,
+  "test_used_for_selection": false,
+  "unseen_used_for_selection": false
+}
