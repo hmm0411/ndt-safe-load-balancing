@@ -20,26 +20,28 @@ FINE_PREFIX = "capacity-2c20s-fine-"
 
 EXPECTED_REPEATS = 5
 
-# Derived from the fine-sweep knee analysis of the re-run taken after the
-# controller log-format fix (rates 60..240 flows/s, 5 repeats each).
+# Derived from the fine-sweep knee analysis on the 8-vCPU VM
+# (e2-standard-8, after the controller log-format fix;
+#  rates 30..240 flows/s, 5 repeats each).
 #
-# 110 fps (both controllers):
-#   highest rate below which every rate is healthy
-#   (QoS success >= 99%, setup p95 ~120-130 ms, CPU p95 ~94%)
+# 140 fps (both controllers): highest rate meeting every health rule
+#   - QoS success 100%
+#   - process CPU p95 < 95%            (91-93%; 160 fps reaches 97-98%)
+#   - setup p95 < 2x low-load baseline (~46 ms vs ~22-25 ms at 30 fps)
 #
-# 120 fps (c1) / 140 fps (c2):
-#   first rate whose mean QoS success drops below 95%
-#   (setup/QoS degradation region; noisy above this point)
+# 200 fps (both controllers): setup-latency knee
+#   setup p95 jumps from ~90 ms (180 fps) to 205-232 ms; QoS still 100%,
+#   but at 220 fps QoS success falls to 18% (c1) / 71% (c2)
 #
-# 180 fps (both controllers):
+# 240 fps (both controllers): throughput knee
 #   processed Packet-In stops following the offered load
-#   (~1700-1800 pkt/s plateau, QoS success 0%)
-SAFE_REFERENCE_RATE = 110.0
+#   (~2300 pkt/s instead of ~2450; QoS success 0%)
+SAFE_REFERENCE_RATE = 140.0
 SETUP_KNEE_RATE = {
-    "c1": 120.0,
-    "c2": 140.0,
+    "c1": 200.0,
+    "c2": 200.0,
 }
-THROUGHPUT_KNEE_RATE = 180.0
+THROUGHPUT_KNEE_RATE = 240.0
 
 # One-sided 95% Student-t critical value,
 # df = n - 1 = 4.

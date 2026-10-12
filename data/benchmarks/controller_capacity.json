@@ -5,40 +5,40 @@
     "repeats_per_rate": 5,
     "critical_definition": "minimum observed limiting capacity among setup, throughput, and response",
     "setup_knee_rate_fps": {
-      "c1": 120.0,
-      "c2": 140.0
+      "c1": 200.0,
+      "c2": 200.0
     },
-    "throughput_knee_rate_fps": 180.0,
-    "safe_reference_rate_fps": 110.0,
+    "throughput_knee_rate_fps": 240.0,
+    "safe_reference_rate_fps": 140.0,
     "safe_definition": "one-sided 95% lower confidence bound at the highest healthy pre-knee operating point",
     "student_t": 2.132
   },
   "controllers": {
     "c1": {
-      "c_throughput_pps": 1759.9419395586908,
-      "c_setup_pps": 1229.4273354913112,
+      "c_throughput_pps": 2299.524928611722,
+      "c_setup_pps": 2034.0077327431084,
       "c_response_pps": null,
-      "c_critical_pps": 1229.4273354913112,
-      "c_safe_pps": 1132.3715571456587,
-      "setup_knee_rate_fps": 120.0,
+      "c_critical_pps": 2034.0077327431084,
+      "c_safe_pps": 1433.017216016557,
+      "setup_knee_rate_fps": 200.0,
       "safe_reference": {
-        "target_rate_fps": 110.0,
-        "processed_mean_pps": 1132.797974294931,
-        "processed_std_pps": 0.4472315818689361,
+        "target_rate_fps": 140.0,
+        "processed_mean_pps": 1433.173081350078,
+        "processed_std_pps": 0.16347349019157675,
         "sample_count": 5
       }
     },
     "c2": {
-      "c_throughput_pps": 1707.0781268220126,
-      "c_setup_pps": 1432.0159494524078,
+      "c_throughput_pps": 2316.2890446717884,
+      "c_setup_pps": 2033.4907571245558,
       "c_response_pps": null,
-      "c_critical_pps": 1432.0159494524078,
-      "c_safe_pps": 1132.763161242394,
-      "setup_knee_rate_fps": 140.0,
+      "c_critical_pps": 2033.4907571245558,
+      "c_safe_pps": 1432.9513482274806,
+      "setup_knee_rate_fps": 200.0,
       "safe_reference": {
-        "target_rate_fps": 110.0,
-        "processed_mean_pps": 1133.0224867588931,
-        "processed_std_pps": 0.2719838101276664,
+        "target_rate_fps": 140.0,
+        "processed_mean_pps": 1433.1509287875504,
+        "processed_std_pps": 0.2093225606487945,
         "sample_count": 5
       }
     }
