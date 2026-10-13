@@ -112,6 +112,24 @@ def main() -> None:
         plt.close(fig)
         print("Wrote:", output)
 
+    attach_to_training_run()
+
+
+def attach_to_training_run() -> None:
+    """Add the plots to the MLflow run that trained these models, if any."""
+    pointer = MODEL_ROOT / "mlflow_run.json"
+    if not pointer.exists():
+        return
+    try:
+        from mlflow import MlflowClient
+    except ImportError:
+        return
+    info = json.loads(pointer.read_text(encoding="utf-8"))
+    MlflowClient(tracking_uri=info["tracking_uri"]).log_artifacts(
+        info["run_id"], str(PLOT_ROOT), artifact_path="plots"
+    )
+    print(f"Attached plots to MLflow run {info['run_id']}")
+
 
 if __name__ == "__main__":
     main()

@@ -1,0 +1,23 @@
+# systemd unit for the MLflow tracking server (installed by docs/mlflow.md):
+#
+#   sudo cp deploy/mlflow/mlflow.service /etc/systemd/system/mlflow.service
+#   sudo systemctl daemon-reload && sudo systemctl enable --now mlflow
+#
+# Replace USER and REPO below if your account or clone path differ.
+[Unit]
+Description=MLflow tracking server (ndt-forecasting)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=thuyvy2000vyy
+WorkingDirectory=/home/thuyvy2000vyy/ndt-safe-load-balancing
+# Holds MLFLOW_AUTH_ADMIN_PASSWORD=...  (chmod 600, never commit it)
+EnvironmentFile=/home/thuyvy2000vyy/.config/ndt-mlflow.env
+Environment=PATH=/home/thuyvy2000vyy/ndt-venv/bin:/usr/bin:/bin
+ExecStart=/home/thuyvy2000vyy/ndt-safe-load-balancing/scripts/mlflow/serve.sh
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

@@ -132,6 +132,63 @@ def write_json(
     )
 
 
+def records_frame(
+    records: list[dict[str, Any]],
+    feature_names: list[str],
+) -> Any:
+    """Numeric feature/target view of a split, for MLflow dataset tracking."""
+    import pandas as pd
+
+    frame = pd.DataFrame(records)
+    keep = [c for c in ("run_id", "workload_type", "controller_id") if c in frame]
+    numeric = frame[[*feature_names, "future_utilization"]].apply(
+        pd.to_numeric, errors="coerce"
+    )
+    return pd.concat([frame[keep], numeric], axis=1)
+
+
+def log_figures(
+    tracker: Tracker,
+    importances: dict[str, dict[str, float]],
+    skill: dict[str, dict[str, dict[str, float]]],
+) -> None:
+    """Two summary figures attached to the MLflow run (not written locally)."""
+    if tracker.run_id is None:
+        return
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    fig, axes = plt.subplots(1, 2, figsize=(12, 6), constrained_layout=True)
+    for axis, (name, values) in zip(axes, importances.items(), strict=False):
+        top = list(values.items())[:15][::-1]
+        axis.barh([k for k, _ in top], [v for _, v in top], color="#4C72B0")
+        axis.set_title(f"{name}: top-15 feature importance")
+    tracker.log_figure(fig, "figures/feature_importance.png")
+    plt.close(fig)
+
+    test = skill.get("test", {})
+    workloads = list(test)
+    models = sorted({m for ratios in test.values() for m in ratios})
+    fig, axis = plt.subplots(figsize=(10, 5), constrained_layout=True)
+    width = 0.8 / max(len(models), 1)
+    for i, model in enumerate(models):
+        axis.bar(
+            [w + i * width for w in range(len(workloads))],
+            [test[w].get(model, float("nan")) for w in workloads],
+            width=width,
+            label=model,
+        )
+    axis.axhline(1.0, color="black", linewidth=1)
+    axis.set_xticks([w + 0.4 - width / 2 for w in range(len(workloads))], workloads)
+    axis.set_ylabel("RMSE / RMSE persistence (test)")
+    axis.set_title("Below 1 = better than persistence")
+    axis.legend()
+    tracker.log_figure(fig, "figures/skill_vs_persistence_test.png")
+    plt.close(fig)
+
+
 def _train(config: dict[str, Any], tracker: Tracker) -> None:
     MODEL_ROOT.mkdir(
         parents=True,
@@ -189,6 +246,23 @@ def _train(config: dict[str, Any], tracker: Tracker) -> None:
             "processed dataset feature schema is stale; "
             "rebuild it with build_forecast_dataset.py"
         )
+
+    # Dataset lineage: name, digest, schema and row count of every split
+    # appear under "Datasets used" for this run.
+    for split_name, context in (
+        ("train", "training"),
+        ("validation", "validation"),
+        ("test", "testing"),
+        ("unseen", "ood_testing"),
+    ):
+        if splits[split_name]:
+            tracker.log_dataset(
+                records_frame(splits[split_name], feature_names),
+                name=f"{DATASET_VERSION}/{split_name}",
+                context=context,
+                source=str(DATASET_PATH),
+                targets="future_utilization",
+            )
 
     constant_features = near_constant_features(
         splits["train"],
@@ -329,6 +403,11 @@ def _train(config: dict[str, Any], tracker: Tracker) -> None:
         grid=xgb_config["grid"],
         fixed=xgb_config["fixed"],
         on_candidate=tracker.log_candidate,
+    )
+
+    tracker.log_curve(
+        "xgboost_learning_curve_validation_rmse",
+        xgboost_model.learning_curve(),
     )
 
     for tree_model in (random_forest, xgboost_model):
@@ -620,6 +699,42 @@ def _train(config: dict[str, Any], tracker: Tracker) -> None:
                 ratios, prefix=f"skill_{split_name}_{workload}_"
             )
 
+    tracker.log_table(
+        {
+            "model": [m for m, by in final_predictions.items() for s in by for _ in by[s]],
+            "split": [s for by in final_predictions.values() for s in by for _ in by[s]],
+            "workload": [w for by in final_predictions.values() for s in by for w in by[s]],
+            "rmse": [by[s][w]["rmse"] for by in final_predictions.values() for s in by for w in by[s]],
+            "mae": [by[s][w]["mae"] for by in final_predictions.values() for s in by for w in by[s]],
+        },
+        "tables/per_workload_metrics.json",
+    )
+    for name, table in (("random_forest", random_forest_grid), ("xgboost", xgboost_grid)):
+        tracker.log_table(
+            [{**{f"param_{k}": str(v) for k, v in row["params"].items()},
+              **{k: v for k, v in row.items() if k != "params"}} for row in table],
+            f"tables/grid_{name}.json",
+        )
+    log_figures(
+        tracker,
+        {
+            "random_forest": random_forest.feature_importance(),
+            "xgboost": xgboost_model.feature_importance(),
+        },
+        skill_vs_persistence,
+    )
+
+    def version_tags(model_name: str) -> dict[str, Any]:
+        return {
+            "dataset_version": DATASET_VERSION,
+            "model_version": MODEL_VERSION,
+            "horizon_steps": horizon_steps,
+            "target": "future_utilization - utilization",
+            "validation_rmse": validation_results[model_name]["rmse"],
+            "test_rmse": final_results[model_name]["test"]["rmse"],
+            "unseen_rmse": final_results[model_name]["unseen"]["rmse"],
+        }
+
     example = records_to_matrix(splits["validation"][:5], feature_names)
     tracker.log_model(
         "sklearn",
@@ -628,14 +743,22 @@ def _train(config: dict[str, Any], tracker: Tracker) -> None:
         example,
         # Our own freshly trained forest, not a downloaded file.
         trusted_types=["sklearn.tree._tree.Tree"],
+        version_tags=version_tags("random_forest"),
     )
-    tracker.log_model("xgboost", xgboost_model.model, "xgboost", example)
+    tracker.log_model(
+        "xgboost",
+        xgboost_model.model,
+        "xgboost",
+        example,
+        version_tags=version_tags("xgboost"),
+    )
     tracker.log_model(
         "sklearn",
         make_pipeline(linear.scaler, linear.model),
         "linear_regression",
         example,
     )
+    tracker.write_pointer(MODEL_ROOT / "mlflow_run.json")
     tracker.log_artifacts(MODEL_ROOT, artifact_path=MODEL_VERSION)
 
     print("=" * 72)
@@ -705,7 +828,8 @@ def _train(config: dict[str, Any], tracker: Tracker) -> None:
     print("Artifacts:", MODEL_ROOT)
     if tracker.run_id:
         print(f"MLflow    : {tracker.tracking_uri}  run_id={tracker.run_id}")
-        print("            mlflow ui --backend-store-uri", tracker.tracking_uri)
+        for name, version in tracker.registered_versions.items():
+            print(f"            registered {name} version {version} (alias {tracker.candidate_alias})")
 
 
 def main() -> None:
@@ -720,6 +844,11 @@ def main() -> None:
         run_name=args.run_name or f"{MODEL_VERSION}-{DATASET_VERSION}",
         register_models=args.register or bool(mlflow_config.get("register_models")),
         registered_names=mlflow_config.get("registered_names", {}),
+        system_metrics=bool(mlflow_config.get("system_metrics", False)),
+        system_metrics_interval=float(
+            mlflow_config.get("system_metrics_interval_seconds", 5.0)
+        ),
+        candidate_alias=str(mlflow_config.get("candidate_alias", "challenger")),
     )
 
     # The run opens before any fitting so progress (grid candidates) shows up

@@ -83,6 +83,24 @@ class TreeForecastModel:
         change = np.asarray(self.model.predict(features), dtype=float)
         return current_utilization(records) + change
 
+    def learning_curve(self) -> list[float]:
+        """Validation RMSE per boosting round (XGBoost only; empty otherwise).
+
+        The curve is on the change target, whose RMSE equals the RMSE of the
+        U(t+h) forecast because U(t) is added back unchanged.
+        """
+        evals = getattr(self.model, "evals_result", None)
+        if evals is None:
+            return []
+        try:
+            history = evals()
+        except Exception:  # not fitted with an eval_set
+            return []
+        for series in history.values():
+            if "rmse" in series:
+                return [float(v) for v in series["rmse"]]
+        return []
+
     def feature_importance(self) -> dict[str, float]:
         values = getattr(self.model, "feature_importances_", None)
         if values is None:
@@ -99,8 +117,9 @@ def _grid(grid: Mapping[str, Any]) -> list[dict[str, Any]]:
     ]
 
 
+# (model name, params, validation metrics, extra scalars, learning curve)
 CandidateCallback = Callable[
-    [str, dict[str, Any], dict[str, float], dict[str, Any]], None
+    [str, dict[str, Any], dict[str, float], dict[str, Any], list[float]], None
 ]
 
 
@@ -127,7 +146,7 @@ def _select(
         metrics = evaluate_regression(y_val, model.predict(validation))
         table.append({"params": params, **model.extra, **metrics})
         if on_candidate is not None:
-            on_candidate(name, params, metrics, model.extra)
+            on_candidate(name, params, metrics, model.extra, model.learning_curve())
         if metrics["rmse"] < best_rmse:
             best, best_rmse = model, metrics["rmse"]
 

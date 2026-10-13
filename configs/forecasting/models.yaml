@@ -10,8 +10,15 @@ mlflow:
   # running `mlflow server` instead.
   tracking_uri: sqlite:///mlflow.db
   experiment: ndt-forecasting
-  # Register the selected Random Forest / XGBoost in the Model Registry.
-  register_models: true
+  # CPU/RAM/disk/network of the training process in the "System metrics"
+  # tab (needs psutil, listed in requirements-ml.txt).
+  system_metrics: true
+  system_metrics_interval_seconds: 2
+  # Register the selected Random Forest / XGBoost in the Model Registry
+  # (or pass --register). Each new version gets the alias below; promoting a
+  # version to "champion" is a manual decision in the UI.
+  register_models: false
+  candidate_alias: challenger
   registered_names:
     random_forest: ndt-forecast-random-forest
     xgboost: ndt-forecast-xgboost

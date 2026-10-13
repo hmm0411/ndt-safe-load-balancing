@@ -67,3 +67,6 @@ data/outcome/reports/*
 # Local MLflow tracking
 mlflow.db
 mlruns/
+basic_auth.db
+mlartifacts/
+.mlflow_flask_secret
