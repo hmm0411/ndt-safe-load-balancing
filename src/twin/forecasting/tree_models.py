@@ -91,7 +91,7 @@ class TreeForecastModel:
         return dict(sorted(pairs, key=lambda item: item[1], reverse=True))
 
 
-def _grid(grid: Mapping[str, tuple[Any, ...]]) -> list[dict[str, Any]]:
+def _grid(grid: Mapping[str, Any]) -> list[dict[str, Any]]:
     keys = sorted(grid)
     return [
         dict(zip(keys, values, strict=True))
@@ -99,11 +99,17 @@ def _grid(grid: Mapping[str, tuple[Any, ...]]) -> list[dict[str, Any]]:
     ]
 
 
+CandidateCallback = Callable[
+    [str, dict[str, Any], dict[str, float], dict[str, Any]], None
+]
+
+
 def _select(
     name: str,
     candidates: list[dict[str, Any]],
     fit_one: Callable[[dict[str, Any]], TreeForecastModel],
     validation: list[dict[str, Any]],
+    on_candidate: CandidateCallback | None = None,
 ) -> tuple[TreeForecastModel, list[dict[str, Any]]]:
     """Fit every candidate, keep the lowest validation RMSE."""
     if not validation:
@@ -120,6 +126,8 @@ def _select(
         model = fit_one(params)
         metrics = evaluate_regression(y_val, model.predict(validation))
         table.append({"params": params, **model.extra, **metrics})
+        if on_candidate is not None:
+            on_candidate(name, params, metrics, model.extra)
         if metrics["rmse"] < best_rmse:
             best, best_rmse = model, metrics["rmse"]
 
@@ -131,7 +139,9 @@ def fit_random_forest(
     train: list[dict[str, Any]],
     validation: list[dict[str, Any]],
     feature_names: list[str],
-    grid: Mapping[str, tuple[Any, ...]] = RANDOM_FOREST_GRID,
+    grid: Mapping[str, Any] = RANDOM_FOREST_GRID,
+    fixed: Mapping[str, Any] = RANDOM_FOREST_FIXED,
+    on_candidate: CandidateCallback | None = None,
 ) -> tuple[TreeForecastModel, list[dict[str, Any]]]:
     from sklearn.ensemble import RandomForestRegressor
 
@@ -139,18 +149,20 @@ def fit_random_forest(
     y_train = delta_target(train)
 
     def fit_one(params: dict[str, Any]) -> TreeForecastModel:
-        model = RandomForestRegressor(**RANDOM_FOREST_FIXED, **params)
+        model = RandomForestRegressor(**{**fixed, **params})
         model.fit(x_train, y_train)
         return TreeForecastModel("random_forest", list(feature_names), model, params)
 
-    return _select("random_forest", _grid(grid), fit_one, validation)
+    return _select("random_forest", _grid(grid), fit_one, validation, on_candidate)
 
 
 def fit_xgboost(
     train: list[dict[str, Any]],
     validation: list[dict[str, Any]],
     feature_names: list[str],
-    grid: Mapping[str, tuple[Any, ...]] = XGBOOST_GRID,
+    grid: Mapping[str, Any] = XGBOOST_GRID,
+    fixed: Mapping[str, Any] = XGBOOST_FIXED,
+    on_candidate: CandidateCallback | None = None,
 ) -> tuple[TreeForecastModel, list[dict[str, Any]]]:
     from xgboost import XGBRegressor
 
@@ -160,7 +172,7 @@ def fit_xgboost(
     y_val = delta_target(validation)
 
     def fit_one(params: dict[str, Any]) -> TreeForecastModel:
-        model = XGBRegressor(**XGBOOST_FIXED, **params)
+        model = XGBRegressor(**{**fixed, **params})
         # Early stopping watches the validation split, which is the
         # model-selection split; test and unseen are never seen here.
         model.fit(x_train, y_train, eval_set=[(x_val, y_val)], verbose=False)
@@ -173,4 +185,4 @@ def fit_xgboost(
             extra={"best_iteration": best_iteration},
         )
 
-    return _select("xgboost", _grid(grid), fit_one, validation)
+    return _select("xgboost", _grid(grid), fit_one, validation, on_candidate)

@@ -1,0 +1,46 @@
+# Forecast model training settings (scripts/experiments/train_forecast_baselines.py).
+#
+# Change hyperparameter grids here instead of in code: every candidate becomes
+# a child run in MLflow, and the selected one is the lowest VALIDATION RMSE.
+# Test and unseen splits are evaluated once, after selection.
+
+mlflow:
+  enabled: true
+  # A local SQLite file next to the repo root. Use an http:// URI to log to a
+  # running `mlflow server` instead.
+  tracking_uri: sqlite:///mlflow.db
+  experiment: ndt-forecasting
+  # Register the selected Random Forest / XGBoost in the Model Registry.
+  register_models: true
+  registered_names:
+    random_forest: ndt-forecast-random-forest
+    xgboost: ndt-forecast-xgboost
+
+moving_average:
+  windows: [3, 5, 10]
+
+random_forest:
+  fixed:
+    n_estimators: 300
+    n_jobs: -1
+    random_state: 42
+  grid:
+    max_depth: [6, 10, null]
+    min_samples_leaf: [5, 20]
+    max_features: [0.5, 1.0]
+
+xgboost:
+  fixed:
+    n_estimators: 1000
+    subsample: 0.8
+    colsample_bytree: 0.8
+    reg_lambda: 1.0
+    objective: reg:squarederror
+    tree_method: hist
+    early_stopping_rounds: 50
+    n_jobs: -1
+    random_state: 42
+  grid:
+    max_depth: [3, 5]
+    learning_rate: [0.05, 0.1]
+    min_child_weight: [1, 5]

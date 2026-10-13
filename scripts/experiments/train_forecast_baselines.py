@@ -6,8 +6,11 @@ import json
 from pathlib import Path
 from typing import Any
 
+import argparse
+import functools
+
 import joblib
-import mlflow
+import yaml
 
 from src.twin.forecasting.versions import MODEL_VERSION as VERSIONED_MODEL
 from src.twin.forecasting.versions import dataset_version
@@ -22,7 +25,10 @@ from src.twin.forecasting.evaluator import (
 from src.twin.forecasting.features import (
     feature_names as expected_feature_names,
 )
+from sklearn.pipeline import make_pipeline
+
 from src.twin.forecasting.linear_model import (
+    records_to_matrix,
     feature_shift_report,
     fit_linear_regression,
     near_constant_features,
@@ -30,11 +36,8 @@ from src.twin.forecasting.linear_model import (
 from src.twin.forecasting.splitter import (
     split_records,
 )
+from src.twin.forecasting.tracking import Tracker
 from src.twin.forecasting.tree_models import (
-    RANDOM_FOREST_FIXED,
-    RANDOM_FOREST_GRID,
-    XGBOOST_FIXED,
-    XGBOOST_GRID,
     fit_random_forest,
     fit_xgboost,
 )
@@ -65,7 +68,40 @@ SPLIT_MANIFEST_PATH = (
     DATA_ROOT / "split_manifest.json"
 )
 
-MA_WINDOWS = (3, 5, 10)
+MODEL_CONFIG_PATH = Path("configs/forecasting/models.yaml")
+
+
+def load_model_config(path: Path) -> dict[str, Any]:
+    config = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    for section in ("mlflow", "moving_average", "random_forest", "xgboost"):
+        if section not in config:
+            raise ValueError(f"{path}: missing section {section!r}")
+    return config
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Train persistence, moving average, Linear Regression, "
+        "Random Forest and XGBoost forecasters."
+    )
+    parser.add_argument("--config", type=Path, default=MODEL_CONFIG_PATH)
+    parser.add_argument(
+        "--run-name",
+        default=None,
+        help="MLflow run name (default: <model_version>-<dataset_version>)",
+    )
+    parser.add_argument(
+        "--note",
+        default="",
+        help="free-text note stored as the MLflow run description",
+    )
+    parser.add_argument("--no-mlflow", action="store_true")
+    parser.add_argument(
+        "--register",
+        action="store_true",
+        help="register the selected tree models in the MLflow Model Registry",
+    )
+    return parser.parse_args()
 
 
 def load_records(
@@ -96,18 +132,7 @@ def write_json(
     )
 
 
-def log_metrics(
-    prefix: str,
-    metrics: dict[str, float],
-) -> None:
-    for name, value in metrics.items():
-        mlflow.log_metric(
-            f"{prefix}_{name}",
-            float(value),
-        )
-
-
-def main() -> None:
+def _train(config: dict[str, Any], tracker: Tracker) -> None:
     MODEL_ROOT.mkdir(
         parents=True,
         exist_ok=True,
@@ -128,6 +153,10 @@ def main() -> None:
     feature_names = list(
         manifest["feature_names"]
     )
+
+    ma_windows: list[int] = [int(w) for w in config["moving_average"]["windows"]]
+    rf_config = config["random_forest"]
+    xgb_config = config["xgboost"]
 
     horizon = manifest["horizon"]
 
@@ -228,16 +257,15 @@ def main() -> None:
     # Moving Average candidate selection.
     # Validation RMSE only.
     # -------------------------------------------------
-    for window in MA_WINDOWS:
+    for window in ma_windows:
         name = f"moving_average_w{window}"
 
         metrics, _ = evaluate_predictor(
             splits["validation"],
-            lambda rows, w=window:
-                moving_average_predict(
-                    rows,
-                    window=w,
-                ),
+            functools.partial(
+                moving_average_predict,
+                window=window,
+            ),
         )
 
         validation_results[name] = metrics
@@ -245,7 +273,7 @@ def main() -> None:
     selected_ma_name = min(
         (
             f"moving_average_w{window}"
-            for window in MA_WINDOWS
+            for window in ma_windows
         ),
         key=lambda name:
             validation_results[name][
@@ -289,12 +317,18 @@ def main() -> None:
         splits["train"],
         splits["validation"],
         feature_names,
+        grid=rf_config["grid"],
+        fixed=rf_config["fixed"],
+        on_candidate=tracker.log_candidate,
     )
     print("Fitting XGBoost grid ...", flush=True)
     xgboost_model, xgboost_grid = fit_xgboost(
         splits["train"],
         splits["validation"],
         feature_names,
+        grid=xgb_config["grid"],
+        fixed=xgb_config["fixed"],
+        on_candidate=tracker.log_candidate,
     )
 
     for tree_model in (random_forest, xgboost_model):
@@ -391,14 +425,14 @@ def main() -> None:
             "selection_split": "validation",
             "selection_metric": "rmse",
             "random_forest": {
-                "fixed": RANDOM_FOREST_FIXED,
-                "grid": {k: list(v) for k, v in RANDOM_FOREST_GRID.items()},
+                "fixed": rf_config["fixed"],
+                "grid": rf_config["grid"],
                 "selected": random_forest.params,
                 "candidates": random_forest_grid,
             },
             "xgboost": {
-                "fixed": XGBOOST_FIXED,
-                "grid": {k: list(v) for k, v in XGBOOST_GRID.items()},
+                "fixed": xgb_config["fixed"],
+                "grid": xgb_config["grid"],
                 "selected": xgboost_model.params,
                 "best_iteration": xgboost_model.extra.get("best_iteration"),
                 "candidates": xgboost_grid,
@@ -507,7 +541,7 @@ def main() -> None:
         "feature_count":
             len(feature_names),
         "ma_candidates":
-            list(MA_WINDOWS),
+            list(ma_windows),
         "ma_selection_metric":
             "validation_rmse",
         "selected_ma_window":
@@ -539,70 +573,70 @@ def main() -> None:
     )
 
     # -------------------------------------------------
-    # MLflow tracking.
+    # MLflow tracking (no-op with --no-mlflow).
     # Local artifacts remain authoritative.
     # -------------------------------------------------
-    mlflow.set_tracking_uri(
-        "sqlite:///mlflow.db"
+    tracker.log_params({
+        "model_version": MODEL_VERSION,
+        "dataset_version": DATASET_VERSION,
+        "horizon_steps": horizon_steps,
+        "horizon_status": horizon_status,
+        "horizon_effective_seconds": horizon_effective_seconds,
+        "feature_count": len(feature_names),
+        "selected_ma_window": selected_ma_window,
+        "tree_target": "future_utilization - utilization",
+        "selection_metric": "validation_rmse",
+        "train_rows": len(splits["train"]),
+        "validation_rows": len(splits["validation"]),
+        "test_rows": len(splits["test"]),
+        "unseen_rows": len(splits["unseen"]),
+    })
+    tracker.log_params(random_forest.params, prefix="random_forest.")
+    tracker.log_params(rf_config["fixed"], prefix="random_forest.fixed.")
+    tracker.log_params(xgboost_model.params, prefix="xgboost.")
+    tracker.log_params(xgb_config["fixed"], prefix="xgboost.fixed.")
+    tracker.log_metrics(
+        {"xgboost_best_iteration": xgboost_model.extra.get("best_iteration", -1)}
     )
 
-    mlflow.set_experiment(
-        "ndt-forecasting"
+    for model_name, metrics in validation_results.items():
+        tracker.log_metrics(metrics, prefix=f"validation_{model_name}_")
+
+    for model_name, result in final_results.items():
+        tracker.log_metrics(result["test"], prefix=f"test_{model_name}_")
+        tracker.log_metrics(result["unseen"], prefix=f"unseen_{model_name}_")
+
+    for model_name, by_split in final_predictions.items():
+        for split_name, by_workload in by_split.items():
+            for workload, metrics in by_workload.items():
+                tracker.log_metrics(
+                    {"rmse": metrics["rmse"], "mae": metrics["mae"]},
+                    prefix=f"{split_name}_{workload}_{model_name}_",
+                )
+
+    for split_name, by_workload in skill_vs_persistence.items():
+        for workload, ratios in by_workload.items():
+            tracker.log_metrics(
+                ratios, prefix=f"skill_{split_name}_{workload}_"
+            )
+
+    example = records_to_matrix(splits["validation"][:5], feature_names)
+    tracker.log_model(
+        "sklearn",
+        random_forest.model,
+        "random_forest",
+        example,
+        # Our own freshly trained forest, not a downloaded file.
+        trusted_types=["sklearn.tree._tree.Tree"],
     )
-
-    with mlflow.start_run(
-        run_name=(
-            f"{MODEL_VERSION}-{DATASET_VERSION}"
-        )
-    ):
-        mlflow.log_params({
-            "model_version":
-                MODEL_VERSION,
-            "dataset_version":
-                DATASET_VERSION,
-            "horizon_steps":
-                horizon_steps,
-            "horizon_status":
-                horizon_status,
-            "horizon_effective_seconds":
-                horizon_effective_seconds,
-            "feature_count":
-                len(feature_names),
-            "selected_ma_window":
-                selected_ma_window,
-            "ma_selection_metric":
-                "validation_rmse",
-            "scaler_fit_scope":
-                "train_only",
-            "random_shuffle":
-                False,
-        })
-
-        for model_name, metrics in (
-            validation_results.items()
-        ):
-            log_metrics(
-                f"validation_{model_name}",
-                metrics,
-            )
-
-        for model_name, result in (
-            final_results.items()
-        ):
-            log_metrics(
-                f"test_{model_name}",
-                result["test"],
-            )
-
-            log_metrics(
-                f"unseen_{model_name}",
-                result["unseen"],
-            )
-
-        mlflow.log_artifacts(
-            str(MODEL_ROOT),
-            artifact_path=MODEL_VERSION,
-        )
+    tracker.log_model("xgboost", xgboost_model.model, "xgboost", example)
+    tracker.log_model(
+        "sklearn",
+        make_pipeline(linear.scaler, linear.model),
+        "linear_regression",
+        example,
+    )
+    tracker.log_artifacts(MODEL_ROOT, artifact_path=MODEL_VERSION)
 
     print("=" * 72)
     print(f"FORECAST MODELS {MODEL_VERSION} on {DATASET_VERSION}")
@@ -669,7 +703,42 @@ def main() -> None:
 
     print()
     print("Artifacts:", MODEL_ROOT)
-    print("MLflow    : sqlite:///mlflow.db")
+    if tracker.run_id:
+        print(f"MLflow    : {tracker.tracking_uri}  run_id={tracker.run_id}")
+        print("            mlflow ui --backend-store-uri", tracker.tracking_uri)
+
+
+def main() -> None:
+    args = parse_args()
+    config = load_model_config(args.config)
+    mlflow_config = config["mlflow"]
+
+    tracker = Tracker(
+        enabled=bool(mlflow_config.get("enabled", True)) and not args.no_mlflow,
+        tracking_uri=str(mlflow_config["tracking_uri"]),
+        experiment=str(mlflow_config["experiment"]),
+        run_name=args.run_name or f"{MODEL_VERSION}-{DATASET_VERSION}",
+        register_models=args.register or bool(mlflow_config.get("register_models")),
+        registered_names=mlflow_config.get("registered_names", {}),
+    )
+
+    # The run opens before any fitting so progress (grid candidates) shows up
+    # in the MLflow UI while training is still running.
+    tracker.start(
+        {
+            "model_version": MODEL_VERSION,
+            "dataset_version": DATASET_VERSION,
+            "model_config": str(args.config),
+            "role": "training",
+            "mlflow.note.content": args.note,
+        }
+    )
+    try:
+        _train(config, tracker)
+    except BaseException:
+        tracker.end(status="FAILED")
+        raise
+    tracker.end()
 
 
 if __name__ == "__main__":
