@@ -20,19 +20,28 @@ FINE_PREFIX = "capacity-2c20s-fine-"
 
 EXPECTED_REPEATS = 5
 
-# Derived from the fine-sweep knee analysis:
+# Derived from the fine-sweep knee analysis on the 8-vCPU VM
+# (e2-standard-8, after the controller log-format fix;
+#  rates 30..240 flows/s, 5 repeats each).
 #
-# 80 fps:
-#   highest clearly healthy pre-knee operating point
+# 140 fps (both controllers): highest rate meeting every health rule
+#   - QoS success 100%
+#   - process CPU p95 < 95%            (91-93%; 160 fps reaches 97-98%)
+#   - setup p95 < 2x low-load baseline (~46 ms vs ~22-25 ms at 30 fps)
 #
-# 90 fps:
-#   setup/QoS degradation region
+# 200 fps (both controllers): setup-latency knee
+#   setup p95 jumps from ~90 ms (180 fps) to 205-232 ms; QoS still 100%,
+#   but at 220 fps QoS success falls to 18% (c1) / 71% (c2)
 #
-# 100 fps:
-#   throughput saturation region
-SAFE_REFERENCE_RATE = 80.0
-SETUP_KNEE_RATE = 90.0
-THROUGHPUT_KNEE_RATE = 100.0
+# 240 fps (both controllers): throughput knee
+#   processed Packet-In stops following the offered load
+#   (~2300 pkt/s instead of ~2450; QoS success 0%)
+SAFE_REFERENCE_RATE = 140.0
+SETUP_KNEE_RATE = {
+    "c1": 200.0,
+    "c2": 200.0,
+}
+THROUGHPUT_KNEE_RATE = 240.0
 
 # One-sided 95% Student-t critical value,
 # df = n - 1 = 4.
@@ -182,10 +191,15 @@ def main() -> None:
             )
         )
 
+        if controller not in SETUP_KNEE_RATE:
+            raise RuntimeError(
+                f"no setup knee configured for {controller}"
+            )
+
         setup_group = groups.get(
             (
                 controller,
-                SETUP_KNEE_RATE,
+                SETUP_KNEE_RATE[controller],
             )
         )
 
@@ -284,6 +298,9 @@ def main() -> None:
 
             "c_safe_pps":
                 c_safe,
+
+            "setup_knee_rate_fps":
+                SETUP_KNEE_RATE[controller],
 
             "safe_reference": {
                 "target_rate_fps":

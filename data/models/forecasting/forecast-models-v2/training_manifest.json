@@ -1,0 +1,33 @@
+{
+  "dataset_version": "forecast-dataset-v2-h3-provisional",
+  "feature_count": 27,
+  "horizon_effective_seconds": 3.0,
+  "horizon_status": "provisional",
+  "horizon_steps": 3,
+  "ma_candidates": [
+    3,
+    5,
+    10
+  ],
+  "ma_selection_metric": "validation_rmse",
+  "model_version": "forecast-models-v2",
+  "random_forest_params": {
+    "max_depth": null,
+    "max_features": 0.5,
+    "min_samples_leaf": 5
+  },
+  "random_shuffle": false,
+  "scaler_fit_scope": "train_only",
+  "schema_version": "1.0",
+  "selected_ma_window": 3,
+  "test_used_for_selection": false,
+  "tree_selection": "validation_rmse",
+  "tree_target": "future_utilization - utilization",
+  "unseen_used_for_selection": false,
+  "xgboost_best_iteration": 523,
+  "xgboost_params": {
+    "learning_rate": 0.05,
+    "max_depth": 5,
+    "min_child_weight": 5
+  }
+}

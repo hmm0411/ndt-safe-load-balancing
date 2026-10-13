@@ -26,6 +26,7 @@ jobs:
           pip install -r requirements-orchestrator.txt
           pip install -r requirements-dev.txt
           pip install -r requirements-controller-extra.txt
+          pip install -r requirements-ml.txt
 
       - name: Compile
         run: python -m compileall -q src tests

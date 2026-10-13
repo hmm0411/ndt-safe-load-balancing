@@ -4,36 +4,41 @@
     "experiment": "capacity-2c20s-fine",
     "repeats_per_rate": 5,
     "critical_definition": "minimum observed limiting capacity among setup, throughput, and response",
-    "setup_knee_rate_fps": 90.0,
-    "throughput_knee_rate_fps": 100.0,
-    "safe_reference_rate_fps": 80.0,
+    "setup_knee_rate_fps": {
+      "c1": 200.0,
+      "c2": 200.0
+    },
+    "throughput_knee_rate_fps": 240.0,
+    "safe_reference_rate_fps": 140.0,
     "safe_definition": "one-sided 95% lower confidence bound at the highest healthy pre-knee operating point",
     "student_t": 2.132
   },
   "controllers": {
     "c1": {
-      "c_throughput_pps": 1031.4430681305807,
-      "c_setup_pps": 932.452383737682,
+      "c_throughput_pps": 2299.524928611722,
+      "c_setup_pps": 2034.0077327431084,
       "c_response_pps": null,
-      "c_critical_pps": 932.452383737682,
-      "c_safe_pps": 830.912131857993,
+      "c_critical_pps": 2034.0077327431084,
+      "c_safe_pps": 1433.017216016557,
+      "setup_knee_rate_fps": 200.0,
       "safe_reference": {
-        "target_rate_fps": 80.0,
-        "processed_mean_pps": 832.0519144348568,
-        "processed_std_pps": 1.1954180682163802,
+        "target_rate_fps": 140.0,
+        "processed_mean_pps": 1433.173081350078,
+        "processed_std_pps": 0.16347349019157675,
         "sample_count": 5
       }
     },
     "c2": {
-      "c_throughput_pps": 1029.2420712322576,
-      "c_setup_pps": 933.103063336618,
+      "c_throughput_pps": 2316.2890446717884,
+      "c_setup_pps": 2033.4907571245558,
       "c_response_pps": null,
-      "c_critical_pps": 933.103063336618,
-      "c_safe_pps": 832.9337985006983,
+      "c_critical_pps": 2033.4907571245558,
+      "c_safe_pps": 1432.9513482274806,
+      "setup_knee_rate_fps": 200.0,
       "safe_reference": {
-        "target_rate_fps": 80.0,
-        "processed_mean_pps": 833.0357373120653,
-        "processed_std_pps": 0.10691468656750418,
+        "target_rate_fps": 140.0,
+        "processed_mean_pps": 1433.1509287875504,
+        "processed_std_pps": 0.2093225606487945,
         "sample_count": 5
       }
     }

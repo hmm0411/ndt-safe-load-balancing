@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 # Split names. UNSEEN is a held-out workload family, not a fourth random slice.
@@ -196,3 +197,93 @@ def split_frame(
 
     # Boolean masks keep the original row order, so nothing is shuffled.
     return {name: frame[labels == name] for name in SPLIT_NAMES}
+
+
+# ---------------------------------------------------------------------------
+# Record-level helpers used by the training pipeline.
+#
+# The official run set is read from the experiment config so the pipeline and
+# collect_forecast_data.sh always agree on run ids ({workload}-rNN-sSEED).
+# ---------------------------------------------------------------------------
+
+_REPO_ROOT = Path(__file__).resolve().parents[3]
+DEFAULT_EXPERIMENT_CONFIG = (
+    _REPO_ROOT / "configs" / "experiments" / "forecast_dataset_2c20s.yaml"
+)
+
+
+def planned_run_ids(
+    config_path: Path = DEFAULT_EXPERIMENT_CONFIG,
+) -> tuple[str, ...]:
+    """Official run ids: every workload x repeat, repeat N uses seeds[N-1]."""
+    import yaml
+
+    config = yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}
+    workloads = [str(name) for name in config["workloads"]]
+    repeats = int(config["repeats"])
+    seeds = [int(seed) for seed in config["seeds"]]
+
+    if len(seeds) != repeats:
+        raise ValueError("seeds must have exactly one entry per repeat")
+
+    return tuple(
+        build_run_id(workload, repeat, seeds[repeat - 1])
+        for workload in workloads
+        for repeat in range(1, repeats + 1)
+    )
+
+
+def build_split_run_ids(
+    run_ids: Iterable[str] | None = None,
+    policy: SplitPolicy = DEFAULT_SPLIT_POLICY,
+) -> dict[str, set[str]]:
+    """Run ids per split (defaults to the official plan)."""
+    ids = planned_run_ids() if run_ids is None else tuple(run_ids)
+    assignment = split_run_ids(ids, policy)
+    return {name: set(values) for name, values in assignment.as_dict().items()}
+
+
+def validate_split_run_ids(splits: Mapping[str, set[str]]) -> None:
+    if set(splits) != set(SPLIT_NAMES):
+        raise ValueError(
+            "split names must be exactly train, validation, test, unseen"
+        )
+
+    assert_no_leakage(
+        SplitAssignment(
+            train=tuple(splits[TRAIN]),
+            validation=tuple(splits[VALIDATION]),
+            test=tuple(splits[TEST]),
+            unseen=tuple(splits[UNSEEN]),
+        )
+    )
+
+
+def split_records(
+    records: Iterable[Mapping[str, Any]],
+    *,
+    expected_run_ids: Iterable[str] | None = None,
+    policy: SplitPolicy = DEFAULT_SPLIT_POLICY,
+) -> dict[str, list[dict[str, Any]]]:
+    """
+    Split rows by run. Every expected run must be present and nothing else.
+
+    expected_run_ids defaults to the official plan in the experiment config.
+    """
+    expected = set(
+        planned_run_ids() if expected_run_ids is None else expected_run_ids
+    )
+    output: dict[str, list[dict[str, Any]]] = {name: [] for name in SPLIT_NAMES}
+    seen: set[str] = set()
+
+    for record in records:
+        run_id = str(record.get("run_id", ""))
+        if run_id not in expected:
+            raise ValueError(f"unassigned run_id: {run_id!r}")
+        output[assign_split(run_id, policy)].append(dict(record))
+        seen.add(run_id)
+
+    if seen != expected:
+        raise ValueError(f"expected runs missing: {sorted(expected - seen)}")
+
+    return output
