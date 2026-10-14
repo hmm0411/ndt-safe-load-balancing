@@ -1,0 +1,233 @@
+{
+  "margin_source": "validation",
+  "model_name": "xgboost",
+  "model_version": "forecast-v1",
+  "splits": {
+    "test": {
+      "samples": 1336,
+      "with_gate": {
+        "by_controller": {
+          "c1": {
+            "coverage": 0.9520958083832335,
+            "samples": 668.0
+          },
+          "c2": {
+            "coverage": 0.9625748502994012,
+            "samples": 668.0
+          }
+        },
+        "by_workload": {
+          "burst": {
+            "coverage": 0.874251497005988,
+            "samples": 334.0
+          },
+          "gradual": {
+            "coverage": 0.9820359281437125,
+            "samples": 334.0
+          },
+          "oscillating": {
+            "coverage": 0.9940119760479041,
+            "samples": 334.0
+          },
+          "stable": {
+            "coverage": 0.9790419161676647,
+            "samples": 334.0
+          }
+        },
+        "coverage": 0.9573353293413174,
+        "overload": {
+          "actual_overload": 38.0,
+          "alarms": 49.0,
+          "false_alarm": 19.0,
+          "false_alarm_rate": 0.014637904468412942,
+          "missed_overload": 8.0,
+          "missed_overload_rate": 0.21052631578947367,
+          "samples": 1336.0
+        }
+      },
+      "without_gate": {
+        "by_controller": {
+          "c1": {
+            "coverage": 0.9520958083832335,
+            "samples": 668.0
+          },
+          "c2": {
+            "coverage": 0.9625748502994012,
+            "samples": 668.0
+          }
+        },
+        "by_workload": {
+          "burst": {
+            "coverage": 0.874251497005988,
+            "samples": 334.0
+          },
+          "gradual": {
+            "coverage": 0.9820359281437125,
+            "samples": 334.0
+          },
+          "oscillating": {
+            "coverage": 0.9940119760479041,
+            "samples": 334.0
+          },
+          "stable": {
+            "coverage": 0.9790419161676647,
+            "samples": 334.0
+          }
+        },
+        "coverage": 0.9573353293413174,
+        "overload": {
+          "actual_overload": 38.0,
+          "alarms": 49.0,
+          "false_alarm": 19.0,
+          "false_alarm_rate": 0.014637904468412942,
+          "missed_overload": 8.0,
+          "missed_overload_rate": 0.21052631578947367,
+          "samples": 1336.0
+        }
+      }
+    },
+    "unseen": {
+      "samples": 1670,
+      "with_gate": {
+        "by_controller": {
+          "c1": {
+            "coverage": 0.895808383233533,
+            "samples": 835.0
+          },
+          "c2": {
+            "coverage": 0.9317365269461078,
+            "samples": 835.0
+          }
+        },
+        "by_workload": {
+          "hot-switch": {
+            "coverage": 0.9137724550898204,
+            "samples": 1670.0
+          }
+        },
+        "coverage": 0.9137724550898204,
+        "overload": {
+          "actual_overload": 0.0,
+          "alarms": 1.0,
+          "false_alarm": 1.0,
+          "false_alarm_rate": 0.0005988023952095808,
+          "missed_overload": 0.0,
+          "missed_overload_rate": NaN,
+          "samples": 1670.0
+        }
+      },
+      "without_gate": {
+        "by_controller": {
+          "c1": {
+            "coverage": 0.32335329341317365,
+            "samples": 835.0
+          },
+          "c2": {
+            "coverage": 0.4179640718562874,
+            "samples": 835.0
+          }
+        },
+        "by_workload": {
+          "hot-switch": {
+            "coverage": 0.37065868263473056,
+            "samples": 1670.0
+          }
+        },
+        "coverage": 0.37065868263473056,
+        "overload": {
+          "actual_overload": 0.0,
+          "alarms": 0.0,
+          "false_alarm": 0.0,
+          "false_alarm_rate": 0.0,
+          "missed_overload": 0.0,
+          "missed_overload_rate": NaN,
+          "samples": 1670.0
+        }
+      }
+    },
+    "validation": {
+      "samples": 1336,
+      "with_gate": {
+        "by_controller": {
+          "c1": {
+            "coverage": 0.9520958083832335,
+            "samples": 668.0
+          },
+          "c2": {
+            "coverage": 0.9520958083832335,
+            "samples": 668.0
+          }
+        },
+        "by_workload": {
+          "burst": {
+            "coverage": 0.8802395209580839,
+            "samples": 334.0
+          },
+          "gradual": {
+            "coverage": 0.9760479041916168,
+            "samples": 334.0
+          },
+          "oscillating": {
+            "coverage": 0.9760479041916168,
+            "samples": 334.0
+          },
+          "stable": {
+            "coverage": 0.9760479041916168,
+            "samples": 334.0
+          }
+        },
+        "coverage": 0.9520958083832335,
+        "overload": {
+          "actual_overload": 39.0,
+          "alarms": 43.0,
+          "false_alarm": 12.0,
+          "false_alarm_rate": 0.009252120277563608,
+          "missed_overload": 8.0,
+          "missed_overload_rate": 0.20512820512820512,
+          "samples": 1336.0
+        }
+      },
+      "without_gate": {
+        "by_controller": {
+          "c1": {
+            "coverage": 0.9520958083832335,
+            "samples": 668.0
+          },
+          "c2": {
+            "coverage": 0.9520958083832335,
+            "samples": 668.0
+          }
+        },
+        "by_workload": {
+          "burst": {
+            "coverage": 0.8802395209580839,
+            "samples": 334.0
+          },
+          "gradual": {
+            "coverage": 0.9760479041916168,
+            "samples": 334.0
+          },
+          "oscillating": {
+            "coverage": 0.9760479041916168,
+            "samples": 334.0
+          },
+          "stable": {
+            "coverage": 0.9760479041916168,
+            "samples": 334.0
+          }
+        },
+        "coverage": 0.9520958083832335,
+        "overload": {
+          "actual_overload": 39.0,
+          "alarms": 43.0,
+          "false_alarm": 12.0,
+          "false_alarm_rate": 0.009252120277563608,
+          "missed_overload": 8.0,
+          "missed_overload_rate": 0.20512820512820512,
+          "samples": 1336.0
+        }
+      }
+    }
+  },
+  "threshold": 1.0
+}

@@ -1,0 +1,36 @@
+{
+  "test": {
+    "burst": {
+      "linear_regression": 0.846966667473163,
+      "moving_average_w3": 1.101633574746405,
+      "random_forest": 0.5627802922459486,
+      "xgboost": 0.5260640474538071
+    },
+    "gradual": {
+      "linear_regression": 1.330331737517443,
+      "moving_average_w3": 1.0237370512249437,
+      "random_forest": 0.48840261172111166,
+      "xgboost": 0.4722697010578425
+    },
+    "oscillating": {
+      "linear_regression": 0.33915322682798177,
+      "moving_average_w3": 1.2671175920834434,
+      "random_forest": 0.11620845480161472,
+      "xgboost": 0.11206140869206402
+    },
+    "stable": {
+      "linear_regression": 1.1365090517923953,
+      "moving_average_w3": 0.885005595873181,
+      "random_forest": 0.7089228906926882,
+      "xgboost": 0.7539640521631417
+    }
+  },
+  "unseen": {
+    "hot-switch": {
+      "linear_regression": 1.5048454001916503,
+      "moving_average_w3": 0.8397523888403173,
+      "random_forest": 2.1599488333288543,
+      "xgboost": 2.649986901201694
+    }
+  }
+}
