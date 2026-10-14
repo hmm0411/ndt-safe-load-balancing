@@ -26,12 +26,13 @@ mlflow:
 moving_average:
   windows: [3, 5, 10]
 
+# Week 10 (M1): 24 Random Forest + 32 XGBoost candidates.
 random_forest:
   fixed:
-    n_estimators: 300
     n_jobs: -1
     random_state: 42
   grid:
+    n_estimators: [300, 600]
     max_depth: [6, 10, null]
     min_samples_leaf: [5, 20]
     max_features: [0.5, 1.0]
@@ -39,8 +40,6 @@ random_forest:
 xgboost:
   fixed:
     n_estimators: 1000
-    subsample: 0.8
-    colsample_bytree: 0.8
     reg_lambda: 1.0
     objective: reg:squarederror
     tree_method: hist
@@ -51,3 +50,21 @@ xgboost:
     max_depth: [3, 5]
     learning_rate: [0.05, 0.1]
     min_child_weight: [1, 5]
+    subsample: [0.8, 1.0]
+    colsample_bytree: [0.8, 1.0]
+
+# Model selection score S_m across model families (lower is better), computed
+# on the VALIDATION split only. Errors are normalized by persistence; latency
+# is the single-sample p95 in ms, normalized by 1000 ms and capped at 1.
+selection:
+  weights:
+    rmse: 0.45
+    p95: 0.30
+    mae: 0.15
+    latency: 0.10
+  # A gap below this between the two best tree models is reported as a tie.
+  tie_tolerance: 0.01
+  # Single-sample latency used inside S_m (the runtime benchmark is
+  # scripts/experiments/benchmark_forecast_inference.py, 50 + 1000).
+  latency_warmup: 50
+  latency_repeats: 200

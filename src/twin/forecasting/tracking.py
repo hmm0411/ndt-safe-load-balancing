@@ -82,6 +82,44 @@ def _finite(metrics: Mapping[str, Any]) -> dict[str, float]:
     return out
 
 
+def pointed_run(pointer: Path) -> tuple[Any, str] | None:
+    """(MlflowClient, run_id) of the training run behind ``mlflow_run.json``.
+
+    Lets later scripts (latency benchmark, margins, report figures) attach
+    metrics and artifacts to the run that trained the model. None when the
+    model was trained with --no-mlflow or MLflow is not installed.
+    """
+    if not pointer.is_file():
+        return None
+    try:
+        from mlflow import MlflowClient
+    except ImportError:
+        return None
+    info = json.loads(pointer.read_text(encoding="utf-8"))
+    return MlflowClient(tracking_uri=info["tracking_uri"]), str(info["run_id"])
+
+
+def log_to_pointed_run(
+    pointer: Path,
+    metrics: Mapping[str, Any] | None = None,
+    artifacts: Sequence[tuple[Path, str]] = (),
+) -> str | None:
+    """Log finite metrics and (local_dir_or_file, artifact_path) pairs to the
+    pointed run. Returns the run id, or None when nothing was logged."""
+    target = pointed_run(pointer)
+    if target is None:
+        return None
+    client, run_id = target
+    for key, value in _finite(metrics or {}).items():
+        client.log_metric(run_id, key, value)
+    for local, artifact_path in artifacts:
+        if local.is_dir():
+            client.log_artifacts(run_id, str(local), artifact_path=artifact_path)
+        elif local.is_file():
+            client.log_artifact(run_id, str(local), artifact_path=artifact_path)
+    return run_id
+
+
 class Tracker:
     """Thin wrapper so the training script reads the same with MLflow on or off."""
 
