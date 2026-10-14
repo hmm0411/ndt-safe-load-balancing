@@ -13,7 +13,15 @@ from src.twin.forecasting.margin import (
     margin_for,
     overload_confusion,
 )
-from src.twin.forecasting.ood import FeatureRanges, OODGate, gate_mask
+from src.twin.forecasting.features import feature_names
+from src.twin.forecasting.ood import (
+    MONITOR_ONLY_FEATURES,
+    FeatureRanges,
+    OODGate,
+    gate_mask,
+    monitored_names,
+    monitored_row,
+)
 
 
 class FiniteSampleQuantileTest(unittest.TestCase):
@@ -144,6 +152,59 @@ class OODGateTest(unittest.TestCase):
         self.assertEqual(
             gate_mask(flags, sequences).tolist(),
             [False, False, True, False, False, False, False],
+        )
+
+
+class MonitorOnlyFeaturesTest(unittest.TestCase):
+    """The gate also watches columns that are not model inputs (hot-switch)."""
+
+    def setUp(self) -> None:
+        # u = model feature; share = monitor-only, near-constant in train.
+        self.ranges = FeatureRanges.fit(
+            [[0.4, 0.100], [1.1, 0.107]], ["u", "share"], monitor_only=["share"]
+        )
+
+    def test_monitored_names_puts_monitor_only_last_without_duplicates(self) -> None:
+        names = monitored_names(feature_names())
+        self.assertEqual(names[: len(feature_names())], feature_names())
+        self.assertEqual(names[len(feature_names()):], MONITOR_ONLY_FEATURES)
+        self.assertEqual(monitored_names(["a", "managed_switch_count"]),
+                         ("a", "managed_switch_count", "max_switch_control_load_share"))
+
+    def test_hot_switch_share_is_out_of_range_while_model_feature_is_not(self) -> None:
+        self.assertEqual(self.ranges.violations([0.79, 0.54]), ("share",))
+        self.assertEqual(self.ranges.violations([0.79, 0.1055]), ())
+
+    def test_gate_fires_on_monitor_only_drift(self) -> None:
+        gate = OODGate(self.ranges)
+        active = [gate.update("c1", [0.79, 0.54]).active for _ in range(3)]
+        self.assertEqual(active, [False, False, True])
+
+    def test_constant_column_flags_any_change(self) -> None:
+        ranges = FeatureRanges.fit([[0.5, 10.0], [0.6, 10.0]], ["u", "count"],
+                                   monitor_only=["count"])
+        self.assertEqual(ranges.violations([0.55, 10.0]), ())
+        self.assertEqual(ranges.violations([0.55, 9.0]), ("count",))
+
+    def test_round_trip_keeps_monitor_only(self) -> None:
+        data = self.ranges.to_dict()
+        self.assertEqual(data["monitor_only_features"], ["share"])
+        self.assertEqual(FeatureRanges.from_dict(data, ["u"]), self.ranges)
+
+    def test_old_file_without_monitor_only_still_loads(self) -> None:
+        data = FeatureRanges.fit([[0.0], [1.0]], ["u"]).to_dict()
+        del data["monitor_only_features"]
+        self.assertEqual(FeatureRanges.from_dict(data, ["u"]).monitor_only, ())
+
+    def test_monitor_only_must_be_trailing(self) -> None:
+        with self.assertRaises(ValueError):
+            FeatureRanges.fit([[0.0, 1.0]], ["share", "u"], monitor_only=["share"])
+
+    def test_monitored_row_appends_values_from_twin_state_row(self) -> None:
+        row = {"max_switch_control_load_share": 0.54, "managed_switch_count": 10}
+        self.assertEqual(
+            monitored_row([0.7], row, MONITOR_ONLY_FEATURES),
+            [0.7, 10.0, 0.54],
         )
 
 

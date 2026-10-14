@@ -39,7 +39,10 @@ one_sided_q95       float  (quantile of U - U_hat, reported only)
 method              "train_min_max"
 tolerance_fraction  0.10
 consecutive_steps   3
+monitor_only_features ["managed_switch_count", "max_switch_control_load_share"]
+                    (watched by the gate, NOT model inputs; absent = [])
 features            {name: {"min": float, "max": float}}
+                    (feature_names + monitor_only_features)
 
 ## Reports (not read at runtime)
 model_selection.json, inference_latency.json, coverage.json,
@@ -66,6 +69,16 @@ hyperparameters.json, training_manifest.json
   feature leaves `[min - tol * (max - min), max + tol * (max - min)]`; after
   `consecutive_steps` such samples in a row the runtime falls back to
   persistence (`U_hat = U`, `ood_fallback = true`).
+- The gate row is the model vector (feature_schema order) followed by the
+  `monitor_only_features` values of the same TwinState controller row
+  (`ood.monitored_row`; `forecast_rows` adds `max_switch_control_load_share`).
+  These columns never vary in training (switch count 10, load share
+  0.100-0.107), so the models do not use them; a change in them means the
+  model is outside its training conditions. Watching only the 27 model
+  features, the gate never fired on hot-switch (D_OOD = 0, load share ~0.54).
+  Side effect, intended: after a migration `managed_switch_count` changes and
+  the forecast falls back to persistence until a model is trained with
+  migrations.
 - JSON files are written with sorted keys, so the key order of
   `feature_ranges.features` is alphabetical and means nothing. Build the
   vector in `feature_schema.feature_names` order

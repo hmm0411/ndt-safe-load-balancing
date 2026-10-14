@@ -1,0 +1,9 @@
+{
+  "tracking_uri": "sqlite:///mlflow.db",
+  "experiment": "ndt-forecasting",
+  "run_id": "fa3ef66139ce479481a418897af984ce",
+  "registered_versions": {
+    "random_forest": "2",
+    "xgboost": "2"
+  }
+}
