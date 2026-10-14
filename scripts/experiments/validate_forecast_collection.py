@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from src.twin.forecasting.raw_validator import validate_raw_samples
+from src.twin.forecasting.raw_validator import validate_raw_samples  # noqa: E402
 
 
 REQUIRED_FIELDS = {
