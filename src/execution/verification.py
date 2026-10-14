@@ -114,9 +114,11 @@ class MigrationVerifier:
         source_connected, target_connected, connectivity_reasons = self.verify_connectivity(dpid, source_controller, target_controller)
         reasons = role_reasons + connectivity_reasons
         packet_in_verified, packet_error = self.verify_packet_in(dpid, target_controller)
-        if not packet_in_verified: reasons.append(packet_error)
+        if not packet_in_verified:
+            reasons.append(packet_error)
         flow_mod_verified, flow_error = self.verify_flow_mod(dpid, target_controller, simulate_failure=simulate_flow_mod_failure)
-        if not flow_mod_verified: reasons.append(flow_error)
+        if not flow_mod_verified:
+            reasons.append(flow_error)
 
         return VerificationResult(
             ok=not reasons,

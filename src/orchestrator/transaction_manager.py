@@ -19,13 +19,14 @@ class TransactionManager:
         with self._lock:
             if switch_id in self._locked_switches:
                 raise TransactionConflict(f"{switch_id} already has an active transaction")
+            started_at = utc_now()
             tx = MigrationTransaction(
                 switch_id=switch_id,
                 source_controller=source_controller,
                 target_controller=target_controller,
-                started_at=utc_now(),
+                started_at=started_at,
             )
-            tx.history.append(TransactionEvent(TransactionState.PREPARING, tx.started_at))
+            tx.history.append(TransactionEvent(TransactionState.PREPARING, started_at))
             self._transactions[tx.transaction_id] = tx
             self._locked_switches.add(switch_id)
             return tx

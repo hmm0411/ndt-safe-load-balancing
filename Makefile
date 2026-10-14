@@ -4,10 +4,10 @@ compile:
 	python3 -m compileall -q src tests
 
 lint:
-	python3 -m ruff check src/schemas src/telemetry src/twin src/experiments src/orchestrator/app.py src/orchestrator/current_state.py tests/unit
+	python3 -m ruff check src scripts tests
 
 typecheck:
-	python3 -m mypy --ignore-missing-imports src/schemas src/telemetry src/twin src/experiments src/orchestrator/current_state.py tests/unit
+	python3 -m mypy --ignore-missing-imports src tests/unit
 
 test:
 	python3 -m unittest discover -s tests/unit -v

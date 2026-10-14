@@ -292,10 +292,7 @@ Again generate a fresh Packet-In while the request is verifying. Expected transa
 
 ```bash
 source ~/ndt-venv/bin/activate
-python -m compileall -q src tests
-ruff check src/schemas src/telemetry src/experiments src/orchestrator/app.py src/orchestrator/current_state.py tests/unit
-mypy --ignore-missing-imports src/schemas src/telemetry src/experiments src/orchestrator/current_state.py
-python -m unittest discover -s tests/unit -v
+make ci    # compile + ruff (src scripts tests) + mypy (src tests/unit) + unittest
 ```
 
 **Tool/source:** Python stdlib `compileall`/`unittest`, Ruff CLI, and Mypy CLI. These commands mirror the hosted CI job.
@@ -316,12 +313,11 @@ make clean-sdn
 
 `.github/workflows/ci.yml` runs on a GitHub-hosted runner:
 
-1. checkout;
-2. Python setup;
-3. compile;
-4. Ruff;
-5. Mypy on the application and experiment modules;
-6. unit tests.
+1. `unit` job: `make compile`, `make lint`, `make typecheck`, `make test`
+   (the same targets as `make ci` on the VM);
+2. `repo-guards` job: no `.env`/MLflow/raw-run files tracked, no file over 25 MB,
+   frozen capacity/model artifacts parse and match `src/twin/forecasting/versions.py`,
+   and `collect_forecast_data.sh --dry-run` validates the 25-run plan.
 
 This job intentionally does not run Mininet because it needs kernel/OVS privileges and the thesis-specific Ryu environment.
 

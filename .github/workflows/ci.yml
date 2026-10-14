@@ -1,41 +1,127 @@
 name: CI
 
+# Hosted checks that need no Mininet/OVS/sudo. The real SDN smoke test lives in
+# integration.yml (self-hosted GCP runner).
+
 on:
   pull_request:
     branches: [dev, main]
   push:
-    branches: [dev]
+    branches: [dev, main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
   unit:
+    name: Lint, typecheck, unit tests
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Set up Python
+      - name: Set up Python 3.10 (same as the GCP VM)
         uses: actions/setup-python@v6
         with:
           python-version: "3.10"
           cache: pip
+          cache-dependency-path: requirements-*.txt
 
-      - name: Install test dependencies
+      - name: Install dependencies
+        # mininet from PyPI provides only the Python package, so topology
+        # modules import; it does not run a network here.
         run: |
-          python -m pip install mininet==2.3.0.dev6
           python -m pip install --upgrade pip
-          pip install -r requirements-orchestrator.txt
-          pip install -r requirements-dev.txt
-          pip install -r requirements-controller-extra.txt
-          pip install -r requirements-ml.txt
+          pip install mininet==2.3.0.dev6
+          pip install -r requirements-orchestrator.txt \
+                      -r requirements-dev.txt \
+                      -r requirements-controller-extra.txt \
+                      -r requirements-ml.txt
 
+      # Same targets as `make ci` on the VM, so local and CI cannot drift.
       - name: Compile
-        run: python -m compileall -q src tests
-
+        run: make compile
       - name: Ruff
-        run: ruff check src/schemas src/telemetry src/experiments src/orchestrator/app.py src/orchestrator/current_state.py tests/unit
-
-      - name: Mypy (application modules)
-        run: mypy --ignore-missing-imports src/schemas src/telemetry src/experiments src/orchestrator/current_state.py
-
+        run: make lint
+      - name: Mypy
+        run: make typecheck
       - name: Unit tests
-        run: python -m unittest discover -s tests/unit -v
+        run: make test
+
+  repo-guards:
+    name: Config and repository guards
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.10"
+          cache: pip
+          cache-dependency-path: requirements-*.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements-orchestrator.txt
+
+      - name: Forbidden files are not tracked
+        # Local state and generated runs must never reach the repo (see .gitignore).
+        run: |
+          bad=$(git ls-files | grep -E \
+            '^(\.env$|mlflow\.db$|mlruns/|mlartifacts/|basic_auth\.db$|\.mlflow_flask_secret$|data/raw/[^.]|data/snapshots/[^.]|data/experiment_runs/[^.])' \
+            || true)
+          if [ -n "$bad" ]; then
+            echo "::error::These paths must not be committed:"; echo "$bad"; exit 1
+          fi
+
+      - name: No new file larger than 25 MB
+        run: |
+          big=$(git ls-files -z | xargs -0 stat -c '%s %n' | awk '$1 > 25*1024*1024')
+          if [ -n "$big" ]; then
+            echo "::error::Files over 25 MB:"; echo "$big"; exit 1
+          fi
+
+      - name: Frozen artifacts parse and match versions.py
+        # The active model version must exist with its manifests, and the
+        # capacity artifact used by the orchestrator must be valid JSON.
+        run: |
+          python - <<'PY'
+          import json, sys
+          from pathlib import Path
+          sys.path.insert(0, ".")
+          from src.twin.forecasting.versions import MODEL_VERSION, MODELS_ROOT
+
+          errors = []
+          for path in [Path("data/benchmarks/controller_capacity.json"),
+                       *Path("data/models/forecasting").glob("*/*.json")]:
+              try:
+                  json.loads(path.read_text(encoding="utf-8"))
+              except Exception as exc:
+                  errors.append(f"{path}: {exc}")
+
+          model_dir = MODELS_ROOT / MODEL_VERSION
+          for name in ("training_manifest.json", "split_manifest.json",
+                       "feature_schema.json", "test_metrics.json", "unseen_metrics.json"):
+              if not (model_dir / name).is_file():
+                  errors.append(f"missing {model_dir / name} (MODEL_VERSION={MODEL_VERSION})")
+
+          capacity = json.loads(Path("data/benchmarks/controller_capacity.json").read_text())
+          for cid, c in capacity.get("controllers", {}).items():
+              if not (c.get("c_safe_pps") or 0) > 0:
+                  errors.append(f"controller_capacity.json: {cid}.c_safe_pps must be > 0")
+
+          if errors:
+              print("\n".join(f"::error::{e}" for e in errors)); sys.exit(1)
+          print(f"OK: {MODEL_VERSION}, capacity for {sorted(capacity['controllers'])}")
+          PY
+
+      - name: Forecast collection plan is consistent (dry run, 25 runs)
+        run: bash scripts/experiments/collect_forecast_data.sh --dry-run
