@@ -14,7 +14,7 @@ jobs:
       - name: Unit tests before deploy check
         run: |
           source "$HOME/ndt-venv/bin/activate"
-          pip install -r requirements-orchestrator.txt
+          pip install -r requirements-orchestrator.txt -r requirements-ml.txt
           python -m unittest discover -s tests/unit -v
 
       - name: End-to-end deployment smoke check
