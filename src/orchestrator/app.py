@@ -26,6 +26,7 @@ from src.telemetry.writer import JsonlWriter
 from src.twin.capacity.model import CapacityModel
 from src.twin.state.builder import TwinStateBuilder
 from src.twin.state.quality import TwinQualityAssessor
+from src.twin.state.quality_score import validate_config
 from src.twin.state.twinning_rate import TwinningRateTracker
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -43,6 +44,7 @@ controllers_cfg = load_yaml("NDT_CONTROLLERS_CONFIG", "configs/controllers.yaml"
 telemetry_cfg = load_yaml("NDT_TELEMETRY_CONFIG", "configs/telemetry.yaml")
 migration_cfg = load_yaml("NDT_MIGRATION_CONFIG", "configs/migration.yaml")
 forecast_cfg = load_yaml("NDT_FORECAST_CONFIG", "configs/forecasting/runtime.yaml")
+quality_score_cfg = validate_config(load_yaml("NDT_QUALITY_CONFIG", "configs/quality.yaml"))
 
 CONTROLLERS = controllers_cfg["controllers"]
 SWITCHES = controllers_cfg["switches"]
@@ -98,6 +100,7 @@ quality_assessor = TwinQualityAssessor(
     min_completeness_ratio=float(quality_cfg["min_completeness_ratio"]),
     min_twinning_rate=float(quality_cfg["min_twinning_rate"]),
     twinning_rate_provider=twinning_tracker.rate,
+    quality_config=quality_score_cfg,
 )
 twin_state_builder = TwinStateBuilder(
     capacity_model=capacity_model,
