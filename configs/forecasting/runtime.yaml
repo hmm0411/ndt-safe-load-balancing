@@ -1,0 +1,7 @@
+# Runtime forecaster used by the orchestrator (Week 10, V3).
+# model_dir follows contract C1 (docs/forecast_artifact_contract.md).
+enabled: true
+model_dir: data/models/forecasting/forecast-v1
+overload_threshold: 1.0
+# One JSONL line per snapshot: <output_dir>/<RUN_ID>.jsonl (data for V4 / Figure 9).
+output_dir: data/raw/forecast
