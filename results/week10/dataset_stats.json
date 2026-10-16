@@ -1,0 +1,86 @@
+{
+  "dataset_version": "forecast-dataset-v2-h3-provisional",
+  "samples": 8350,
+  "samples_per_split": {
+    "train": 4008,
+    "validation": 1336,
+    "test": 1336,
+    "unseen": 1670
+  },
+  "runs": 25,
+  "by_workload": {
+    "stable": {
+      "samples": 1670,
+      "samples_per_split": {
+        "train": 1002,
+        "validation": 334,
+        "test": 334,
+        "unseen": 0
+      },
+      "utilization_mean": 0.5837448267784199,
+      "utilization_std": 0.01708107363462646,
+      "utilization_max": 0.709643593491138,
+      "share_utilization_ge_1": 0.0,
+      "share_future_utilization_ge_1": 0.0
+    },
+    "gradual": {
+      "samples": 1670,
+      "samples_per_split": {
+        "train": 1002,
+        "validation": 334,
+        "test": 334,
+        "unseen": 0
+      },
+      "utilization_mean": 0.8551105378549925,
+      "utilization_std": 0.14390190208306464,
+      "utilization_max": 1.0215264172535548,
+      "share_utilization_ge_1": 0.003592814371257485,
+      "share_future_utilization_ge_1": 0.003592814371257485
+    },
+    "burst": {
+      "samples": 1670,
+      "samples_per_split": {
+        "train": 1002,
+        "validation": 334,
+        "test": 334,
+        "unseen": 0
+      },
+      "utilization_mean": 0.552445147993842,
+      "utilization_std": 0.18186800604079298,
+      "utilization_max": 1.1025687198788736,
+      "share_utilization_ge_1": 0.11077844311377245,
+      "share_future_utilization_ge_1": 0.11077844311377245
+    },
+    "oscillating": {
+      "samples": 1670,
+      "samples_per_split": {
+        "train": 1002,
+        "validation": 334,
+        "test": 334,
+        "unseen": 0
+      },
+      "utilization_mean": 0.6799669701076981,
+      "utilization_std": 0.14097970295535805,
+      "utilization_max": 0.944202727763361,
+      "share_utilization_ge_1": 0.0,
+      "share_future_utilization_ge_1": 0.0
+    },
+    "hot-switch": {
+      "samples": 1670,
+      "samples_per_split": {
+        "train": 0,
+        "validation": 0,
+        "test": 0,
+        "unseen": 1670
+      },
+      "utilization_mean": 0.786780985747961,
+      "utilization_std": 0.024426719857879097,
+      "utilization_max": 0.952809289301864,
+      "share_utilization_ge_1": 0.0,
+      "share_future_utilization_ge_1": 0.0
+    }
+  },
+  "dropped_for_history": 500,
+  "dropped_for_future_label": 150,
+  "raw_rows": 9000
+}

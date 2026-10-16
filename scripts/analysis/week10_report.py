@@ -146,14 +146,19 @@ def fig1_distribution(df: pd.DataFrame, out: Path) -> None:
     fig, ax = plt.subplots(figsize=(6.0, 3.0))
     ax.boxplot(
         [df.loc[df["workload_type"] == w, "utilization"] for w in workloads],
+        # Percentile whiskers: with 1.5 IQR the burst peaks (11% of burst samples
+        # are >= 1) fall outside the whiskers and the plot hides every overload.
+        whis=(1, 99),
         showfliers=False,
         medianprops={"color": "black"},
     )
     ax.set_xticks(range(1, len(workloads) + 1), workloads)
-    ax.axhline(1.0, color="#d62728", linewidth=1, linestyle="--", label="U = 1")
+    ax.axhline(1.0, color="#d62728", linewidth=1, linestyle="--")
+    # Label the line at its right end instead of a legend box that covers it.
+    ax.text(len(workloads) + 0.45, 1.0, "U = 1", color="#d62728", fontsize=8,
+            ha="right", va="bottom")
     ax.set_ylabel("Utilization U")
-    ax.set_title("Utilization per workload (all runs, whiskers 1.5 IQR)")
-    ax.legend(loc="upper left")
+    ax.set_title("Utilization per workload (all runs, whiskers P1-P99)")
     save(fig, out / "fig1_utilization_distribution.png")
 
 
@@ -181,13 +186,13 @@ def fig2_series(df: pd.DataFrame, out: Path) -> None:
 def fig3_test_errors(test_metrics: dict[str, Any], out: Path) -> None:
     models = present(MODELS, test_metrics)
     x = np.arange(len(models))
-    fig, axes = plt.subplots(1, 2, figsize=(7.0, 2.8))
+    fig, axes = plt.subplots(1, 2, figsize=(7.6, 3.0), constrained_layout=True)
     for ax, key, title in ((axes[0], "rmse", "RMSE"), (axes[1], "p95_absolute_error", "P95 |e|")):
         values = [test_metrics[m][key] for m in models]
         ax.bar(x, values, color=[COLORS[m] for m in models], width=0.6)
         for xi, value in zip(x, values, strict=True):
             ax.text(xi, value, f"{value:.3f}", ha="center", va="bottom", fontsize=7)
-        ax.set_xticks(x, [LABELS[m] for m in models])
+        ax.set_xticks(x, [LABELS[m] for m in models], fontsize=8, rotation=20, ha="right")
         ax.set_title(f"{title} on test (repeat 5)")
     axes[0].set_ylabel("Utilization units")
     save(fig, out / "fig3_test_rmse_p95.png")
@@ -243,7 +248,9 @@ def fig5_learning_curve(model_dir: Path, validation: list[dict[str, Any]],
 
 def fig6_importance(importance: dict[str, dict[str, float]], out: Path, top: int = 15) -> None:
     models = [m for m in ("random_forest", "xgboost") if importance.get(m)]
-    fig, axes = plt.subplots(1, len(models), figsize=(3.6 * len(models), 3.6))
+    # constrained_layout keeps the right panel's labels off the left panel's bars.
+    fig, axes = plt.subplots(1, len(models), figsize=(4.0 * len(models), 3.6),
+                             constrained_layout=True)
     for ax, model in zip(np.atleast_1d(axes), models, strict=True):
         items = sorted(importance[model].items(), key=lambda kv: kv[1], reverse=True)[:top][::-1]
         ax.barh([k for k, _ in items], [v for _, v in items], color=COLORS[model])
@@ -260,10 +267,13 @@ def fig7_residuals(residuals: np.ndarray, margin: dict[str, Any], model_name: st
     for sign in (-1, 1):
         ax.axvline(sign * m, color="#d62728", linewidth=1, linestyle="--")
     inside = float(np.mean(np.abs(residuals) <= m))
+    large = int(np.sum(np.abs(residuals) > 0.2))
+    # Log scale: the few large residuals (burst onsets) are invisible on a linear axis.
+    ax.set_yscale("log")
     ax.set_xlabel("Residual U(t+h) - U_hat [utilization]")
-    ax.set_ylabel("Samples")
-    ax.set_title(f"{LABELS.get(model_name, model_name)} on test: m_f = {m:.3f}, "
-                 f"{inside:.1%} inside")
+    ax.set_ylabel("Samples (log)")
+    ax.set_title(f"{LABELS.get(model_name, model_name)} on test: global m_f = {m:.3f}, "
+                 f"{inside:.1%} inside, {large} with |e| > 0.2")
     save(fig, out / "fig7_residuals_with_margin.png")
 
 
