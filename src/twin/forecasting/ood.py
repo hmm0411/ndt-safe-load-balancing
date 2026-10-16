@@ -179,14 +179,25 @@ class OODDecision:
 
 
 class OODGate:
-    """Stateful gate, one consecutive counter per key (controller id)."""
+    """Stateful gate, one consecutive counter per key (controller id).
 
-    def __init__(self, ranges: FeatureRanges) -> None:
+    ``ignore`` lists features the gate still sees but never acts on. Use it
+    only for a feature shown not to drive the model and whose train range is a
+    property of the collection, not of the load (process_memory_rss_mb: the
+    controller processes of all 25 training runs were long-lived, 56.65-57.05
+    MB; a freshly started controller sits at ~47 MB, 16 Oct).
+    """
+
+    def __init__(self, ranges: FeatureRanges, ignore: Sequence[str] = ()) -> None:
+        unknown = sorted(set(ignore) - set(ranges.feature_names))
+        if unknown:
+            raise ValueError(f"OOD ignore list has unknown features: {unknown}")
         self.ranges = ranges
+        self.ignore = tuple(ignore)
         self._consecutive: dict[str, int] = {}
 
     def update(self, key: str, row: Any) -> OODDecision:
-        features = self.ranges.violations(row)
+        features = tuple(f for f in self.ranges.violations(row) if f not in self.ignore)
         count = self._consecutive.get(key, 0) + 1 if features else 0
         self._consecutive[key] = count
         return OODDecision(

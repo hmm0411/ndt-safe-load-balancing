@@ -18,7 +18,7 @@ import json
 import time
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Callable, Mapping
+from typing import Any, Callable, Mapping, Sequence
 
 import numpy as np
 
@@ -82,6 +82,7 @@ class RuntimeForecaster:
         model_dir: Path,
         threshold: float = 1.0,
         on_features: FeatureHook | None = None,
+        ood_ignore: Sequence[str] = (),
     ) -> None:
         model_dir = Path(model_dir)
         errors = validate_artifact(model_dir)
@@ -100,7 +101,10 @@ class RuntimeForecaster:
         )
         ranges_path = model_dir / "feature_ranges.json"
         self.ood: OODGate | None = (
-            OODGate(FeatureRanges.from_dict(_read_json(ranges_path), self.feature_names))
+            OODGate(
+                FeatureRanges.from_dict(_read_json(ranges_path), self.feature_names),
+                ignore=ood_ignore,
+            )
             if ranges_path.is_file()
             else None
         )

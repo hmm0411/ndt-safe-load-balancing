@@ -5,3 +5,12 @@ model_dir: data/models/forecasting/forecast-v1
 overload_threshold: 1.0
 # One JSONL line per snapshot: <output_dir>/<RUN_ID>.jsonl (data for V4 / Figure 9).
 output_dir: data/raw/forecast
+# Features the OOD gate sees but never acts on (src/twin/forecasting/ood.py).
+# process_memory_rss_mb: 56.65-57.05 MB in train because the controllers of all
+# 25 collection runs were long-lived processes; a restarted controller sits at
+# ~47 MB and turned the gate on for 170/172 READY samples of a stable run
+# (w10-r1-stable, 16 Oct). forecast-v1 barely uses it: gain share 0.96%, and
+# setting it to 47.5 MB moves predictions by mean 0.0003, p95 0.0011-0.0017
+# (test/unseen), far below m_f ~0.05. Drop the feature in forecast-v2.
+ood_ignore_features:
+  - process_memory_rss_mb
