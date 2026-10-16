@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import (
     asdict,
     dataclass,
+    field,
 )
 from datetime import datetime
 from typing import Any
@@ -61,6 +62,14 @@ class TwinQuality:
     consistent: bool
 
     valid: bool
+
+    # Soft quality in [0, 1] (configs/quality.yaml). It never replaces
+    # `valid` (the Hard Gate); None when no quality config is loaded.
+    consistency_score: float = 1.0
+
+    quality_score: float | None = None
+
+    quality_components: dict[str, float] = field(default_factory=dict)
 
     def to_dict(
         self,

@@ -26,6 +26,11 @@ class SnapshotQuality:
     stale_sources: list[str] = field(default_factory=list)
     conflicts: list[str] = field(default_factory=list)
     max_data_age_ms: float = 0.0
+    # Share of (switch, controller) pairs whose observed role matches ownership
+    # (owner MASTER, peers SLAVE, connected). 1.0 = fully consistent.
+    consistency_score: float = 1.0
+    expected_role_pairs: int = 0
+    consistent_role_pairs: int = 0
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
