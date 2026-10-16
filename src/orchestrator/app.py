@@ -16,6 +16,7 @@ from src.execution.migration import ControllerClient, RoleMigrationExecutor
 from src.execution.rollback import RollbackExecutor
 from src.execution.verification import MigrationVerifier
 from src.orchestrator.current_state import CurrentStateStore
+from src.orchestrator.forecast_service import ForecastService
 from src.orchestrator.ownership_manager import OwnershipManager
 from src.orchestrator.transaction_manager import TransactionConflict, TransactionManager
 from src.telemetry.collector import TelemetryCollector
@@ -41,6 +42,7 @@ def load_yaml(env_name: str, default_path: str):
 controllers_cfg = load_yaml("NDT_CONTROLLERS_CONFIG", "configs/controllers.yaml")
 telemetry_cfg = load_yaml("NDT_TELEMETRY_CONFIG", "configs/telemetry.yaml")
 migration_cfg = load_yaml("NDT_MIGRATION_CONFIG", "configs/migration.yaml")
+forecast_cfg = load_yaml("NDT_FORECAST_CONFIG", "configs/forecasting/runtime.yaml")
 
 CONTROLLERS = controllers_cfg["controllers"]
 SWITCHES = controllers_cfg["switches"]
@@ -103,6 +105,7 @@ twin_state_builder = TwinStateBuilder(
 )
 store = CurrentStateStore()
 writer = JsonlWriter()
+forecast_service = ForecastService.from_config(forecast_cfg, ROOT, store, writer)
 stop_event = threading.Event()
 
 
@@ -181,6 +184,9 @@ def build_snapshot(run_id: str):
         ROOT / telemetry_cfg["snapshot_data_dir"] / f"{run_id}.jsonl",
         snapshot.to_dict(),
     )
+    # Outside the try above: a forecasting error must not count as a failed
+    # snapshot (that would lower the twinning rate and the Quality Score).
+    forecast_service.on_twin_state(twin_state.to_dict(), run_id)
 
 
 def telemetry_loop():
@@ -282,6 +288,12 @@ def twin_state():
     if value is None:
         return {"status": "NOT_READY"}
     return value
+
+
+@app.get("/api/v1/twin/forecast")
+def twin_forecast():
+    """Latest forecast per controller. Read-only: the planner decides migrations."""
+    return forecast_service.payload()
 
 
 @app.post("/api/v1/init-roles")
