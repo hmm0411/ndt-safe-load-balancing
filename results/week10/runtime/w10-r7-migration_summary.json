@@ -1,0 +1,39 @@
+{
+  "run_id": "w10-r7-migration",
+  "predictions": 364,
+  "snapshots": 182,
+  "snapshots_in_file": 285,
+  "ready_ratio": 0.8791208791208791,
+  "not_ready_reasons": {
+    "INSUFFICIENT_HISTORY": 20,
+    "INVALID_SNAPSHOT": 4,
+    "HISTORY_GAP": 20
+  },
+  "ood_fallback_ratio": 0.66875,
+  "ood_features": {
+    "managed_switch_count": 218,
+    "max_switch_control_load_share": 218,
+    "response_p95_ms": 2,
+    "response_mean_5": 1,
+    "utilization": 1,
+    "processed_packet_in_rate": 1,
+    "flow_mod_rate": 1,
+    "process_cpu_percent": 2
+  },
+  "overload_alerts": 0,
+  "inference_ms_p50": 1.19802,
+  "inference_ms_p95": 1.994631,
+  "inference_ms_max": 3.81161,
+  "service_ms_p50": 1.3204,
+  "service_ms_p95": 4.699331,
+  "quality_score_min": 0.983333,
+  "quality_score_p5": 0.998333,
+  "matched_pairs": 308,
+  "rmse": 0.026283642030259867,
+  "rmse_persistence": 0.028006320014983085,
+  "coverage_upper_bound": 0.9967532467532467,
+  "actual_overloads": 0,
+  "overload_hits": 0,
+  "overload_misses": 0,
+  "false_alarms": 0
+}

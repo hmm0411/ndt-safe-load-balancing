@@ -1,0 +1,39 @@
+{
+  "run_id": "w10-r6-hot-switch",
+  "predictions": 368,
+  "snapshots": 184,
+  "snapshots_in_file": 834,
+  "ready_ratio": 0.9456521739130435,
+  "not_ready_reasons": {
+    "INSUFFICIENT_HISTORY": 20
+  },
+  "ood_fallback_ratio": 0.9885057471264368,
+  "ood_features": {
+    "max_switch_control_load_share": 348,
+    "utilization": 3,
+    "processed_packet_in_rate": 3,
+    "flow_mod_rate": 3,
+    "process_cpu_percent": 4,
+    "response_p95_ms": 2,
+    "utilization_lag_1": 1,
+    "util_std_5": 2,
+    "pin_std_5": 2,
+    "util_slope_5": 1
+  },
+  "overload_alerts": 0,
+  "inference_ms_p50": 0.87697,
+  "inference_ms_p95": 2.6849,
+  "inference_ms_max": 2.6849,
+  "service_ms_p50": 1.07378,
+  "service_ms_p95": 1.48566,
+  "quality_score_min": 1.0,
+  "quality_score_p5": 1.0,
+  "matched_pairs": 342,
+  "rmse": 0.07726108465875742,
+  "rmse_persistence": 0.0755555860091666,
+  "coverage_upper_bound": 0.9502923976608187,
+  "actual_overloads": 0,
+  "overload_hits": 0,
+  "overload_misses": 0,
+  "false_alarms": 0
+}
