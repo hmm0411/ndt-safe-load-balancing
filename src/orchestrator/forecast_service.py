@@ -55,6 +55,7 @@ class ForecastService:
             forecaster = RuntimeForecaster(
                 root / str(config["model_dir"]),
                 threshold=float(config.get("overload_threshold", 1.0)),
+                ood_ignore=tuple(str(n) for n in config.get("ood_ignore_features") or ()),
             )
         except Exception as exc:  # the orchestrator keeps running without forecasts
             print(f"[forecast] load error={exc}", flush=True)
@@ -77,6 +78,9 @@ class ForecastService:
                 "model_name": self.forecaster.model_name,
                 "model_version": self.forecaster.model_version,
                 "horizon_seconds": self.forecaster.horizon_seconds,
+                "ood_ignored_features": list(self.forecaster.ood.ignore)
+                if self.forecaster.ood is not None
+                else [],
                 "service_time_ms": service_ms,
                 "controllers": [p.to_dict() for p in predictions],
             }
