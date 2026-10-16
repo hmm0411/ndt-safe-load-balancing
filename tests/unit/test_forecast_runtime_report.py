@@ -22,16 +22,28 @@ def prediction(second: int, u: float, *, ready: bool = True, ood: bool = False) 
             "upper_utilization_bound": upper, "overload_risk": upper >= 1.0}
 
 
+def invalid(second: int) -> str:
+    row = {"snapshot_id": f"s{second}", "controller_id": "c1", "status": "NOT_READY",
+           "reason": "INVALID_SNAPSHOT", "current_utilization": None}
+    return json.dumps({"status": "OK", "snapshot_id": f"s{second}",
+                       "created_at": (T0 + timedelta(seconds=second)).isoformat(),
+                       "controllers": [row]}) + "\n"
+
+
 def write_run(directory: Path) -> Path:
     path = directory / "run.jsonl"
     us = [0.5, 0.5, 0.6, 0.6, 0.7, 0.8, 0.9, 1.1, 1.2, 0.9]
     with path.open("w", encoding="utf-8") as handle:
+        handle.write(invalid(-2))  # Mininet not up yet
+        handle.write(invalid(-1))
         for second, u in enumerate(us):
             payload = {"status": "OK", "snapshot_id": f"s{second}",
                        "created_at": (T0 + timedelta(seconds=second)).isoformat(),
                        "service_time_ms": 1.0 + second,
                        "controllers": [prediction(second, u, ready=second >= 2, ood=second == 4)]}
             handle.write(json.dumps(payload) + "\n")
+        for second in range(10, 40):  # orchestrator left running after the workload
+            handle.write(invalid(second))
     return path
 
 
@@ -42,6 +54,8 @@ class RuntimeReportTest(unittest.TestCase):
             summary = summarize("run", rows)
             plot("run", rows, Path(tmp) / "fig.png")
             self.assertTrue((Path(tmp) / "fig.png").exists())
+        self.assertEqual(summary["snapshots_in_file"], 42)
+        self.assertEqual(summary["snapshots"], 10)
         self.assertEqual(summary["predictions"], 10)
         self.assertAlmostEqual(summary["ready_ratio"], 0.8)
         self.assertEqual(summary["not_ready_reasons"], {"INSUFFICIENT_HISTORY": 2})
@@ -54,6 +68,8 @@ class RuntimeReportTest(unittest.TestCase):
         self.assertEqual(summary["overload_misses"], 2)
         self.assertEqual(summary["false_alarms"], 1)
         self.assertEqual(summary["service_ms_p95"], 10.0)
+        # inference stats skip the OOD-fallback sample (t=4: 0.54 ms)
+        self.assertEqual(summary["inference_ms_p95"], 0.59)
         self.assertEqual(summary["overload_alerts"], 4)  # t=6,7,8,9
 
 

@@ -85,9 +85,38 @@ def realized(rows: list[dict[str, Any]], tolerance_s: float = 0.5) -> list[tuple
     return pairs
 
 
+def active_window(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Rows of the workload itself.
+
+    The orchestrator keeps writing (INVALID) snapshots before Mininet is up and
+    after it stops, until it is restarted for the next run. Keep the snapshots
+    from the first one that is not INVALID_SNAPSHOT (cold start included) to
+    the last READY one; invalid snapshots inside the window (telemetry loss,
+    migration) stay in.
+    """
+    order = sorted({r["created_at"] for r in rows})
+    first = next(
+        (t for t in order if any(r["created_at"] == t and r.get("reason") != "INVALID_SNAPSHOT"
+                                 for r in rows)),
+        None,
+    )
+    ready_times = [r["created_at"] for r in rows if r.get("status") == "READY"]
+    if first is None or not ready_times:
+        return rows
+    last = max(ready_times)
+    return [r for r in rows if first <= r["created_at"] <= last]
+
+
 def summarize(run_id: str, rows: list[dict[str, Any]]) -> dict[str, Any]:
+    total_snapshots = len({r["snapshot_id"] for r in rows})
+    rows = active_window(rows)
     ready = [r for r in rows if r.get("status") == "READY"]
-    times = [float(r["inference_time_ms"]) for r in ready if r.get("inference_time_ms") is not None]
+    # Model latency only: an OOD-fallback sample skips the model (persistence).
+    times = [
+        float(r["inference_time_ms"])
+        for r in ready
+        if r.get("inference_time_ms") is not None and not r.get("ood_fallback")
+    ]
     pairs = realized(rows)
     errors = [float(r["predicted_utilization"]) - actual for r, actual in pairs]
     covered = [actual <= float(r["upper_utilization_bound"]) for r, actual in pairs]
@@ -102,6 +131,7 @@ def summarize(run_id: str, rows: list[dict[str, Any]]) -> dict[str, Any]:
         "run_id": run_id,
         "predictions": len(rows),
         "snapshots": len({r["snapshot_id"] for r in rows}),
+        "snapshots_in_file": total_snapshots,
         "ready_ratio": len(ready) / len(rows) if rows else None,
         "not_ready_reasons": dict(Counter(r.get("reason") for r in rows if r.get("status") != "READY")),
         "ood_fallback_ratio": (sum(bool(r.get("ood_fallback")) for r in ready) / len(ready)) if ready else None,
