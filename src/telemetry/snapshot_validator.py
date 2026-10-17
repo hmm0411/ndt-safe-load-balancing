@@ -71,6 +71,25 @@ class SnapshotValidator:
                         f"expected_{expected_role}:actual_{actual_role}"
                     )
 
+        # Graded counterpart of `consistent` for the Quality Score: every
+        # expected (switch, controller) pair counts, also switches whose
+        # ownership is missing (they can never be consistent).
+        expected_pairs = consistent_pairs = 0
+        for switch_id in sorted(self.expected_switch_ids):
+            owner = ownership_mapping.get(switch_id)
+            for controller_id in sorted(self.expected_controller_ids):
+                expected_pairs += 1
+                if owner not in self.expected_controller_ids:
+                    continue
+                observed = role_matrix.get((switch_id, controller_id)) or {}
+                expected_role = "MASTER" if controller_id == owner else "SLAVE"
+                if (
+                    observed.get("connected", False)
+                    and str(observed.get("role", "UNKNOWN")) == expected_role
+                ):
+                    consistent_pairs += 1
+        consistency_score = consistent_pairs / expected_pairs if expected_pairs else 0.0
+
         fresh = not stale
         complete = not missing
         consistent = not conflicts
@@ -83,4 +102,7 @@ class SnapshotValidator:
             stale_sources=stale,
             conflicts=conflicts,
             max_data_age_ms=max_age_ms,
+            consistency_score=consistency_score,
+            expected_role_pairs=expected_pairs,
+            consistent_role_pairs=consistent_pairs,
         )

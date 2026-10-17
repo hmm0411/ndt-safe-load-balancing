@@ -84,6 +84,10 @@ def main() -> None:
 
     xgboost = XGBRegressor()
     xgboost.load_model(str(model_dir / "xgboost.json"))
+    # Same as the runtime predictor: one row per call, single thread. With the
+    # default (all cores) p95 rose from ~0.5 ms to 23 ms while the testbed was
+    # running (16 Oct, load 3.6-5.8): OpenMP threads wait for busy cores.
+    xgboost.set_params(n_jobs=1)
     predictors = single_sample_predictors(
         feature_names,
         benchmark_row(

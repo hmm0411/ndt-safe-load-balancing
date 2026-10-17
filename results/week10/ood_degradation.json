@@ -1,0 +1,60 @@
+{
+  "gate": {
+    "consecutive_steps": 3,
+    "method": "train_min_max",
+    "monitor_only_features": [
+      "managed_switch_count",
+      "max_switch_control_load_share"
+    ],
+    "tolerance_fraction": 0.1
+  },
+  "model_name": "xgboost",
+  "model_version": "forecast-v1",
+  "ood_to_id_rmse_ratio": 1.9543770840251222,
+  "splits": {
+    "test": {
+      "d_ood": 0.0,
+      "d_ood_by_workload": {
+        "burst": 0.0,
+        "gradual": 0.0,
+        "oscillating": 0.0,
+        "stable": 0.0
+      },
+      "out_of_range_by_feature": {},
+      "out_of_range_rate": 0.0,
+      "rmse_persistence": 0.09799110074193756,
+      "rmse_with_gate": 0.03966430705478838,
+      "rmse_without_gate": 0.03966430705478838,
+      "samples": 1336
+    },
+    "unseen": {
+      "d_ood": 0.9880239520958084,
+      "d_ood_by_workload": {
+        "hot-switch": 0.9880239520958084
+      },
+      "out_of_range_by_feature": {
+        "max_switch_control_load_share": 1.0
+      },
+      "out_of_range_rate": 1.0,
+      "rmse_persistence": 0.02925260223983059,
+      "rmse_with_gate": 0.03367270552456016,
+      "rmse_without_gate": 0.0775190127616144,
+      "samples": 1670
+    },
+    "validation": {
+      "d_ood": 0.0,
+      "d_ood_by_workload": {
+        "burst": 0.0,
+        "gradual": 0.0,
+        "oscillating": 0.0,
+        "stable": 0.0
+      },
+      "out_of_range_by_feature": {},
+      "out_of_range_rate": 0.0,
+      "rmse_persistence": 0.09928818207768776,
+      "rmse_with_gate": 0.03851108685408014,
+      "rmse_without_gate": 0.03851108685408014,
+      "samples": 1336
+    }
+  }
+}

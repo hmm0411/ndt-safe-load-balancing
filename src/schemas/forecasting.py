@@ -111,3 +111,45 @@ class ForecastRawSample:
         data = asdict(self)
         data["observed_at"] = self.observed_at.isoformat()
         return data
+
+# Reason codes of a NOT_READY forecast (ForecastPrediction.reason).
+INVALID_SNAPSHOT = "INVALID_SNAPSHOT"
+INSUFFICIENT_HISTORY = "INSUFFICIENT_HISTORY"
+HISTORY_GAP = "HISTORY_GAP"
+DUPLICATE_SNAPSHOT = "DUPLICATE_SNAPSHOT"
+MISSING_CAPACITY = "MISSING_CAPACITY"
+MISSING_FEATURE = "MISSING_FEATURE"
+
+
+@dataclass(frozen=True)
+class ForecastPrediction:
+    """Runtime forecast for one controller and one TwinState snapshot.
+
+    NOT_READY predictions carry None in every forecast field, never 0: a 0
+    would read as "idle controller" to the planner.
+    """
+
+    snapshot_id: str
+    controller_id: str
+    status: str  # "READY" | "NOT_READY"
+    reason: str | None
+    model_name: str
+    model_version: str
+    current_utilization: float | None = None
+    predicted_utilization: float | None = None
+    predicted_packet_in_rate: float | None = None
+    error_margin_utilization: float | None = None
+    upper_utilization_bound: float | None = None
+    overload_risk: bool | None = None
+    ood_fallback: bool = False
+    ood_features: tuple[str, ...] = ()
+    inference_time_ms: float | None = None
+    quality_score: float | None = None
+    consistency_score: float | None = None
+    horizon_seconds: float | None = None
+    predicted_at: str = ""
+
+    def to_dict(self) -> dict[str, Any]:
+        data = asdict(self)
+        data["ood_features"] = list(self.ood_features)
+        return data

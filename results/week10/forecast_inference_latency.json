@@ -1,0 +1,74 @@
+{
+  "schema_version": "1.0",
+  "model_version": "forecast-v1",
+  "method": "single_sample_predict_perf_counter_ns",
+  "feature_count": 27,
+  "warmup": 50,
+  "repeats": 1000,
+  "selected_model": "xgboost",
+  "selected_p95_ms": 23.037978,
+  "models": {
+    "persistence": {
+      "repeats": 1000.0,
+      "warmup": 50.0,
+      "mean_ms": 0.00028,
+      "p50_ms": 0.00028,
+      "p95_ms": 0.00029,
+      "p99_ms": 0.00041,
+      "max_ms": 0.00072
+    },
+    "moving_average_w3": {
+      "repeats": 1000.0,
+      "warmup": 50.0,
+      "mean_ms": 0.012406,
+      "p50_ms": 0.01183,
+      "p95_ms": 0.01773,
+      "p99_ms": 0.032975,
+      "max_ms": 0.06105
+    },
+    "linear_regression": {
+      "repeats": 1000.0,
+      "warmup": 50.0,
+      "mean_ms": 0.2198,
+      "p50_ms": 0.214905,
+      "p95_ms": 0.314486,
+      "p99_ms": 0.347226,
+      "max_ms": 0.52881
+    },
+    "random_forest": {
+      "repeats": 1000.0,
+      "warmup": 50.0,
+      "mean_ms": 40.385699,
+      "p50_ms": 39.017455,
+      "p95_ms": 50.229846,
+      "p99_ms": 54.004627,
+      "max_ms": 92.584279
+    },
+    "xgboost": {
+      "repeats": 1000.0,
+      "warmup": 50.0,
+      "mean_ms": 14.879178,
+      "p50_ms": 17.96286,
+      "p95_ms": 23.037978,
+      "p99_ms": 26.96427,
+      "max_ms": 29.065389
+    }
+  },
+  "environment": {
+    "hostname": "kltn-sdn",
+    "python": "3.10.12",
+    "cpu_count": 8,
+    "load_average_before": [
+      3.56,
+      1.75,
+      0.73
+    ],
+    "load_average_after": [
+      5.81,
+      2.58,
+      1.07
+    ],
+    "git_commit": "00c8c63f03b5578fc79fe229b968b9c1eb2f869a",
+    "measured_at": "2026-10-16T09:45:26.818026+00:00"
+  }
+}

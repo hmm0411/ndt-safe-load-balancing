@@ -491,6 +491,10 @@ def _train(
         fixed=xgb_config["fixed"],
         on_candidate=tracker.log_candidate,
     )
+    # Same reason for XGBoost: a single-row predict on all cores waits for busy
+    # cores (p95 23 ms vs ~0.5 ms single-threaded, testbed running, 16 Oct).
+    # Set after the grid, so training itself stays multi-threaded.
+    xgboost_model.model.set_params(n_jobs=1)
 
     tracker.log_curve(
         "xgboost_learning_curve_validation_rmse",
