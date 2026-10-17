@@ -116,7 +116,7 @@ def write_json(path: Path, data: Any) -> None:
 def write_csv(path: Path, rows: Sequence[Mapping[str, Any]], columns: Sequence[str] | None = None) -> None:
     cols = list(columns or _columns(rows))
     with path.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=cols, extrasaction="ignore")
+        writer = csv.DictWriter(handle, fieldnames=cols, extrasaction="ignore", lineterminator="\n")
         writer.writeheader()
         for row in rows:
             writer.writerow({c: _cell(row.get(c)) for c in cols})
@@ -312,9 +312,15 @@ def replay_quality(snapshots: list[dict[str, Any]], weights: Mapping[str, Mappin
     max_age = float(telemetry.get("freshness_max_age_ms", 2500))
     attempts: deque[tuple[datetime, bool]] = deque()
     rows = []
+    started = False
     for snap in sorted(snapshots, key=lambda s: s["created_at"]):
         created = _ts(snap["created_at"])
         quality = snap.get("quality") or {}
+        if not started and quality.get("valid"):
+            # The orchestrator resets its twinning window once the initial roles are set
+            # (src/orchestrator/app.py); startup snapshots must not count against the run.
+            attempts.clear()
+            started = True
         attempts.append((created, bool(quality.get("valid"))))
         while attempts and attempts[0][0] < created - timedelta(seconds=window):
             attempts.popleft()
@@ -667,7 +673,7 @@ def dod(ev: Evidence, training_dir: Path, runtime: Mapping[str, dict[str, Any]])
         ("Horizon v1 measured", horizon.get("feasible") is True, "horizon_v1.json"),
         ("Dataset statistics", True if ok("dataset_statistics.csv") else None, "dataset_statistics.csv"),
         ("Quality sensitivity", True if ok("quality_sensitivity.csv") else None, "quality_sensitivity.csv"),
-        ("make ci", ("exit_code: 0" in ci_text) if ci_text else None, "ci.txt (run with --ci)"),
+        ("make ci", (ci_text.count("exit_code: 0") == 2) if ci_text else None, "ci.txt (make ci + git diff --check, run with --ci)"),
     ]
     width = max(len(n) for n, _, _ in items)
     lines = [f"# Week 10 Definition of Done, generated {datetime.now(timezone.utc).isoformat()}",

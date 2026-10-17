@@ -229,7 +229,7 @@ def main() -> int:
 
     flat = [k for k, v in summaries[0].items() if not isinstance(v, dict)]
     with (args.output_dir / "runtime_summary.csv").open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=flat, extrasaction="ignore")
+        writer = csv.DictWriter(handle, fieldnames=flat, extrasaction="ignore", lineterminator="\n")
         writer.writeheader()
         writer.writerows(summaries)
     return 0

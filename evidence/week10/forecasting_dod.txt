@@ -1,4 +1,4 @@
-# Week 10 Definition of Done, generated 2026-10-17T15:27:26.231330+00:00
+# Week 10 Definition of Done, generated 2026-10-17T16:28:40.108118+00:00
 # PASS = evidence found and criterion met; MISSING = evidence not produced yet; FAIL = criterion not met
 
 Week9 dataset frozen        PASS     data/forecasting/processed/forecast-dataset-v2-h3-provisional
@@ -36,7 +36,7 @@ Burst runtime recorded      PASS     burst_runtime.json
 Horizon v1 measured         PASS     horizon_v1.json
 Dataset statistics          PASS     dataset_statistics.csv
 Quality sensitivity         PASS     quality_sensitivity.csv
-make ci                     PASS     ci.txt (run with --ci)
+make ci                     PASS     ci.txt (make ci + git diff --check, run with --ci)
 
 36/36 PASS
 

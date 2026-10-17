@@ -1,2 +1,2 @@
 schema_version,horizon_seconds,t_detect_ms,t_migrate_ms,t_decision_budget_ms,inference_p95_ms,inference_source,inference_measured_at,decision_overhead_ms,t_decision_ms,slack_ms,feasible,planner_included,written_at
-1.0,3.0,568.579,2132.906,298.515,0.5776685500000001,data/benchmarks/forecast_inference_latency.json,2026-10-16T16:28:51.952479+00:00,4.1045,4.682,293.833,True,False,2026-10-17T15:26:56.919210+00:00
+1.0,3.0,568.579,2132.906,298.515,0.5776685500000001,data/benchmarks/forecast_inference_latency.json,2026-10-16T16:28:51.952479+00:00,4.1045,4.682,293.833,True,False,2026-10-17T16:28:14.316571+00:00

@@ -34,6 +34,12 @@ class QualityReplayTest(unittest.TestCase):
         # the variants rank the same snapshot differently but never touch hard_valid
         self.assertNotEqual(rows[30]["consistency_heavy"], rows[30]["freshness_heavy"])
 
+    def test_startup_snapshots_do_not_count_against_the_twinning_window(self) -> None:
+        snaps = [snapshot(s, valid=False) for s in range(5)] + [snapshot(s) for s in range(5, 40)]
+        rows = replay_quality(snaps, QUALITY_VARIANTS, THRESHOLDS, TELEMETRY, {"c1", "c2"}, {"s1"})
+        self.assertFalse(any(r["hard_valid"] for r in rows[:5]))
+        self.assertTrue(all(r["hard_valid"] for r in rows[5:]))
+
     def test_histogram_counts_every_value(self) -> None:
         counts, edges = _histogram([0.0, 0.5, 1.0, 1.0], 4)
         self.assertEqual(sum(counts), 4)
