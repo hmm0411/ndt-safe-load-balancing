@@ -1,0 +1,9 @@
+\pgfplotstableread[col sep=comma]{\evdir/inference_latency.csv}\lat
+\begin{tikzpicture}
+\begin{axis}[w10,ybar,bar width=12pt,ymode=log,log origin=infty,
+  symbolic x coords={persistence,moving_average_w3,linear_regression,random_forest,xgboost},xtick={persistence,moving_average_w3,linear_regression,random_forest,xgboost},
+  xticklabels={Persistence,MA(3),LR,RF,XGBoost},ylabel={single-sample P95 (ms, log)},legend pos=north west]
+\addplot table[x=model,y=p95_ms]{\lat}; \addlegendentry{P95}
+\addplot table[x=model,y=p50_ms]{\lat}; \addlegendentry{P50}
+\end{axis}
+\end{tikzpicture}

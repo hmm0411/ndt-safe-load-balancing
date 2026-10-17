@@ -1,0 +1,8 @@
+\pgfplotstableread[col sep=comma]{\evdir/model_comparison_validation.csv}\val
+\begin{tikzpicture}
+\begin{axis}[w10,ybar,bar width=12pt,symbolic x coords={persistence,moving_average_w3,linear_regression,random_forest,xgboost},
+  xtick={persistence,moving_average_w3,linear_regression,random_forest,xgboost},xticklabels={Persistence,MA(3),LR,RF,XGBoost},ylabel={validation RMSE},
+  nodes near coords,nodes near coords style={font=\tiny,/pgf/number format/.cd,fixed,precision=3},ymin=0]
+\addplot table[x=model,y=rmse]{\val};
+\end{axis}
+\end{tikzpicture}

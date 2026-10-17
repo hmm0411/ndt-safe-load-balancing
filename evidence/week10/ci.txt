@@ -1,0 +1,250 @@
+# make ci + git diff --check, 2026-10-17T15:27:06.369961+00:00
+git_commit: d9e43ea9f3e203cf61627ee93660e2da3fc8eb04
+
+$ make ci
+python3 -m compileall -q src tests
+python3 -m ruff check src scripts tests
+All checks passed!
+python3 -m mypy --ignore-missing-imports src tests/unit
+Success: no issues found in 154 source files
+python3 -m unittest discover -s tests/unit -v
+[forecast] error=twin_state needs created_at and snapshot_id
+[forecast] load error=missing model_card.json; missing feature_schema.json; missing error_margin.json
+
+... ok
+test_gap_reports_history_gap_until_refilled (test_forecast_predictor.PersistenceForecasterTest) ... ok
+test_hot_switch_share_turns_on_the_ood_gate_at_the_third_sample (test_forecast_predictor.PersistenceForecasterTest) ... ok
+test_invalid_snapshot_is_not_ready_without_values (test_forecast_predictor.PersistenceForecasterTest) ... ok
+test_margin_pushes_risk_and_measured_overload_is_always_risk (test_forecast_predictor.PersistenceForecasterTest) ... ok
+test_missing_capacity (test_forecast_predictor.PersistenceForecasterTest) ... ok
+test_monitor_only_columns_are_the_audit_columns (test_forecast_predictor.PersistenceForecasterTest) ... ok
+test_ready_only_at_the_eleventh_sample (test_forecast_predictor.PersistenceForecasterTest) ... ok
+test_switch_count_change_after_migration_turns_on_the_gate (test_forecast_predictor.PersistenceForecasterTest) ... ok
+test_wrong_feature_order_is_rejected (test_forecast_predictor.PersistenceForecasterTest) ... ok
+test_accepts_forecast_raw_sample_instances (test_forecast_raw_validator.ForecastRawValidatorTests) ... ok
+test_allows_overload_utilization (test_forecast_raw_validator.ForecastRawValidatorTests) ... ok
+test_custom_sampling_interval_is_supported (test_forecast_raw_validator.ForecastRawValidatorTests) ... ok
+test_duplicate_timestamp_is_counted (test_forecast_raw_validator.ForecastRawValidatorTests) ... ok
+test_empty_identifiers_create_issues (test_forecast_raw_validator.ForecastRawValidatorTests) ... ok
+test_empty_input_is_valid (test_forecast_raw_validator.ForecastRawValidatorTests) ... ok
+test_expected_sampling_interval_must_be_positive_and_finite (test_forecast_raw_validator.ForecastRawValidatorTests) ... ok
+test_expected_sampling_interval_rejects_non_numeric_value (test_forecast_raw_validator.ForecastRawValidatorTests) ... ok
+test_interval_outside_tolerance_without_gap_is_reported (test_forecast_raw_validator.ForecastRawValidatorTests) ... ok
+test_invalid_numeric_values_create_issues (test_forecast_raw_validator.ForecastRawValidatorTests) ... ok
+test_invalid_timestamp_is_reported (test_forecast_raw_validator.ForecastRawValidatorTests) ... ok
+test_long_sampling_interval_is_reported_as_gap (test_forecast_raw_validator.ForecastRawValidatorTests) ... ok
+test_non_finite_safe_capacity_is_invalid (test_forecast_raw_validator.ForecastRawValidatorTests) ... ok
+test_non_finite_utilization_is_invalid (test_forecast_raw_validator.ForecastRawValidatorTests) ... ok
+test_same_timestamp_on_different_controllers_is_not_duplicate (test_forecast_raw_validator.ForecastRawValidatorTests) ... ok
+test_scheduler_jitter_within_ten_percent_is_accepted (test_forecast_raw_validator.ForecastRawValidatorTests) ... ok
+test_short_sampling_interval_is_reported_without_gap (test_forecast_raw_validator.ForecastRawValidatorTests) ... ok
+test_snapshot_invalid_is_counted_without_dropping_sample (test_forecast_raw_validator.ForecastRawValidatorTests) ... ok
+test_timestamp_must_be_monotonic_per_controller (test_forecast_raw_validator.ForecastRawValidatorTests) ... ok
+test_valid_samples_are_valid_and_grouped_by_controller (test_forecast_raw_validator.ForecastRawValidatorTests) ... ok
+test_official_provenance_is_serialized (test_forecast_run_metadata.ForecastRunMetadataTests) ... ok
+test_metadata_records_tag_and_safe_capacity (test_forecast_run_metadata_provenance.ForecastRunMetadataProvenanceTests) ... ok
+test_missing_artifact_omits_capacity_fields (test_forecast_run_metadata_provenance.ForecastRunMetadataProvenanceTests) ... ok
+test_real_runner_output_satisfies_the_metadata_contract (test_forecast_run_metadata_provenance.ForecastRunMetadataProvenanceTests) ... ok
+test_tag_comes_from_environment_when_not_configured (test_forecast_run_metadata_provenance.ForecastRunMetadataProvenanceTests) ... ok
+test_summary (test_forecast_runtime_report.RuntimeReportTest) ... ok
+test_controller_without_owned_switch_has_zero_share (test_forecast_runtime_rows.RuntimeRowsParityTest) ... ok
+test_every_feature_input_matches_the_data_collection (test_forecast_runtime_rows.RuntimeRowsParityTest) ... ok
+test_share_counts_owned_switches_only (test_forecast_runtime_rows.RuntimeRowsParityTest) ... ok
+test_allows_utilization_above_one_for_overload (test_forecast_schema.ForecastRawSampleTests) ... ok
+test_create_valid_sample (test_forecast_schema.ForecastRawSampleTests) ... ok
+test_rejects_empty_identifiers (test_forecast_schema.ForecastRawSampleTests) ... ok
+test_rejects_empty_workload_metadata (test_forecast_schema.ForecastRawSampleTests) ... ok
+test_rejects_invalid_safe_capacity (test_forecast_schema.ForecastRawSampleTests) ... ok
+test_rejects_negative_managed_switch_count (test_forecast_schema.ForecastRawSampleTests) ... ok
+test_rejects_negative_numeric_metrics (test_forecast_schema.ForecastRawSampleTests) ... ok
+test_rejects_non_finite_numeric_metrics (test_forecast_schema.ForecastRawSampleTests) ... ok
+test_rejects_non_finite_safe_capacity (test_forecast_schema.ForecastRawSampleTests) ... ok
+test_sample_is_immutable (test_forecast_schema.ForecastRawSampleTests) ... ok
+test_to_dict_serializes_datetime_as_iso8601 (test_forecast_schema.ForecastRawSampleTests) ... ok
+test_counts_warmup_and_repeats (test_forecast_selection.LatencyTest) ... ok
+test_invalid_repeats_raise (test_forecast_selection.LatencyTest) ... ok
+test_clear_gap_is_not_a_tie (test_forecast_selection.SelectModelTest) ... ok
+test_empty_or_nan_scores_raise (test_forecast_selection.SelectModelTest) ... ok
+test_lowest_score_wins (test_forecast_selection.SelectModelTest) ... ok
+test_near_tie_between_trees_is_flagged (test_forecast_selection.SelectModelTest) ... ok
+test_errors_are_normalized_by_persistence (test_forecast_selection.SelectionScoreTest) ... ok
+test_latency_term_is_capped_at_one (test_forecast_selection.SelectionScoreTest) ... ok
+test_persistence_scores_090_plus_latency (test_forecast_selection.SelectionScoreTest) ... ok
+test_weights_must_sum_to_one (test_forecast_selection.SelectionScoreTest) ... ok
+test_zero_baseline_raises (test_forecast_selection.SelectionScoreTest) ... ok
+test_baselines_read_the_row (test_forecast_selection.SingleSamplePredictorsTest) ... ok
+test_linear_regression_predicts_level_after_scaling (test_forecast_selection.SingleSamplePredictorsTest) ... ok
+test_row_shape_is_checked (test_forecast_selection.SingleSamplePredictorsTest) ... ok
+test_tree_models_add_delta_to_current_utilization (test_forecast_selection.SingleSamplePredictorsTest) ... ok
+test_disabled (test_forecast_service.ForecastServiceTest) ... ok
+test_forecaster_error_is_contained (test_forecast_service.ForecastServiceTest) ... ok
+test_missing_model_keeps_running_and_reports_it (test_forecast_service.ForecastServiceTest) ... ok
+test_not_ready_before_first_snapshot (test_forecast_service.ForecastServiceTest) ... ok
+test_ready_payload_and_jsonl (test_forecast_service.ForecastServiceTest) ... ok
+test_forecast_route_is_registered (test_forecast_service.OrchestratorRouteTest) ... /home/thuyvy2000vyy/ndt-safe-load-balancing/src/orchestrator/app.py:246: DeprecationWarning: 
+        on_event is deprecated, use lifespan event handlers instead.
+
+        Read more about it in the
+        [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+        
+  @app.on_event("startup")
+/home/thuyvy2000vyy/ndt-venv/lib/python3.10/site-packages/fastapi/applications.py:4681: DeprecationWarning: 
+        on_event is deprecated, use lifespan event handlers instead.
+
+        Read more about it in the
+        [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+        
+  return self.router.on_event(event_type)  # ty: ignore[deprecated]
+/home/thuyvy2000vyy/ndt-safe-load-balancing/src/orchestrator/app.py:256: DeprecationWarning: 
+        on_event is deprecated, use lifespan event handlers instead.
+
+        Read more about it in the
+        [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+        
+  @app.on_event("shutdown")
+ok
+test_build_and_parse_round_trip (test_forecast_split.ForecastSplitTests) ... ok
+test_dataframe_split (test_forecast_split.ForecastSplitTests) ... ok
+test_each_run_id_belongs_to_exactly_one_split (test_forecast_split.ForecastSplitTests) ... ok
+test_every_hot_switch_repeat_is_unseen (test_forecast_split.ForecastSplitTests) ... ok
+test_hot_switch_not_in_train_validation_test (test_forecast_split.ForecastSplitTests) ... ok
+test_invalid_run_ids_are_rejected (test_forecast_split.ForecastSplitTests) ... ok
+test_no_continuity_segment_spans_two_splits (test_forecast_split.ForecastSplitTests) ... ok
+test_official_plan_run_ids_follow_the_contract_and_split_12_4_4_5 (test_forecast_split.ForecastSplitTests) ... ok
+test_parse_run_id_with_hyphenated_workload (test_forecast_split.ForecastSplitTests) ... ok
+test_policy_rejects_overlapping_repeats (test_forecast_split.ForecastSplitTests) ... ok
+test_policy_rejects_workload_both_seen_and_unseen (test_forecast_split.ForecastSplitTests) ... ok
+test_random_shuffle_cannot_be_enabled (test_forecast_split.ForecastSplitTests) ... ok
+test_random_shuffle_is_false (test_forecast_split.ForecastSplitTests) ... ok
+test_repeat_mapping_for_every_seen_workload (test_forecast_split.ForecastSplitTests) ... ok
+test_rows_keep_original_order (test_forecast_split.ForecastSplitTests) ... ok
+test_rows_of_one_run_never_span_two_splits (test_forecast_split.ForecastSplitTests) ... ok
+test_same_run_id_cannot_appear_in_two_splits (test_forecast_split.ForecastSplitTests) ... ok
+test_split_is_deterministic_and_independent_of_input_order (test_forecast_split.ForecastSplitTests) ... ok
+test_split_sizes (test_forecast_split.ForecastSplitTests) ... ok
+test_train_test_disjoint (test_forecast_split.ForecastSplitTests) ... ok
+test_train_validation_disjoint (test_forecast_split.ForecastSplitTests) ... ok
+test_unknown_workload_or_repeat_is_rejected_not_dropped (test_forecast_split.ForecastSplitTests) ... ok
+test_unseen_rows_contain_only_hot_switch (test_forecast_split.ForecastSplitTests) ... ok
+test_unseen_test_disjoint (test_forecast_split.ForecastSplitTests) ... ok
+test_unseen_train_disjoint (test_forecast_split.ForecastSplitTests) ... ok
+test_unseen_validation_disjoint (test_forecast_split.ForecastSplitTests) ... ok
+test_validation_test_disjoint (test_forecast_split.ForecastSplitTests) ... ok
+test_yaml_split_block_matches_policy (test_forecast_split.ForecastSplitTests) ... ok
+test_yaml_workloads_match_split_policy (test_forecast_split.ForecastSplitTests) ... ok
+test_expected_run_counts (test_forecast_splitter.ForecastSplitterTests) ... ok
+test_hot_switch_is_unseen_only (test_forecast_splitter.ForecastSplitterTests) ... ok
+test_split_records (test_forecast_splitter.ForecastSplitterTests) ... ok
+test_splits_do_not_overlap (test_forecast_splitter.ForecastSplitterTests) ... ok
+test_disabled_tracker_is_noop (test_forecast_tracking.TrackerHelpersTests) ... ok
+test_finite_drops_nan_inf_bool_and_text (test_forecast_tracking.TrackerHelpersTests) ... ok
+test_flat_stringifies_none (test_forecast_tracking.TrackerHelpersTests) ... ok
+test_dataset_registry_alias_and_pointer (test_forecast_tracking.TrackerMlflowTests) ... /home/thuyvy2000vyy/ndt-venv/lib/python3.10/site-packages/mlflow/data/dataset_source_registry.py:148: UserWarning: The specified dataset source can be interpreted in multiple ways: LocalArtifactDatasetSource, LocalArtifactDatasetSource. MLflow will assume that this is a LocalArtifactDatasetSource source.
+  return _dataset_source_registry.resolve(
+Union type hint with multiple non-None types is inferred as AnyType, and MLflow doesn't validate the data against its element types.Union type hint is inferred as AnyType, and MLflow doesn't validate the data against its element types.Union type hint with multiple non-None types is inferred as AnyType, and MLflow doesn't validate the data against its element types.Successfully registered model 'unit-linear'.
+Created version '1' of model 'unit-linear'.
+ok
+test_parent_run_with_candidate_children (test_forecast_tracking.TrackerMlflowTests) ... ok
+test_empty_validation_is_rejected (test_forecast_tree_models.TreeModelTests) ... ok
+test_feature_importance_names_every_feature (test_forecast_tree_models.TreeModelTests) ... ok
+test_forecast_is_anchored_at_current_load (test_forecast_tree_models.TreeModelTests) ... ok
+test_random_forest_selects_on_validation (test_forecast_tree_models.TreeModelTests) ... ok
+test_xgboost_records_best_iteration (test_forecast_tree_models.TreeModelTests) ... ok
+test_runtime_yaml_ignores_memory (test_ood_ignore.ForecastV1MemoryTest) ... ok
+test_ignore_reaches_the_gate (test_ood_ignore.ForecasterIgnoreTest) ... ok
+test_service_reads_the_list_and_reports_it (test_ood_ignore.ForecasterIgnoreTest) ... ok
+test_ignored_feature_never_turns_the_gate_on (test_ood_ignore.OODGateIgnoreTest) ... ok
+test_other_features_still_count (test_ood_ignore.OODGateIgnoreTest) ... ok
+test_unknown_name_is_rejected (test_ood_ignore.OODGateIgnoreTest) ... ok
+test_assess_many_missing_margin_raises (test_overload_detector.OverloadDetectorTest) ... ok
+test_assess_many_with_per_controller_margin (test_overload_detector.OverloadDetectorTest) ... ok
+test_assess_many_with_shared_margin (test_overload_detector.OverloadDetectorTest) ... ok
+test_boundary_equal_to_one_is_risk (test_overload_detector.OverloadDetectorTest) ... ok
+test_detector_carries_controller_id_and_threshold (test_overload_detector.OverloadDetectorTest) ... ok
+test_invalid_inputs (test_overload_detector.OverloadDetectorTest) ... ok
+test_just_below_boundary_is_not_risk (test_overload_detector.OverloadDetectorTest) ... ok
+test_prediction_above_one_is_not_clamped (test_overload_detector.OverloadDetectorTest) ... ok
+test_safe_prediction (test_overload_detector.OverloadDetectorTest) ... ok
+test_upper_bound_crosses_one (test_overload_detector.OverloadDetectorTest) ... ok
+test_commit (test_ownership.OwnershipTests) ... ok
+test_valid_config (test_qos_probe.QosProbeTests) ... ok
+test_zero_rate_rejected (test_qos_probe.QosProbeTests) ... ok
+test_rate (test_rate_calculator.RateCalculatorTests) ... ok
+test_reset (test_rate_calculator.RateCalculatorTests) ... ok
+test_valid_quiet_state (test_snapshot.SnapshotTests) ... ok
+test_build_valid_snapshot (test_snapshot_builder.SnapshotBuilderTests) ... ok
+test_all_pairs_consistent (test_snapshot_consistency_score.ConsistencyScoreTest) ... ok
+test_disconnected_pair_is_not_consistent (test_snapshot_consistency_score.ConsistencyScoreTest) ... ok
+test_missing_role_state (test_snapshot_consistency_score.ConsistencyScoreTest) ... ok
+test_one_wrong_role_gives_39_of_40_and_invalid (test_snapshot_consistency_score.ConsistencyScoreTest) ... ok
+test_switch_without_ownership_loses_both_pairs (test_snapshot_consistency_score.ConsistencyScoreTest) ... ok
+test_missing_controller_is_invalid (test_snapshot_validator.SnapshotValidatorTests) ... ok
+test_role_ownership_conflict_is_invalid (test_snapshot_validator.SnapshotValidatorTests) ... ok
+test_stale_controller_is_invalid (test_snapshot_validator.SnapshotValidatorTests) ... ok
+test_valid_quiet_state (test_snapshot_validator.SnapshotValidatorTests) ... ok
+test_controller_serialization_contains_processed_rate (test_telemetry_schema.TelemetrySchemaTests) ... ok
+test_switch_serialization_contains_processed_rate (test_telemetry_schema.TelemetrySchemaTests) ... ok
+test_complete_snapshot_has_completeness_one (test_twin_quality.TwinQualityAssessorTests) ... ok
+test_controller_timestamps_one_hundred_ms_apart_have_matching_jitter (test_twin_quality.TwinQualityAssessorTests) ... ok
+test_controllers_observed_at_same_time_have_zero_jitter (test_twin_quality.TwinQualityAssessorTests) ... ok
+test_missing_controller_has_incomplete_invalid_quality (test_twin_quality.TwinQualityAssessorTests) ... ok
+test_missing_switch_telemetry_has_incomplete_quality (test_twin_quality.TwinQualityAssessorTests) ... ok
+test_ownership_conflict_is_reported_as_inconsistent (test_twin_quality.TwinQualityAssessorTests) ... ok
+test_stale_controller_is_invalid (test_twin_quality.TwinQualityAssessorTests) ... ok
+test_twinning_rate_below_point_nine_five_is_invalid (test_twin_quality.TwinQualityAssessorTests) ... ok
+test_twinning_rate_one_is_valid_when_other_conditions_pass (test_twin_quality.TwinQualityAssessorTests) ... ok
+test_high_score_never_makes_an_invalid_snapshot_valid (test_twin_quality_score.AssessorTest) ... ok
+test_score_and_components_are_reported (test_twin_quality_score.AssessorTest) ... ok
+test_without_config_the_score_is_absent (test_twin_quality_score.AssessorTest) ... ok
+test_shape (test_twin_quality_score.PiecewiseTest) ... ok
+test_config_must_have_all_weights_summing_to_one (test_twin_quality_score.ScoreTest) ... ok
+test_one_wrong_role_costs_weight_times_share (test_twin_quality_score.ScoreTest) ... ok
+test_perfect_state_scores_one (test_twin_quality_score.ScoreTest) ... ok
+test_score_stays_in_unit_interval (test_twin_quality_score.ScoreTest) ... ok
+test_collection_latency_is_preserved_in_milliseconds (test_twin_state_builder.TwinStateBuilderTests) ... ok
+test_load_500_has_half_utilization (test_twin_state_builder.TwinStateBuilderTests) ... ok
+test_load_above_safe_capacity_has_utilization_above_one (test_twin_state_builder.TwinStateBuilderTests) ... ok
+test_load_at_safe_capacity_has_one_utilization (test_twin_state_builder.TwinStateBuilderTests) ... ok
+test_load_zero_has_zero_utilization (test_twin_state_builder.TwinStateBuilderTests) ... ok
+test_unknown_controller_fails (test_twin_state_builder.TwinStateBuilderTests) ... ok
+test_empty_tracker_has_zero_rate (test_twinning_rate.TwinningRateTrackerTests) ... ok
+test_new_measurement_after_reset_starts_fresh_window (test_twinning_rate.TwinningRateTrackerTests) ... ok
+test_nine_successes_and_one_failure_have_rate_point_nine (test_twinning_rate.TwinningRateTrackerTests) ... ok
+test_reset_clears_existing_measurements (test_twinning_rate.TwinningRateTrackerTests) ... ok
+test_ten_successes_have_rate_one (test_twinning_rate.TwinningRateTrackerTests) ... ok
+test_hard_gate_does_not_depend_on_weights (test_week10_evidence.QualityReplayTest) ... ok
+test_histogram_counts_every_value (test_week10_evidence.QualityReplayTest) ... ok
+test_deadline_sequence (test_workload_generator.TestDeadlinePacer) ... ok
+test_period_ms_matches_rate (test_workload_generator.TestDeadlinePacer) ... ok
+test_wait_until_sleeps_remaining_time (test_workload_generator.TestDeadlinePacer) ... ok
+test_invalid_sample_interval_rejected (test_workload_generator.TestGeneratorValidation) ... ok
+test_negative_rate_is_rejected (test_workload_generator.TestGeneratorValidation) ... ok
+test_rate_zero_is_rejected (test_workload_generator.TestGeneratorValidation) ... ok
+test_valid_smoke_config (test_workload_generator.TestGeneratorValidation) ... ok
+test_invalid_port_range_rejected (test_workload_generator.TestPortAllocator) ... ok
+test_port_allocator_increments_sequentially (test_workload_generator.TestPortAllocator) ... ok
+test_port_allocator_wraps_to_start (test_workload_generator.TestPortAllocator) ... ok
+test_safe_port_pool (test_workload_generator.TestPortReuseSafety) ... ok
+test_unsafe_port_pool_rejected (test_workload_generator.TestPortReuseSafety) ... ok
+test_workload_sample_serializes (test_workload_generator.TestWorkloadSample) ... ok
+test_hot_switch_fields_accept_valid_values (test_workload_profiles.WorkloadPointTests) ... ok
+test_hot_switch_fields_are_optional_together (test_workload_profiles.WorkloadPointTests) ... ok
+test_hot_switch_fields_must_be_provided_together (test_workload_profiles.WorkloadPointTests) ... ok
+test_hot_switch_id_must_not_be_empty (test_workload_profiles.WorkloadPointTests) ... ok
+test_hot_switch_share_must_be_between_zero_and_one (test_workload_profiles.WorkloadPointTests) ... ok
+test_hot_switch_share_must_be_finite (test_workload_profiles.WorkloadPointTests) ... ok
+test_serialization (test_workload_schema.WorkloadSchemaTests) ... ok
+
+----------------------------------------------------------------------
+Ran 429 tests in 15.696s
+
+OK
+
+exit_code: 0
+
+$ git diff --check
+results/week10/runtime/runtime_summary.csv:3: trailing whitespace.
++w10-r2b-burst,364,182,188,0.945054945054945,0.0377906976744186,42,1.47733,8.156329,9.7837,7.131319,11.58008,1.0,1.0,338,0.07900638008916967,0.13821073856001606,0.9615384615384616,36,30,6,12
+
+
+exit_code: 2

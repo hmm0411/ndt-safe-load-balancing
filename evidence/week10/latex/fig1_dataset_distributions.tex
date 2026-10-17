@@ -1,0 +1,14 @@
+\begin{tikzpicture}
+\begin{groupplot}[group style={group size=2 by 2,horizontal sep=1.6cm,vertical sep=1.6cm},
+  width=0.48\linewidth,height=4.2cm,ylabel={samples},grid=major,grid style={gray!25},ymin=0,
+  xticklabel style={/pgf/number format/fixed},scaled x ticks=false]
+\nextgroupplot[xlabel={utilization $U$}]
+\addplot[fill=blue!30,draw=blue!60,const plot mark left] table[col sep=comma,x=left,y=count]{\evdir/hist_utilization.csv} \closedcycle;
+\nextgroupplot[xlabel={processed Packet-In rate (pps)}]
+\addplot[fill=blue!30,draw=blue!60,const plot mark left] table[col sep=comma,x=left,y=count]{\evdir/hist_processed_packet_in_rate.csv} \closedcycle;
+\nextgroupplot[xlabel={CPU (\%)}]
+\addplot[fill=blue!30,draw=blue!60,const plot mark left] table[col sep=comma,x=left,y=count]{\evdir/hist_process_cpu_percent.csv} \closedcycle;
+\nextgroupplot[xlabel={response P95 (ms)}]
+\addplot[fill=blue!30,draw=blue!60,const plot mark left] table[col sep=comma,x=left,y=count]{\evdir/hist_response_p95_ms.csv} \closedcycle;
+\end{groupplot}
+\end{tikzpicture}

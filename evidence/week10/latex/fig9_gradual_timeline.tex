@@ -1,0 +1,28 @@
+\begin{tikzpicture}
+\begin{groupplot}[group style={group size=1 by 2,vertical sep=1.2cm},width=0.95\linewidth,height=5cm,
+  grid=major,grid style={gray!25},unbounded coords=jump,ylabel={$U$},
+  legend style={font=\scriptsize,at={(0.5,-0.32)},anchor=north,legend columns=4}]
+\nextgroupplot[title={c1}]
+\addplot[name path=hat,blue,thin] table[col sep=comma,x=t_target_s,y=u_hat]{\evdir/runtime_gradual_c1.csv};
+\addplot[name path=up,draw=none,forget plot] table[col sep=comma,x=t_target_s,y=upper]{\evdir/runtime_gradual_c1.csv};
+\addplot[blue!25,forget plot] fill between[of=hat and up];
+\addplot[black,thick] table[col sep=comma,x=t_s,y=u]{\evdir/runtime_gradual_c1.csv};
+\addplot[red,dashed,domain=0:200,forget plot] {1.0};
+\addplot[only marks,red,mark=*,mark size=1.2pt] table[col sep=comma,x=t_target_s,y=alert_upper]{\evdir/runtime_gradual_c1.csv};
+\addplot[only marks,orange,mark=x] table[col sep=comma,x=t_target_s,y=ood_u_hat]{\evdir/runtime_gradual_c1.csv};
+\addplot[only marks,black,mark=triangle*] table[col sep=comma,x=t_s,y=measured_overload_u]{\evdir/runtime_gradual_c1.csv};
+\nextgroupplot[title={c2},xlabel={seconds since workload start}]
+\addplot[name path=hat2,blue,thin] table[col sep=comma,x=t_target_s,y=u_hat]{\evdir/runtime_gradual_c2.csv};
+\addlegendentry{$\hat U$ at $t+h$}
+\addplot[name path=up2,draw=none,forget plot] table[col sep=comma,x=t_target_s,y=upper]{\evdir/runtime_gradual_c2.csv};
+\addplot[blue!25] fill between[of=hat2 and up2]; \addlegendentry{$+m_f$}
+\addplot[black,thick] table[col sep=comma,x=t_s,y=u]{\evdir/runtime_gradual_c2.csv}; \addlegendentry{$U(t)$}
+\addplot[red,dashed,domain=0:200] {1.0}; \addlegendentry{safe limit 1.0}
+\addplot[only marks,red,mark=*,mark size=1.2pt] table[col sep=comma,x=t_target_s,y=alert_upper]{\evdir/runtime_gradual_c2.csv};
+\addlegendentry{risk flag}
+\addplot[only marks,orange,mark=x] table[col sep=comma,x=t_target_s,y=ood_u_hat]{\evdir/runtime_gradual_c2.csv};
+\addlegendentry{OOD fallback}
+\addplot[only marks,black,mark=triangle*] table[col sep=comma,x=t_s,y=measured_overload_u]{\evdir/runtime_gradual_c2.csv};
+\addlegendentry{measured $U\ge 1$}
+\end{groupplot}
+\end{tikzpicture}

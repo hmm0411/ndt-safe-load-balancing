@@ -1,0 +1,74 @@
+% Week 10 evidence: tables and figures read the CSV files one level up.
+% Compile: cd evidence/week10/latex && xelatex main.tex   (or lualatex; needs fontspec)
+% In the thesis: \usepackage{pgfplots,booktabs}, \pgfplotsset{compat=1.17},
+% \usepgfplotslibrary{groupplots,statistics,fillbetween}, \newcommand{\evdir}{<path to evidence/week10>}
+% then \input{<path>/fig9_gradual_timeline.tex} etc.
+\documentclass[11pt]{article}
+\usepackage{fontspec}
+\usepackage[a4paper,margin=2cm]{geometry}
+\usepackage{booktabs,float,caption}
+\usepackage{pgfplots,pgfplotstable}
+\pgfplotsset{compat=1.17}
+\usepgfplotslibrary{groupplots,statistics,fillbetween}
+\newcommand{\evdir}{..}
+\pgfplotsset{every axis/.append style={font=\small},
+  w10/.style={width=0.95\linewidth,height=5cm,grid=major,grid style={gray!25}}}
+\begin{document}
+\section*{Tuần 10 -- Bảng và hình từ evidence/week10}
+\input{tab_dataset_statistics.tex}
+
+\input{tab_horizon.tex}
+
+\input{tab_model_comparison_test.tex}
+
+\input{tab_model_selection.tex}
+
+\input{tab_quality_sensitivity.tex}
+
+\input{tab_runtime.tex}
+
+\begin{figure}[H]\centering
+\input{fig1_dataset_distributions.tex}
+\caption*{Hình 1. Phân bố các biến chính của dataset (mẫu hợp lệ).}
+\end{figure}
+
+\begin{figure}[H]\centering
+\input{fig2_workload_profiles.tex}
+\caption*{Hình 2. U(t) của năm workload (một run mỗi loại, controller c1).}
+\end{figure}
+
+\begin{figure}[H]\centering
+\input{fig3_validation_models.tex}
+\caption*{Hình 3. So sánh năm mô hình trên Validation (RMSE).}
+\end{figure}
+
+\begin{figure}[H]\centering
+\input{fig4_test_rmse.tex}
+\caption*{Hình 4. RMSE và P95 sai số tuyệt đối trên Test.}
+\end{figure}
+
+\begin{figure}[H]\centering
+\input{fig5_per_workload_rmse.tex}
+\caption*{Hình 5. RMSE theo workload (Test; hot-switch là Unseen).}
+\end{figure}
+
+\begin{figure}[H]\centering
+\input{fig6_test_vs_hotswitch.tex}
+\caption*{Hình 6. Test (ID) và Hot-switch (OOD): XGBoost có/không cổng OOD so với Persistence.}
+\end{figure}
+
+\begin{figure}[H]\centering
+\input{fig7_inference_p95.tex}
+\caption*{Hình 7. Độ trễ suy luận một mẫu (P50, P95) khi testbed chạy.}
+\end{figure}
+
+\begin{figure}[H]\centering
+\input{fig8_quality_sensitivity.tex}
+\caption*{Hình 8. Quality Score theo bốn bộ trọng số trên lượt mất telemetry; vạch đỏ: Hard Gate = invalid.}
+\end{figure}
+
+\begin{figure}[H]\centering
+\input{fig9_gradual_timeline.tex}
+\caption*{Hình 9. Dự báo runtime trên workload gradual: $U$ hiện tại, $\hat U$ tại $t+h$, $\hat U + m_f$, ngưỡng 1,0 và cờ rủi ro.}
+\end{figure}
+\end{document}
