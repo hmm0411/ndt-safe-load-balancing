@@ -1,0 +1,4 @@
+{
+  "status": "MODEL_NOT_LOADED",
+  "error": "missing model_card.json; missing feature_schema.json; missing error_margin.json"
+}

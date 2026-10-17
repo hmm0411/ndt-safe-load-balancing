@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0",
+  "horizon_seconds": 3.0,
+  "t_detect_ms": 568.579,
+  "t_migrate_ms": 2132.906,
+  "t_decision_budget_ms": 298.515,
+  "inference_p95_ms": 0.5776685500000001,
+  "inference_source": "data/benchmarks/forecast_inference_latency.json",
+  "inference_measured_at": "2026-10-16T16:28:51.952479+00:00",
+  "decision_overhead_ms": 4.1045,
+  "t_decision_ms": 4.682,
+  "slack_ms": 293.833,
+  "feasible": true,
+  "planner_included": false,
+  "written_at": "2026-10-17T16:28:14.316571+00:00"
+}

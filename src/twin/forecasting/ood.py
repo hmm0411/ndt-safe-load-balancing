@@ -1,14 +1,22 @@
 """Out-of-distribution gate for the runtime forecaster.
 
 Ranges come from the TRAIN split: per feature [min, max], widened by
-tolerance_fraction * (max - min) on each side. A sample is out of range when
+tolerance_fraction * (max - min) on each side. The gate watches the model
+features AND the monitor-only columns (features.AUDIT_ONLY_FEATURES:
+managed_switch_count, max_switch_control_load_share). Those two are not model
+inputs because they never vary in training, which is exactly why a change in
+them means the model is outside the conditions it was trained on (hot-switch:
+load share ~0.54 vs 0.100-0.107 in train; any migration changes the switch
+count). A sample is out of range when
 any feature leaves its widened range. The gate turns on at the
 ``consecutive_steps``-th out-of-range sample in a row and turns off as soon as
 a sample is back in range. While it is on, the runtime falls back to
 persistence (U_hat = current U, ood_fallback = true).
 
-The tree models extrapolate badly on hot-switch (RMSE 0.065 vs persistence
-0.029), which is what this gate is for.
+The tree models extrapolate badly on hot-switch (forecast-v1 XGBoost RMSE
+0.0775 vs persistence 0.0293), which is what this gate is for. Watching only
+the 27 model features, the gate never fired on hot-switch (D_OOD = 0): every
+model feature of hot-switch stays inside the widened train range.
 """
 from __future__ import annotations
 
@@ -18,7 +26,31 @@ from typing import Any, Mapping, Sequence
 
 import numpy as np
 
+from src.twin.forecasting.features import AUDIT_ONLY_FEATURES
+
 METHOD = "train_min_max"
+
+# Watched by the gate, never fed to the model.
+MONITOR_ONLY_FEATURES: tuple[str, ...] = AUDIT_ONLY_FEATURES
+
+
+def monitored_names(
+    feature_names: Sequence[str],
+    monitor_only: Sequence[str] = MONITOR_ONLY_FEATURES,
+) -> tuple[str, ...]:
+    """Model features (feature_schema order) followed by the monitor-only columns."""
+    names = tuple(feature_names)
+    return names + tuple(n for n in monitor_only if n not in names)
+
+
+def monitored_row(
+    model_vector: Sequence[float],
+    source: Mapping[str, Any],
+    monitor_only: Sequence[str],
+) -> list[float]:
+    """Runtime row for the gate: the model vector plus the monitor-only values
+    read from the TwinState row (forecast_rows adds max_switch_control_load_share)."""
+    return [float(v) for v in model_vector] + [float(source[n]) for n in monitor_only]
 
 
 @dataclass(frozen=True)
@@ -28,9 +60,14 @@ class FeatureRanges:
     maximum: tuple[float, ...]
     tolerance_fraction: float = 0.10
     consecutive_steps: int = 3
+    # Trailing entries of feature_names that are watched but are not model inputs.
+    monitor_only: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         n = len(self.feature_names)
+        k = len(self.monitor_only)
+        if k and tuple(self.feature_names[n - k:]) != tuple(self.monitor_only):
+            raise ValueError("monitor_only must be the trailing feature_names")
         if len(self.minimum) != n or len(self.maximum) != n:
             raise ValueError("one min and one max per feature")
         if not math.isfinite(self.tolerance_fraction) or self.tolerance_fraction < 0:
@@ -48,6 +85,7 @@ class FeatureRanges:
         feature_names: Sequence[str],
         tolerance_fraction: float = 0.10,
         consecutive_steps: int = 3,
+        monitor_only: Sequence[str] = (),
     ) -> FeatureRanges:
         x = np.asarray(matrix, dtype=float)
         if x.ndim != 2 or x.shape[1] != len(feature_names) or x.shape[0] == 0:
@@ -60,6 +98,7 @@ class FeatureRanges:
             tuple(float(v) for v in x.max(axis=0)),
             tolerance_fraction,
             consecutive_steps,
+            tuple(monitor_only),
         )
 
     def _bounds(self) -> tuple[np.ndarray, np.ndarray]:
@@ -92,6 +131,7 @@ class FeatureRanges:
             "method": METHOD,
             "tolerance_fraction": self.tolerance_fraction,
             "consecutive_steps": self.consecutive_steps,
+            "monitor_only_features": list(self.monitor_only),
             "features": {
                 name: {"min": lo, "max": hi}
                 for name, lo, hi in zip(
@@ -107,20 +147,26 @@ class FeatureRanges:
         feature_names: Sequence[str],
     ) -> FeatureRanges:
         """Load feature_ranges.json in the order of ``feature_names``
-        (feature_schema.json). JSON key order carries no meaning: the file is
-        written with sorted keys."""
+        (feature_schema.json) followed by ``monitor_only_features``. JSON key
+        order carries no meaning: the file is written with sorted keys. A file
+        without ``monitor_only_features`` watches the model features only."""
         if data.get("method") != METHOD:
             raise ValueError(f"unsupported feature_ranges method: {data.get('method')!r}")
         features = data["features"]
-        names = tuple(feature_names)
+        monitor_only = tuple(str(n) for n in data.get("monitor_only_features", ()))
+        names = monitored_names(feature_names, monitor_only)
         if set(features) != set(names):
-            raise ValueError("feature_ranges.json features differ from feature_schema.json")
+            raise ValueError(
+                "feature_ranges.json features differ from feature_schema.json "
+                "+ monitor_only_features"
+            )
         return cls(
             names,
             tuple(float(features[n]["min"]) for n in names),
             tuple(float(features[n]["max"]) for n in names),
             float(data["tolerance_fraction"]),
             int(data["consecutive_steps"]),
+            monitor_only,
         )
 
 
@@ -133,14 +179,25 @@ class OODDecision:
 
 
 class OODGate:
-    """Stateful gate, one consecutive counter per key (controller id)."""
+    """Stateful gate, one consecutive counter per key (controller id).
 
-    def __init__(self, ranges: FeatureRanges) -> None:
+    ``ignore`` lists features the gate still sees but never acts on. Use it
+    only for a feature shown not to drive the model and whose train range is a
+    property of the collection, not of the load (process_memory_rss_mb: the
+    controller processes of all 25 training runs were long-lived, 56.65-57.05
+    MB; a freshly started controller sits at ~47 MB, 16 Oct).
+    """
+
+    def __init__(self, ranges: FeatureRanges, ignore: Sequence[str] = ()) -> None:
+        unknown = sorted(set(ignore) - set(ranges.feature_names))
+        if unknown:
+            raise ValueError(f"OOD ignore list has unknown features: {unknown}")
         self.ranges = ranges
+        self.ignore = tuple(ignore)
         self._consecutive: dict[str, int] = {}
 
     def update(self, key: str, row: Any) -> OODDecision:
-        features = self.ranges.violations(row)
+        features = tuple(f for f in self.ranges.violations(row) if f not in self.ignore)
         count = self._consecutive.get(key, 0) + 1 if features else 0
         self._consecutive[key] = count
         return OODDecision(

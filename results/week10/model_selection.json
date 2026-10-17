@@ -1,0 +1,79 @@
+{
+  "baseline": "persistence",
+  "latency_cap_ms": 1000.0,
+  "latency_repeats": 200,
+  "latency_warmup": 50,
+  "method": "selection_score_validation",
+  "models": [
+    {
+      "inference_p50_ms": 0.3825055,
+      "inference_p95_ms": 0.5046245000000003,
+      "mae": 0.015631695512529287,
+      "model": "xgboost",
+      "p95_absolute_error": 0.05133682299642814,
+      "rmse": 0.03851108685408014,
+      "rmse_ratio_vs_persistence": 0.38787180959711043,
+      "selection_score": 0.3073716993234767
+    },
+    {
+      "inference_p50_ms": 25.798725,
+      "inference_p95_ms": 32.679959,
+      "mae": 0.016804719777279226,
+      "model": "random_forest",
+      "p95_absolute_error": 0.05454926719854225,
+      "rmse": 0.042560454569017185,
+      "rmse_ratio_vs_persistence": 0.42865579446016927,
+      "selection_score": 0.3378417970376005
+    },
+    {
+      "inference_p50_ms": 0.13050499999999998,
+      "inference_p95_ms": 0.1552725,
+      "mae": 0.03725007819809587,
+      "model": "linear_regression",
+      "p95_absolute_error": 0.1308880175396928,
+      "rmse": 0.06995304476102104,
+      "rmse_ratio_vs_persistence": 0.7045455289561701,
+      "selection_score": 0.6476939424467478
+    },
+    {
+      "inference_p50_ms": 0.00042,
+      "inference_p95_ms": 0.0004705000000000001,
+      "mae": 0.04945466003624636,
+      "model": "persistence",
+      "p95_absolute_error": 0.18041043139596408,
+      "rmse": 0.09928818207768776,
+      "rmse_ratio_vs_persistence": 1.0,
+      "selection_score": 0.90000004705
+    },
+    {
+      "inference_p50_ms": 0.01005,
+      "inference_p95_ms": 0.0114535,
+      "mae": 0.059615600124577756,
+      "model": "moving_average_w3",
+      "p95_absolute_error": 0.22861633679005813,
+      "rmse": 0.11582519558387905,
+      "rmse_ratio_vs_persistence": 1.1665557084452602,
+      "selection_score": 1.0859305665593522
+    }
+  ],
+  "ranking": [
+    "xgboost",
+    "random_forest",
+    "linear_regression",
+    "persistence",
+    "moving_average_w3"
+  ],
+  "selected": "xgboost",
+  "split": "validation",
+  "test_used_for_selection": false,
+  "tie_tolerance": 0.01,
+  "tree_gap": 0.03047009771412379,
+  "tree_near_tie": false,
+  "unseen_used_for_selection": false,
+  "weights": {
+    "latency": 0.1,
+    "mae": 0.15,
+    "p95": 0.3,
+    "rmse": 0.45
+  }
+}

@@ -1,0 +1,19 @@
+# Twin Quality Score (Week 10, V1). A soft score in [0, 1] reported next to
+# the Hard Gate `valid`; it never replaces it.
+#   Q = sum(weight_i * component_i), each component in [0, 1]
+# Time components use a piecewise-linear map: value <= good -> 1.0,
+# value >= hard -> 0.0, linear in between.
+version: quality-score-v1
+weights:
+  consistency: 0.30   # consistent (switch, controller) role pairs / expected pairs
+  completeness: 0.25  # TwinQuality.completeness_ratio
+  freshness: 0.20     # age_of_twin_ms
+  jitter: 0.10        # synchronization_jitter_ms
+  collection: 0.10    # max collection latency (ingested_at - observed_at)
+  twinning: 0.05      # twinning rate over the window
+thresholds:
+  # good = P95 of the 25 official forecast runs (scripts/analysis/quality_thresholds.py);
+  # measured 16/10: 8993 valid snapshots, see results/week10/quality_thresholds.json
+  age_ms: {good: 1000.0, hard: 2500.0}       # hard = telemetry freshness_max_age_ms
+  jitter_ms: {good: 630.0, hard: 1000.0}     # hard = one sampling interval
+  collection_ms: {good: 568.579, hard: 1000.0}  # good = P95 collection benchmark

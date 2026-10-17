@@ -14,6 +14,7 @@ class CurrentStateStore:
         self._errors: dict[str, str] = {}
         self._latest_snapshot = None
         self._twin_state = None
+        self._forecast: dict[str, Any] | None = None
         self._lock = RLock()
 
     def update_collection(self, controller_id, controller, switches, runtime_state):
@@ -59,6 +60,14 @@ class CurrentStateStore:
     def twin_state_dict(self):
         with self._lock:
             return self._twin_state.to_dict() if self._twin_state else None
+
+    def set_forecast(self, value: dict[str, Any]) -> None:
+        with self._lock:
+            self._forecast = value
+
+    def forecast_dict(self) -> dict[str, Any] | None:
+        with self._lock:
+            return dict(self._forecast) if self._forecast is not None else None
 
     def errors(self) -> dict[str, str]:
         with self._lock:

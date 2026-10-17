@@ -1,0 +1,11 @@
+\pgfplotstableread[col sep=comma]{\evdir/per_workload_rmse_wide.csv}\pw
+\begin{tikzpicture}
+\begin{axis}[w10,ybar,bar width=5pt,symbolic x coords={stable,gradual,burst,oscillating,hot-switch},xtick={stable,gradual,burst,oscillating,hot-switch},
+  ylabel={RMSE},legend style={font=\scriptsize,at={(0.5,-0.2)},anchor=north,legend columns=5},ymin=0]
+\addplot table[x=workload,y=persistence]{\pw}; \addlegendentry{Persistence}
+\addplot table[x=workload,y=moving_average_w3]{\pw}; \addlegendentry{MA(3)}
+\addplot table[x=workload,y=linear_regression]{\pw}; \addlegendentry{LR}
+\addplot table[x=workload,y=random_forest]{\pw}; \addlegendentry{RF}
+\addplot table[x=workload,y=xgboost]{\pw}; \addlegendentry{XGBoost}
+\end{axis}
+\end{tikzpicture}

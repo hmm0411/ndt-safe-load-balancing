@@ -1,0 +1,8 @@
+\pgfplotstableread[col sep=comma]{\evdir/model_comparison_test.csv}\tst
+\begin{tikzpicture}
+\begin{axis}[w10,ybar,bar width=10pt,symbolic x coords={persistence,moving_average_w3,linear_regression,random_forest,xgboost},
+  xtick={persistence,moving_average_w3,linear_regression,random_forest,xgboost},xticklabels={Persistence,MA(3),LR,RF,XGBoost},ylabel={test error},legend pos=north east,ymin=0]
+\addplot table[x=model,y=rmse]{\tst}; \addlegendentry{RMSE}
+\addplot table[x=model,y=p95_absolute_error]{\tst}; \addlegendentry{P95 $|e|$}
+\end{axis}
+\end{tikzpicture}

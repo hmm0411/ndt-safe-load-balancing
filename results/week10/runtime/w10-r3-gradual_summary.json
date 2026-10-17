@@ -1,0 +1,31 @@
+{
+  "run_id": "w10-r3-gradual",
+  "predictions": 364,
+  "snapshots": 182,
+  "snapshots_in_file": 491,
+  "ready_ratio": 0.945054945054945,
+  "not_ready_reasons": {
+    "INSUFFICIENT_HISTORY": 20
+  },
+  "ood_fallback_ratio": 0.0377906976744186,
+  "ood_features": {
+    "response_mean_5": 19,
+    "response_p95_ms": 10
+  },
+  "overload_alerts": 26,
+  "inference_ms_p50": 1.0227,
+  "inference_ms_p95": 1.46914,
+  "inference_ms_max": 2.41503,
+  "service_ms_p50": 3.17286,
+  "service_ms_p95": 4.1045,
+  "quality_score_min": 0.813741,
+  "quality_score_p5": 0.821771,
+  "matched_pairs": 338,
+  "rmse": 0.02897624483336012,
+  "rmse_persistence": 0.03911985467486596,
+  "coverage_upper_bound": 0.9674556213017751,
+  "actual_overloads": 2,
+  "overload_hits": 2,
+  "overload_misses": 0,
+  "false_alarms": 24
+}

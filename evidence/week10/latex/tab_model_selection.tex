@@ -1,0 +1,11 @@
+\begin{table}[H]\centering\small
+\caption{Chọn mô hình trên Validation ($S_m$ nhỏ hơn là tốt hơn)}\label{tab:w10-selection}
+\begin{tabular}{llrrrrr}\toprule
+Hạng & Model & RMSE & P95 $|e|$ & RMSE/Persistence & P95 latency (ms) & $S_m$ \\\midrule
+1 & xgboost & 0.0385 & 0.0513 & 0.3879 & 0.5046 & 0.3074 \\
+2 & random\_forest & 0.0426 & 0.0545 & 0.4287 & 32.6800 & 0.3378 \\
+3 & linear\_regression & 0.0700 & 0.1309 & 0.7045 & 0.1553 & 0.6477 \\
+4 & persistence & 0.0993 & 0.1804 & 1.0000 & 0.0005 & 0.9000 \\
+5 & moving\_average\_w3 & 0.1158 & 0.2286 & 1.1666 & 0.0115 & 1.0859 \\
+\bottomrule\end{tabular}
+\end{table}

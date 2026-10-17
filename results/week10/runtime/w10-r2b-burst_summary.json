@@ -1,0 +1,32 @@
+{
+  "run_id": "w10-r2b-burst",
+  "predictions": 364,
+  "snapshots": 182,
+  "snapshots_in_file": 188,
+  "ready_ratio": 0.945054945054945,
+  "not_ready_reasons": {
+    "INSUFFICIENT_HISTORY": 20
+  },
+  "ood_fallback_ratio": 0.0377906976744186,
+  "ood_features": {
+    "max_switch_control_load_share": 1,
+    "response_p95_ms": 9,
+    "response_mean_5": 24
+  },
+  "overload_alerts": 42,
+  "inference_ms_p50": 1.47733,
+  "inference_ms_p95": 8.156329,
+  "inference_ms_max": 9.7837,
+  "service_ms_p50": 7.131319,
+  "service_ms_p95": 11.58008,
+  "quality_score_min": 1.0,
+  "quality_score_p5": 1.0,
+  "matched_pairs": 338,
+  "rmse": 0.07900638008916967,
+  "rmse_persistence": 0.13821073856001606,
+  "coverage_upper_bound": 0.9615384615384616,
+  "actual_overloads": 36,
+  "overload_hits": 30,
+  "overload_misses": 6,
+  "false_alarms": 12
+}

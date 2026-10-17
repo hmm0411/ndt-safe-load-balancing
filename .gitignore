@@ -34,6 +34,8 @@ data/benchmarks/*
 # Frozen capacity artifacts: the orchestrator and forecast collection need them.
 !data/benchmarks/controller_capacity.json
 !data/benchmarks/capacity_runs.csv
+!data/benchmarks/forecast_inference_latency.json
+!data/benchmarks/horizon_v1.json
 !data/benchmarks/reports/
 data/benchmarks/reports/*
 !data/benchmarks/reports/.gitkeep

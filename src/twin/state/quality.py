@@ -6,6 +6,7 @@ from src.schemas.snapshot import (
 from src.schemas.twin import (
     TwinQuality,
 )
+from src.twin.state.quality_score import quality_components, quality_score
 
 
 class TwinQualityAssessor:
@@ -17,7 +18,11 @@ class TwinQualityAssessor:
         min_completeness_ratio: float,
         min_twinning_rate: float,
         twinning_rate_provider,
+        quality_config=None,
     ) -> None:
+        # Validated configs/quality.yaml (quality_score.load_quality_config);
+        # None = no Quality Score, the Hard Gate works as before.
+        self.quality_config = quality_config
 
         self.expected_controller_ids = (
             set(expected_controller_ids)
@@ -178,6 +183,23 @@ class TwinQualityAssessor:
             >= self.min_twinning_rate
         )
 
+        consistency_score = float(
+            getattr(snapshot.quality, "consistency_score", 1.0)
+        )
+        score = None
+        components: dict[str, float] = {}
+        if self.quality_config is not None:
+            components = quality_components(
+                consistency_score=consistency_score,
+                completeness_ratio=completeness,
+                age_ms=age,
+                jitter_ms=jitter,
+                collection_ms=self._collection_ms(snapshot),
+                twinning_rate=twinning_rate,
+                thresholds=self.quality_config["thresholds"],
+            )
+            score = quality_score(components, self.quality_config["weights"])
+
         return TwinQuality(
             age_of_twin_ms=age,
             twinning_rate=twinning_rate,
@@ -189,4 +211,19 @@ class TwinQualityAssessor:
             ),
             consistent=consistent,
             valid=valid,
+            consistency_score=consistency_score,
+            quality_score=score,
+            quality_components=components,
+        )
+
+    def _collection_ms(
+        self,
+        snapshot: NetworkSnapshot,
+    ) -> float:
+        """Slowest controller collection: ingested_at - observed_at."""
+        if not snapshot.controllers:
+            return float("inf")
+        return max(
+            max(0.0, (item.ingested_at - item.observed_at).total_seconds() * 1000.0)
+            for item in snapshot.controllers
         )

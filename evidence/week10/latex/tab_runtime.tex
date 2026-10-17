@@ -1,0 +1,12 @@
+\begin{table}[H]\centering\small
+\caption{Kịch bản runtime (khung workload)}\label{tab:w10-runtime}
+\begin{tabular}{lrrrrrrrrr}\toprule
+Kịch bản & READY & OOD & RMSE & RMSE pers. & Coverage & Quá tải & Báo trúng & Hụt & Nhầm \\\midrule
+stable & 0.945 & 0.070 & 0.014 & 0.019 & 0.997 & 0 & 0 & 0 & 0 \\
+gradual & 0.945 & 0.038 & 0.029 & 0.039 & 0.967 & 2 & 2 & 0 & 24 \\
+burst & 0.945 & 0.038 & 0.079 & 0.138 & 0.962 & 36 & 30 & 6 & 12 \\
+invalid\_snapshot & 0.505 & 0.000 & 0.018 & 0.024 & 0.983 & 0 & 0 & 0 & 0 \\
+hot\_switch & 0.946 & 0.989 & 0.077 & 0.076 & 0.950 & 0 & 0 & 0 & 0 \\
+migration & 0.879 & 0.669 & 0.026 & 0.028 & 0.997 & 0 & 0 & 0 & 0 \\
+\bottomrule\end{tabular}
+\end{table}

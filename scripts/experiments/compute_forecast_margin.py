@@ -5,7 +5,8 @@ Reads the model chosen by S_m (model_selection.json) from
 data/models/forecasting/<model_version>/ and writes, next to it:
 
   error_margin.json     [runtime] finite-sample q95 of |e| on VALIDATION
-  feature_ranges.json   [runtime] train min/max for the OOD gate
+  feature_ranges.json   [runtime] train min/max for the OOD gate (model
+                        features + monitor-only columns, see ood.py)
   coverage.json         Coverage95 per split / controller / workload,
                         with and without the OOD gate, + alarm confusion
   ood_degradation.json  D_OOD and RMSE with / without the gate
@@ -34,7 +35,12 @@ from src.twin.forecasting.margin import (
     overload_confusion,
 )
 from src.twin.forecasting.metrics import evaluate_regression
-from src.twin.forecasting.ood import FeatureRanges, gate_mask
+from src.twin.forecasting.ood import (
+    MONITOR_ONLY_FEATURES,
+    FeatureRanges,
+    gate_mask,
+    monitored_names,
+)
 from src.twin.forecasting.splitter import split_records
 from src.twin.forecasting.tracking import log_to_pointed_run
 from src.twin.forecasting.versions import MODEL_VERSION, MODELS_ROOT, PROCESSED_ROOT, dataset_version
@@ -54,6 +60,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--tolerance-fraction", type=float, default=0.10)
     parser.add_argument("--consecutive-steps", type=int, default=3)
     parser.add_argument("--threshold", type=float, default=1.0)
+    parser.add_argument(
+        "--model-features-only",
+        action="store_true",
+        help="gate on the 27 model features only (the first forecast-v1 gate; "
+        "kept to report the before/after comparison)",
+    )
     parser.add_argument("--no-mlflow", action="store_true")
     return parser.parse_args()
 
@@ -117,7 +129,7 @@ def evaluate_split(
     workloads = [str(r["workload_type"]) for r in rows]
     m = np.asarray([margin_for(margins, cid) for cid in controllers])
 
-    flags = ranges.out_of_range(records_to_matrix(rows, feature_names))
+    flags = ranges.out_of_range(records_to_matrix(rows, list(ranges.feature_names)))
     active = gate_mask(flags, [str(r["sequence_id"]) for r in rows], ranges.consecutive_steps)
     gated_pred = np.where(active, current, model_pred)
 
@@ -131,9 +143,16 @@ def evaluate_split(
         }
     cov["samples"] = len(rows)
 
+    violations: dict[str, int] = {}
+    for row in records_to_matrix(rows, list(ranges.feature_names)):
+        for name in ranges.violations(row):
+            violations[name] = violations.get(name, 0) + 1
     degradation = {
         "samples": len(rows),
         "out_of_range_rate": float(flags.mean()),
+        "out_of_range_by_feature": {
+            name: count / len(rows) for name, count in sorted(violations.items())
+        },
         "d_ood": float(active.mean()),
         "rmse_without_gate": evaluate_regression(y_true, model_pred)["rmse"],
         "rmse_with_gate": evaluate_regression(y_true, gated_pred)["rmse"],
@@ -168,11 +187,16 @@ def main() -> None:
     margins["model_version"] = args.model_version
     write_json(model_dir / "error_margin.json", margins)
 
+    monitor_only = () if args.model_features_only else monitored_names(
+        feature_names, MONITOR_ONLY_FEATURES
+    )[len(feature_names):]
+    watched = list(feature_names) + list(monitor_only)
     ranges = FeatureRanges.fit(
-        records_to_matrix(splits["train"], feature_names),
-        feature_names,
+        records_to_matrix(splits["train"], watched),
+        watched,
         tolerance_fraction=args.tolerance_fraction,
         consecutive_steps=args.consecutive_steps,
+        monitor_only=monitor_only,
     )
     write_json(model_dir / "feature_ranges.json", ranges.to_dict())
 
