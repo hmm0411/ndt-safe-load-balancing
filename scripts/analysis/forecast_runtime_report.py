@@ -189,11 +189,17 @@ def plot(run_id: str, rows: list[dict[str, Any]], output: Path) -> None:
         axis.scatter([sec(r, float(r["horizon_seconds"])) for r in ood],
                      [r["predicted_utilization"] for r in ood],
                      marker="x", color="tab:orange", s=18, zorder=3, label="OOD fallback")
+        over = [r for r in seen if float(r["current_utilization"]) >= THRESHOLD]
+        axis.scatter([sec(r) for r in over], [r["current_utilization"] for r in over],
+                     marker="^", color="black", s=30, zorder=4, label="measured U >= 1")
         axis.set_ylabel(f"{cid}  U")
         axis.grid(alpha=0.3)
     axes[0, 0].set_title(f"Figure 9 - runtime forecast, {run_id}")
-    axes[0, 0].legend(loc="upper left", fontsize=8, ncol=3)
-    axes[-1, 0].set_xlabel("seconds since first snapshot")
+    # Legend under the plots: inside an axis it hides alerts near the threshold.
+    handles, labels = axes[0, 0].get_legend_handles_labels()
+    axes[-1, 0].legend(handles, labels, loc="upper center", bbox_to_anchor=(0.5, -0.28),
+                       ncol=len(labels), fontsize=9, frameon=False)
+    axes[-1, 0].set_xlabel("seconds since workload start (first valid snapshot)")
     fig.savefig(output, dpi=150)
     plt.close(fig)
 
@@ -218,7 +224,7 @@ def main() -> int:
         (args.output_dir / f"{run_id}_summary.json").write_text(
             json.dumps(summary, indent=2) + "\n", encoding="utf-8"
         )
-        plot(run_id, rows, args.output_dir / f"fig9_{run_id}.png")
+        plot(run_id, active_window(rows), args.output_dir / f"fig9_{run_id}.png")
         print(json.dumps(summary, indent=2))
 
     flat = [k for k, v in summaries[0].items() if not isinstance(v, dict)]
