@@ -1,0 +1,10 @@
+\begin{tikzpicture}
+\begin{axis}[w10,xmin=0,xlabel={time in run (s)},ylabel={$U$ of c1},legend pos=outer north east,
+  legend style={font=\scriptsize},cycle list name=color list]
+\foreach \w/\n in {stable/stable,gradual/gradual,burst/burst,oscillating/oscillating,hot_switch/hot-switch}{
+  \IfFileExists{\evdir/workload_profile_\w.csv}{
+    \addplot+[no marks,thick] table[col sep=comma,x=t_s,y=utilization]{\evdir/workload_profile_\w.csv};
+    \addlegendentryexpanded{\n}}{}}
+\addplot[red,dashed,domain=0:200] {1.0};
+\end{axis}
+\end{tikzpicture}

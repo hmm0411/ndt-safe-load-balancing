@@ -1,0 +1,10 @@
+\pgfplotstableread[col sep=comma]{\evdir/ood_degradation.csv}\ood
+\begin{tikzpicture}
+\begin{axis}[w10,ybar,bar width=10pt,symbolic x coords={validation,test,unseen},xtick={validation,test,unseen},
+  xticklabels={Validation (ID),Test (ID),Hot-switch (OOD)},ylabel={RMSE},ymin=0,
+  legend style={font=\scriptsize,at={(0.5,-0.22)},anchor=north,legend columns=3}]
+\addplot table[x=split,y=rmse_without_gate]{\ood}; \addlegendentry{XGBoost, no gate}
+\addplot table[x=split,y=rmse_with_gate]{\ood}; \addlegendentry{XGBoost + OOD gate}
+\addplot table[x=split,y=rmse_persistence]{\ood}; \addlegendentry{Persistence}
+\end{axis}
+\end{tikzpicture}

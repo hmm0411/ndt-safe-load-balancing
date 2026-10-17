@@ -1,0 +1,12 @@
+\pgfplotstableread[col sep=comma]{\evdir/quality_sensitivity_invalid_snapshot.csv}\qs
+\begin{tikzpicture}
+\begin{axis}[w10,xlabel={time in run (s), telemetry-loss run},ylabel={Quality Score},ymin=0,ymax=1.05,
+  legend style={font=\scriptsize,at={(0.5,-0.32)},anchor=north,legend columns=3}]
+\addplot+[no marks,thick] table[x=t_s,y=base]{\qs}; \addlegendentry{base}
+\addplot+[no marks] table[x=t_s,y=consistency_heavy]{\qs}; \addlegendentry{consistency-heavy}
+\addplot+[no marks] table[x=t_s,y=completeness_heavy]{\qs}; \addlegendentry{completeness-heavy}
+\addplot+[no marks] table[x=t_s,y=freshness_heavy]{\qs}; \addlegendentry{freshness-heavy}
+\addplot[only marks,mark=|,red,mark size=2pt,unbounded coords=discard] table[x=t_s,y=invalid_mark]{\qs};
+\addlegendentry{Hard Gate: invalid}
+\end{axis}
+\end{tikzpicture}

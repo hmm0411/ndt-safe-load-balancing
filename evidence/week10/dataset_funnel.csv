@@ -1,0 +1,7 @@
+stage,samples
+nominal (runs x duration x controllers),9000
+raw samples written,9000
+valid snapshots,9000
+dropped: not enough history,500
+dropped: no label at t+h,150
+processed ML samples,8350

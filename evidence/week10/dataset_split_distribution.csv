@@ -1,0 +1,6 @@
+workload,train,validation,test,unseen
+burst,1002,334,334,0
+gradual,1002,334,334,0
+hot-switch,0,0,0,1670
+oscillating,1002,334,334,0
+stable,1002,334,334,0

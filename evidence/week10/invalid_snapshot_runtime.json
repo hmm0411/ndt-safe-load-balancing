@@ -1,0 +1,32 @@
+{
+  "run_id": "w10-r4-telemetry-loss",
+  "predictions": 364,
+  "snapshots": 182,
+  "snapshots_in_file": 363,
+  "ready_ratio": 0.5054945054945055,
+  "not_ready_reasons": {
+    "INSUFFICIENT_HISTORY": 20,
+    "INVALID_SNAPSHOT": 140,
+    "HISTORY_GAP": 20
+  },
+  "ood_fallback_ratio": 0.0,
+  "ood_features": {},
+  "overload_alerts": 0,
+  "inference_ms_p50": 0.92883,
+  "inference_ms_p95": 1.355,
+  "inference_ms_max": 3.441061,
+  "service_ms_p50": 2.28951,
+  "service_ms_p95": 3.58635,
+  "quality_score_min": 0.679948,
+  "quality_score_p5": 0.687325,
+  "matched_pairs": 172,
+  "rmse": 0.01812841758638616,
+  "rmse_persistence": 0.024094196440316247,
+  "coverage_upper_bound": 0.9825581395348837,
+  "actual_overloads": 0,
+  "overload_hits": 0,
+  "overload_misses": 0,
+  "false_alarms": 0,
+  "scenario": "invalid_snapshot",
+  "source": "data/raw/forecast/w10-r4-telemetry-loss.jsonl"
+}

@@ -1,0 +1,44 @@
+# Week 10 Definition of Done, generated 2026-10-17T15:27:26.231330+00:00
+# PASS = evidence found and criterion met; MISSING = evidence not produced yet; FAIL = criterion not met
+
+Week9 dataset frozen        PASS     data/forecasting/processed/forecast-dataset-v2-h3-provisional
+RF                          PASS     test_metrics.json
+XGBoost                     PASS     test_metrics.json
+RF tuning Validation-only   PASS     rf_validation_search.csv
+XGB tuning Validation-only  PASS     xgb_validation_search.csv
+Five-model comparison       PASS     model_comparison.csv
+MAE                         PASS     model_comparison.csv
+RMSE                        PASS     model_comparison.csv
+MAPEe                       PASS     model_comparison.csv
+R2                          PASS     model_comparison.csv
+P95 absolute error          PASS     model_comparison.csv
+inference mean/P95          PASS     inference_latency.csv
+ID evaluation               PASS     test_metrics.json
+Unseen Hot-switch           PASS     unseen_metrics.json
+OOD degradation ratio       PASS     ood_degradation.csv
+Weighted Validation Score   PASS     model_selection.csv
+Final model locked          PASS     data/models/forecasting/forecast-v1/model_card.json
+Validation P95 margin       PASS     error_margin.json
+Test Coverage95             PASS     coverage.csv (test, with gate: 0.9573353293413174)
+Model artifact              PASS     data/models/forecasting/forecast-v1
+Model card                  PASS     data/models/forecasting/forecast-v1/model_card.json
+History buffer              PASS     src/twin/forecasting/history.py
+Runtime Predictor           PASS     src/twin/forecasting/predictor.py
+Overload Risk Detector      PASS     tests/unit/test_overload_detector.py
+consistency_score           PASS     tests/unit/test_snapshot_consistency_score.py
+quality_score               PASS     src/twin/state/quality_score.py
+Hard Gate preserved         PASS     quality_sensitivity.csv (hard_valid equal for all variants)
+Invalid state -> NOT_READY  PASS     invalid_snapshot_runtime.json
+/api/v1/twin/forecast       PASS     src/orchestrator/app.py
+Stable runtime              PASS     stable_runtime.json
+Gradual proactive runtime   PASS     gradual_runtime.json
+Burst runtime recorded      PASS     burst_runtime.json
+Horizon v1 measured         PASS     horizon_v1.json
+Dataset statistics          PASS     dataset_statistics.csv
+Quality sensitivity         PASS     quality_sensitivity.csv
+make ci                     PASS     ci.txt (run with --ci)
+
+36/36 PASS
+
+Not produced (inputs missing):
+  (none)
