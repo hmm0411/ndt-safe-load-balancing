@@ -1,5 +1,5 @@
-# make ci + git diff --check, 2026-10-17T15:27:06.369961+00:00
-git_commit: d9e43ea9f3e203cf61627ee93660e2da3fc8eb04
+# make ci + git diff --check, 2026-10-17T16:28:21.111080+00:00
+git_commit: 275cdff82b2343f2c833aa1b585816520a2158a3
 
 $ make ci
 python3 -m compileall -q src tests
@@ -11,9 +11,7 @@ python3 -m unittest discover -s tests/unit -v
 [forecast] error=twin_state needs created_at and snapshot_id
 [forecast] load error=missing model_card.json; missing feature_schema.json; missing error_margin.json
 
-... ok
-test_gap_reports_history_gap_until_refilled (test_forecast_predictor.PersistenceForecasterTest) ... ok
-test_hot_switch_share_turns_on_the_ood_gate_at_the_third_sample (test_forecast_predictor.PersistenceForecasterTest) ... ok
+st_hot_switch_share_turns_on_the_ood_gate_at_the_third_sample (test_forecast_predictor.PersistenceForecasterTest) ... ok
 test_invalid_snapshot_is_not_ready_without_values (test_forecast_predictor.PersistenceForecasterTest) ... ok
 test_margin_pushes_risk_and_measured_overload_is_always_risk (test_forecast_predictor.PersistenceForecasterTest) ... ok
 test_missing_capacity (test_forecast_predictor.PersistenceForecasterTest) ... ok
@@ -214,6 +212,7 @@ test_reset_clears_existing_measurements (test_twinning_rate.TwinningRateTrackerT
 test_ten_successes_have_rate_one (test_twinning_rate.TwinningRateTrackerTests) ... ok
 test_hard_gate_does_not_depend_on_weights (test_week10_evidence.QualityReplayTest) ... ok
 test_histogram_counts_every_value (test_week10_evidence.QualityReplayTest) ... ok
+test_startup_snapshots_do_not_count_against_the_twinning_window (test_week10_evidence.QualityReplayTest) ... ok
 test_deadline_sequence (test_workload_generator.TestDeadlinePacer) ... ok
 test_period_ms_matches_rate (test_workload_generator.TestDeadlinePacer) ... ok
 test_wait_until_sleeps_remaining_time (test_workload_generator.TestDeadlinePacer) ... ok
@@ -236,15 +235,13 @@ test_hot_switch_share_must_be_finite (test_workload_profiles.WorkloadPointTests)
 test_serialization (test_workload_schema.WorkloadSchemaTests) ... ok
 
 ----------------------------------------------------------------------
-Ran 429 tests in 15.696s
+Ran 430 tests in 15.114s
 
 OK
 
 exit_code: 0
 
 $ git diff --check
-results/week10/runtime/runtime_summary.csv:3: trailing whitespace.
-+w10-r2b-burst,364,182,188,0.945054945054945,0.0377906976744186,42,1.47733,8.156329,9.7837,7.131319,11.58008,1.0,1.0,338,0.07900638008916967,0.13821073856001606,0.9615384615384616,36,30,6,12
 
 
-exit_code: 2
+exit_code: 0
