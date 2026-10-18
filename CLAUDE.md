@@ -78,7 +78,7 @@ File rỗng **cố ý giữ** — không xóa:
 - `evidence/twin_state/git_diff_check.txt` (rỗng = `git diff --check` không lỗi, là bằng chứng).
 
 Còn chờ Vy/My quyết, không tự xóa: `APPLY_PATCH.md`, `PATCH_NOTES.md` (trùng nội dung với README và
-`docs/capacity-benchmark.md`), `dashboard/vercel.json` (placeholder `YOUR-BACKEND-DOMAIN`),
+`docs/capacity-benchmark.md`),
 `forecasting_prediction_plots.zip` (plot sinh lại được bằng `plot_forecast_baselines.py`).
 Không đụng `data/benchmarks.zip` và mọi thứ trong `data/`, `evidence/`.
 
