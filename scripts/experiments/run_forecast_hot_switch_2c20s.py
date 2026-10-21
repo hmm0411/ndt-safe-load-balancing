@@ -23,6 +23,7 @@ from src.experiments.runners.forecast_data_runner import (
 )
 from src.twin.capacity.model import CapacityModel
 from src.experiments.workloads.hot_switch import (
+    HOT_SWITCH_LEVELS,
     HotSwitchWorkload,
 )
 
@@ -78,16 +79,36 @@ def local_packet_in_per_flow() -> float:
     return value
 
 
+def hot_switch_level() -> str | None:
+    """Level from NDT_HOT_SWITCH_LEVEL (moderate/high/peak); None = Week 10 behaviour."""
+    raw = os.environ.get("NDT_HOT_SWITCH_LEVEL")
+
+    if not raw:
+        return None
+
+    if raw not in HOT_SWITCH_LEVELS:
+        raise ValueError(
+            f"NDT_HOT_SWITCH_LEVEL={raw!r}; "
+            f"expected one of {sorted(HOT_SWITCH_LEVELS)}"
+        )
+
+    return raw
+
+
 def build_distribution(
     safe_capacity_pps: float,
     controller_id: str,
     packet_in_per_flow: float,
+    hot_share: float = HOT_SHARE,
 ) -> dict[int, float]:
     """Per-host new-flow rates that load one controller to the target."""
     if safe_capacity_pps <= 0 or packet_in_per_flow <= 0:
         raise ValueError(
             "safe_capacity_pps and packet_in_per_flow must be > 0"
         )
+
+    if not 0.0 < hot_share < 1.0:
+        raise ValueError("hot_share must be in (0, 1)")
 
     total_rate = (
         TARGET_UTILIZATION
@@ -106,12 +127,12 @@ def build_distribution(
 
     hot_rate = (
         total_rate
-        * HOT_SHARE
+        * hot_share
     )
 
     cold_rate = (
         total_rate
-        * (1.0 - HOT_SHARE)
+        * (1.0 - hot_share)
         / len(cold_hosts)
     )
 
@@ -249,6 +270,13 @@ def run_forecast_hot_switch(
 
     packet_in_per_flow = local_packet_in_per_flow()
 
+    level = hot_switch_level()
+    hot_share = (
+        HOT_SWITCH_LEVELS[level]
+        if level
+        else HOT_SHARE
+    )
+
     distributions = {
         controller_id: build_distribution(
             capacity_model.safe_capacity(
@@ -256,6 +284,7 @@ def run_forecast_hot_switch(
             ),
             controller_id,
             packet_in_per_flow,
+            hot_share,
         )
         for controller_id in CONTROLLER_IDS
     }
@@ -299,8 +328,9 @@ def run_forecast_hot_switch(
             TARGET_UTILIZATION
         ),
         "target_hot_switch_share": (
-            HOT_SHARE
+            hot_share
         ),
+        "hot_switch_level": level,
         "traffic_model": (
             "local-source-to-local-sink"
         ),
@@ -507,7 +537,8 @@ def run_forecast_hot_switch(
                 TARGET_UTILIZATION
             ),
             hot_switch_id="s1",
-            hot_switch_share=HOT_SHARE,
+            hot_switch_share=hot_share,
+            level=level,
         )
 
         runner = ForecastDataRunner(

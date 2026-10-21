@@ -11,6 +11,8 @@ class OscillatingWorkload(WorkloadProfile):
         baseline: float = 0.70,
         amplitude: float = 0.20,
         period_seconds: float = 20.0,
+        phased: bool = False,
+        peak_fraction: float = 0.8,
     ) -> None:
         if period_seconds <= 0:
             raise ValueError(
@@ -20,6 +22,17 @@ class OscillatingWorkload(WorkloadProfile):
         self.baseline = baseline
         self.amplitude = amplitude
         self.period_seconds = period_seconds
+        self.phased = phased
+        self.peak_fraction = peak_fraction
+
+    def _phase(self, elapsed_seconds: float) -> str:
+        # Old behaviour (phased=False): single phase "oscillating".
+        if not self.phased:
+            return "oscillating"
+        angle = 2.0 * math.pi * elapsed_seconds / self.period_seconds
+        if math.sin(angle) >= self.peak_fraction:
+            return "peak"
+        return "rising" if math.cos(angle) > 0 else "falling"
 
     def target_at(
         self,
@@ -40,5 +53,5 @@ class OscillatingWorkload(WorkloadProfile):
         return WorkloadPoint(
             elapsed_seconds=elapsed_seconds,
             target_utilization=utilization,
-            phase="oscillating",
+            phase=self._phase(elapsed_seconds),
         )
