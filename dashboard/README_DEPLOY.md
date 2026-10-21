@@ -7,7 +7,6 @@ Static dashboard for the KLTN **A Network Digital Twin-Assisted Framework for Sa
 ```text
 dashboard/
 ├── index.html
-├── vercel.json
 └── README_DEPLOY.md
 ```
 
@@ -18,20 +17,46 @@ No React/Vite build is required.
 The current FastAPI Orchestrator exposes:
 
 ```text
-GET  /health
-GET  /api/v1/state
-GET  /api/v1/twin/state
-POST /api/v1/init-roles
-POST /api/v1/migrations
+GET  /health                 orchestrator + reachability of every controller
+GET  /api/v1/state           ownership, transactions, switch locks, telemetry errors, latest snapshot
+GET  /api/v1/twin/state      TwinState: telemetry, Hard Gate valid, Quality Score
+GET  /api/v1/twin/forecast   U_hat(t+h), m_f, overload risk, OOD fallback per controller
+GET  /docs                   FastAPI Swagger UI
+POST /api/v1/init-roles      (not called by the dashboard)
+POST /api/v1/migrations      (not called by the dashboard)
 ```
 
-The dashboard uses `/api/v1/twin/state` for live Twin/telemetry data and `/api/v1/state` for transaction/ownership/error information. It does not invent LIVE results for Predictor/Candidate/Safety/Calibration/Experiments APIs that are not currently exposed.
+The dashboard only reads. What each tab uses:
 
-To inspect every UI module with simulated data:
+| Tab | Source |
+|---|---|
+| Dual View, Controllers, Switches | `/api/v1/twin/state` |
+| Digital Twin | `/api/v1/twin/state` (Hard Gate, Quality Score) + `/api/v1/state` latest snapshot (conflicts, missing fields, stale sources) |
+| Forecast & Risk | `/api/v1/twin/forecast` (READY / NOT_READY reason, U_hat, U_hat + m_f, server-side `overload_risk`, OOD fallback); the chart and the online check are built in the browser from successive snapshots |
+| Execution | `/api/v1/state` transactions and `locked_switches` |
+| Services | links to the API, both Ryu REST ports and MLflow; runtime resources; controller sessions from `/health` |
+| Events | changes between polls (snapshot validity, forecast reason, overload risk, OOD gate, controller reachability, locks) + transaction history |
+| Safety Gate, Calibration, Benchmark | not implemented in the backend yet (Nội dung 3–4): empty in LIVE, sample data in Demo |
+
+`/health` calls every controller over REST, so the dashboard polls it every 5 s in the background instead of on every refresh.
+
+To inspect every UI module with simulated data (numbers mirror the real setup: c_safe 1433 pps, h = 3 s, forecast-v1, m_f 0.048 / 0.055):
 
 ```text
-https://<your-vercel-domain>/?demo=1
+http://localhost:9000/dashboard/?demo=1
 ```
+
+## Access (LIVE)
+
+On the VM the orchestrator listens on `127.0.0.1:9000` and serves the dashboard itself at `/dashboard/` (same origin as the API, so no CORS is needed). From your machine:
+
+```bash
+gcloud compute ssh kltn-sdn --zone asia-southeast1-b -- -N \
+  -L 9000:127.0.0.1:9000 -L 5000:127.0.0.1:5000 \
+  -L 8081:127.0.0.1:8081 -L 8082:127.0.0.1:8082
+```
+
+Then open `http://localhost:9000/dashboard/`. The extra ports make the MLflow and controller links in the Services tab work through the same tunnel.
 
 ## Local test
 
@@ -46,11 +71,7 @@ Demo:
 http://localhost:8080/?demo=1
 ```
 
-Direct backend test:
-
-```text
-http://localhost:8080/?api=http://127.0.0.1:9000
-```
+A page served from another origin (for example `:8080`) cannot read the orchestrator API: the orchestrator does not enable CORS. Use `http://localhost:9000/dashboard/` for LIVE data.
 
 ## GitHub
 
@@ -60,65 +81,12 @@ Place this folder in the KLTN repository:
 ndt-safe-load-balancing/
 └── dashboard/
     ├── index.html
-    ├── vercel.json
     └── README_DEPLOY.md
 ```
 
-Then:
+Changes go through a task branch and a PR into `dev`, like any other task (CLAUDE.md §7).
 
-```bash
-git add dashboard/
-git commit -m "feat: finalize NDT dashboard"
-git push origin main
-```
-
-## Vercel
-
-1. Add New → Project.
-2. Import the GitHub repository.
-3. **Root Directory = `dashboard`**.
-4. Framework Preset = **Other**.
-5. Build Command = empty.
-6. Output Directory = `.`.
-7. Deploy.
-
-## Vercel → GCP API proxy
-
-`vercel.json` intentionally contains:
-
-```text
-https://YOUR-BACKEND-DOMAIN.example.com
-```
-
-Replace it after the GCP backend has a real HTTPS domain. Example:
-
-```json
-{
-  "headers": [
-    {
-      "source": "/api/:path*",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-store, max-age=0"
-        }
-      ]
-    }
-  ],
-  "rewrites": [
-    {
-      "source": "/api/:path*",
-      "destination": "https://api.example.com/api/:path*"
-    }
-  ]
-}
-```
-
-The frontend continues to call:
-
-```javascript
-fetch('/api/v1/twin/state')
-```
+The dashboard is published via Claude Artifacts. A published copy runs on another origin, so it can show the Demo mode; LIVE data needs the orchestrator over HTTPS with CORS (see below) or the SSH tunnel above.
 
 ## GCP VM: make the public IP static
 
@@ -178,7 +146,7 @@ For your KLTN, the Console route is the safest way to avoid mixing up the region
 The production path should be:
 
 ```text
-Vercel
+Claude Dashboard
   ↓ HTTPS
 api.<your-domain>
   ↓
@@ -191,7 +159,7 @@ Nginx/Caddy or HTTPS Load Balancer
 FastAPI Orchestrator
 ```
 
-Do not use `http://34.x.x.x:9000` as the final Vercel backend.
+Do not use `http://34.x.x.x:9000` as the dashboard backend: it is plain HTTP and `POST /api/v1/migrations` has no authentication.
 
 ## DNS
 
@@ -201,7 +169,7 @@ For a domain such as `example.com`, create:
 api.example.com  A  <GCP static public IPv4>
 ```
 
-Configure HTTPS for the subdomain, then put `https://api.example.com` in `vercel.json`.
+Configure HTTPS for the subdomain, then enter `https://api.example.com` as **Orchestrator API base URL** in the dashboard Settings. This also needs CORS for the dashboard origin (FastAPI `CORSMiddleware`, GET only) and authentication in front of the POST endpoints; neither exists in the orchestrator today.
 
 ## Public GitHub safety
 
@@ -214,7 +182,6 @@ passwords
 tokens
 SSH private keys
 GCP service-account JSON
-Vercel tokens
 ```
 
 A public domain or public IP is not itself a credential, but you do not need to hard-code the IP when a domain is available.
