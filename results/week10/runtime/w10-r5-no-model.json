@@ -1,4 +1,33 @@
 {
+  "run_id": "w10-r5-no-model",
   "status": "MODEL_NOT_LOADED",
-  "error": "missing model_card.json; missing feature_schema.json; missing error_margin.json"
+  "error": "missing model_card.json; missing feature_schema.json; missing error_margin.json",
+  "health": "{\"status\":\"UP\",\"controllers\":{\"c1\":{\"reachable\":true,\"state\":{\"controller_id\":\"c1\",\"switches\":[{\"switch_id\":\"s1\",\"dpid\":1,\"connected\":true,\"role\":\"MASTER\"},{\"switch_id\":\"s2\",\"dpid\":2,\"connected\":true,\"role\":\"MASTER\"},{\"switch_id\":\"s3\",\"dpid\":3,\"connected\":true,\"role\":\"MASTER\"},{\"switch_id\":\"s4\",\"dpid\":4,\"connected\":true,\"role\":\"MASTER\"},{\"switch_id\":\"s5\",\"dpid\":5,\"connected\":true,\"role\":\"MASTER\"},{\"switch_id\":\"s6\",\"dpid\":6,\"connected\":true,\"role\":\"MASTER\"},{\"switch_id\":\"s7\",\"dpid\":7,\"connected\":true,\"role\":\"MASTER\"},{\"switch_id\":\"s8\",\"dpid\":8,\"connected\":true,\"role\":\"MASTER\"},{\"switch_id\":\"s9\",\"dpid\":9,\"connected\":true,\"role\":\"MASTER\"},{\"switch_id\":\"s10\",\"dpid\":10,\"connected\":true,\"role\":\"MASTER\"},{\"switch_id\":\"s11\",\"dpid\":11,\"connected\":true,\"role\":\"SLAVE\"},{\"switch_id\":\"s12\",\"dpid\":12,\"connected\":true,\"role\":\"SLAVE\"},{\"switch_id\":\"s13\",\"dpid\":13,\"connected\":true,\"role\":\"SLAVE\"},{\"switch_id\":\"s14\",\"dpid\":14,\"connected\":true,\"role\":\"SLAVE\"},{\"switch_id\":\"s15\",\"dpid\":15,\"connected\":true,\"role\":\"SLAVE\"},{\"switch_id\":\"s16\",\"dpid\":16,\"connected\":true,\"role\":\"SLAVE\"},{\"switch_id\":\"s17\",\"dpid\":17,\"connected\":true,\"role\":\"SLAVE\"},{\"switch_id\":\"s18\",\"dpid\":18,\"connected\":true,\"role\":\"SLAVE\"},{\"switch_id\":\"s19\",\"dpid\":19,\"connected\":true,\"role\":\"SLAVE\"},{\"switch_id\":\"s20\",\"dpid\":20,\"connected\":true,\"role\":\"SLAVE\"}]}},\"c2\":{\"reachable\":true,\"state\":{\"controller_id\":\"c2\",\"switches\":[{\"switch_id\":\"s1\",\"dpid\":1,\"connected\":true,\"role\":\"SLAVE\"},{\"switch_id\":\"s2\",\"dpid\":2,\"connected\":true,\"role\":\"SLAVE\"},{\"switch_id\":\"s3\",\"dpid\":3,\"connected\":true,\"role\":\"SLAVE\"},{\"switch_id\":\"s4\",\"dpid\":4,\"connected\":true,\"role\":\"SLAVE\"},{\"switch_id\":\"s5\",\"dpid\":5,\"connected\":true,\"role\":\"SLAVE\"},{\"switch_id\":\"s6\",\"dpid\":6,\"connected\":true,\"role\":\"SLAVE\"},{\"switch_id\":\"s7\",\"dpid\":7,\"connected\":true,\"role\":\"SLAVE\"},{\"switch_id\":\"s8\",\"dpid\":8,\"connected\":true,\"role\":\"SLAVE\"},{\"switch_id\":\"s9\",\"dpid\":9,\"connected\":true,\"role\":\"SLAVE\"},{\"switch_id\":\"s10\",\"dpid\":10,\"connected\":true,\"role\":\"SLAVE\"},{\"switch_id\":\"s11\",\"dpid\":11,\"connected\":true,\"role\":\"MASTER\"},{\"switch_id\":\"s12\",\"dpid\":12,\"connected\":true,\"role\":\"MASTER\"},{\"switch_id\":\"s13\",\"dpid\":13,\"connected\":true,\"role\":\"MASTER\"},{\"switch_id\":\"s14\",\"dpid\":14,\"connected\":true,\"role\":\"MASTER\"},{\"switch_id\":\"s15\",\"dpid\":15,\"connected\":true,\"role\":\"MASTER\"},{\"switch_id\":\"s16\",\"dpid\":16,\"connected\":true,\"role\":\"MASTER\"},{\"switch_id\":\"s17\",\"dpid\":17,\"connected\":true,\"role\":\"MASTER\"},{\"switch_id\":\"s18\",\"dpid\":18,\"connected\":true,\"role\":\"MASTER\"},{\"switch_id\":\"s19\",\"dpid\":19,\"connected\":true,\"role\":\"MASTER\"},{\"switch_id\":\"s20\",\"dpid\":20,\"connected\":true,\"role\":\"MASTER\"}]}}}}",
+  "twin_quality_during_run": {
+    "age_of_twin_ms": 247.611,
+    "twinning_rate": 1,
+    "completeness_ratio": 1,
+    "synchronization_jitter_ms": 2.8939999999999997,
+    "consistent": true,
+    "valid": true,
+    "consistency_score": 1,
+    "quality_score": 1,
+    "quality_components": {
+      "consistency": 1,
+      "completeness": 1,
+      "freshness": 1,
+      "jitter": 1,
+      "collection": 1,
+      "twinning": 1
+    }
+  },
+  "forecast_payload": {
+    "status": "MODEL_NOT_LOADED",
+    "error": "missing model_card.json; missing feature_schema.json; missing error_margin.json"
+  },
+  "captured_at": "2026-10-21T13:46:29Z",
+  "snapshots_in_run": {
+    "snapshots": 188,
+    "valid": 184
+  }
 }

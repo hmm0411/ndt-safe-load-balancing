@@ -1,5 +1,5 @@
-# make ci + git diff --check, 2026-10-17T16:28:21.111080+00:00
-git_commit: 275cdff82b2343f2c833aa1b585816520a2158a3
+# make ci + git diff --check, 2026-10-21T13:49:15.238758+00:00
+git_commit: 33122f4451f57232651edff8a97fb1c8698a0ca0
 
 $ make ci
 python3 -m compileall -q src tests
@@ -11,7 +11,7 @@ python3 -m unittest discover -s tests/unit -v
 [forecast] error=twin_state needs created_at and snapshot_id
 [forecast] load error=missing model_card.json; missing feature_schema.json; missing error_margin.json
 
-st_hot_switch_share_turns_on_the_ood_gate_at_the_third_sample (test_forecast_predictor.PersistenceForecasterTest) ... ok
+turns_on_the_ood_gate_at_the_third_sample (test_forecast_predictor.PersistenceForecasterTest) ... ok
 test_invalid_snapshot_is_not_ready_without_values (test_forecast_predictor.PersistenceForecasterTest) ... ok
 test_margin_pushes_risk_and_measured_overload_is_always_risk (test_forecast_predictor.PersistenceForecasterTest) ... ok
 test_missing_capacity (test_forecast_predictor.PersistenceForecasterTest) ... ok
@@ -79,21 +79,21 @@ test_forecaster_error_is_contained (test_forecast_service.ForecastServiceTest) .
 test_missing_model_keeps_running_and_reports_it (test_forecast_service.ForecastServiceTest) ... ok
 test_not_ready_before_first_snapshot (test_forecast_service.ForecastServiceTest) ... ok
 test_ready_payload_and_jsonl (test_forecast_service.ForecastServiceTest) ... ok
-test_forecast_route_is_registered (test_forecast_service.OrchestratorRouteTest) ... /home/thuyvy2000vyy/ndt-safe-load-balancing/src/orchestrator/app.py:246: DeprecationWarning: 
+test_forecast_route_is_registered (test_forecast_service.OrchestratorRouteTest) ... /home/tntvy112_gmail_com/ndt-safe-load-balancing/src/orchestrator/app.py:246: DeprecationWarning: 
         on_event is deprecated, use lifespan event handlers instead.
 
         Read more about it in the
         [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
         
   @app.on_event("startup")
-/home/thuyvy2000vyy/ndt-venv/lib/python3.10/site-packages/fastapi/applications.py:4681: DeprecationWarning: 
+/home/tntvy112_gmail_com/ndt-venv/lib/python3.10/site-packages/fastapi/applications.py:4681: DeprecationWarning: 
         on_event is deprecated, use lifespan event handlers instead.
 
         Read more about it in the
         [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
         
   return self.router.on_event(event_type)  # ty: ignore[deprecated]
-/home/thuyvy2000vyy/ndt-safe-load-balancing/src/orchestrator/app.py:256: DeprecationWarning: 
+/home/tntvy112_gmail_com/ndt-safe-load-balancing/src/orchestrator/app.py:256: DeprecationWarning: 
         on_event is deprecated, use lifespan event handlers instead.
 
         Read more about it in the
@@ -137,7 +137,7 @@ test_splits_do_not_overlap (test_forecast_splitter.ForecastSplitterTests) ... ok
 test_disabled_tracker_is_noop (test_forecast_tracking.TrackerHelpersTests) ... ok
 test_finite_drops_nan_inf_bool_and_text (test_forecast_tracking.TrackerHelpersTests) ... ok
 test_flat_stringifies_none (test_forecast_tracking.TrackerHelpersTests) ... ok
-test_dataset_registry_alias_and_pointer (test_forecast_tracking.TrackerMlflowTests) ... /home/thuyvy2000vyy/ndt-venv/lib/python3.10/site-packages/mlflow/data/dataset_source_registry.py:148: UserWarning: The specified dataset source can be interpreted in multiple ways: LocalArtifactDatasetSource, LocalArtifactDatasetSource. MLflow will assume that this is a LocalArtifactDatasetSource source.
+test_dataset_registry_alias_and_pointer (test_forecast_tracking.TrackerMlflowTests) ... /home/tntvy112_gmail_com/ndt-venv/lib/python3.10/site-packages/mlflow/data/dataset_source_registry.py:148: UserWarning: The specified dataset source can be interpreted in multiple ways: LocalArtifactDatasetSource, LocalArtifactDatasetSource. MLflow will assume that this is a LocalArtifactDatasetSource source.
   return _dataset_source_registry.resolve(
 Union type hint with multiple non-None types is inferred as AnyType, and MLflow doesn't validate the data against its element types.Union type hint is inferred as AnyType, and MLflow doesn't validate the data against its element types.Union type hint with multiple non-None types is inferred as AnyType, and MLflow doesn't validate the data against its element types.Successfully registered model 'unit-linear'.
 Created version '1' of model 'unit-linear'.
@@ -235,7 +235,7 @@ test_hot_switch_share_must_be_finite (test_workload_profiles.WorkloadPointTests)
 test_serialization (test_workload_schema.WorkloadSchemaTests) ... ok
 
 ----------------------------------------------------------------------
-Ran 430 tests in 15.114s
+Ran 430 tests in 16.325s
 
 OK
 
