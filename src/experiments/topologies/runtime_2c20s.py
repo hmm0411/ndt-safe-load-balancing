@@ -176,7 +176,7 @@ def main() -> None:
         args.forecast_burst,
         args.forecast_oscillating,
     )
-    if args.profile and not any(profile_modes):
+    if args.profile and not (any(profile_modes) or args.forecast_hot_switch):
         parser.error("--profile is not supported for this workload yet")
     forecast_modes = (
         args.forecast_stable,
@@ -284,6 +284,7 @@ def main() -> None:
                 seed=args.seed,
                 capacity_artifact=args.capacity_artifact,
                 git_commit=args.git_commit,
+                profiles=parse_profile_specs(args.profile),
             )
 
         elif args.forecast_oscillating:
