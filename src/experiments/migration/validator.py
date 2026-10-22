@@ -42,6 +42,8 @@ from src.experiments.migration.writer import (
 
 TOLERANCE = 1e-9
 
+EXECUTED_STATUSES = frozenset({"COMMITTED", "RESTORED", "FAILED"})
+
 
 @dataclass
 class _Report:
@@ -190,10 +192,16 @@ def validate_attempt(
         return finish()
 
     # Pre window: the runner must not act without a full, valid pre window.
+    # Only an executed MIGRATE (COMMITTED / RESTORED / FAILED) acted on the testbed; a
+    # SKIPPED MIGRATE or a NO_OP keeps whatever pre window it had and is simply not
+    # eligible (compute_outcome already says why), so these are warnings there.
+    status = None if transaction is None else transaction.status
+    executed = action.action_type == "MIGRATE" and status in EXECUTED_STATUSES
+    pre_problem = report.error if executed else report.warn
     if len(before) != required_window:
-        report.error(f"before window has {len(before)} samples, expected {required_window}")
+        pre_problem(f"before window has {len(before)} samples, expected {required_window}")
     if not all(v.quality.valid for v in before):
-        report.error("before window contains a snapshot that failed the Hard Gate")
+        pre_problem("before window contains a snapshot that failed the Hard Gate")
     _check_window_order(before, "before", report)
     _check_window_order(after, "after", report)
     if before and after and after[0].created_at <= before[-1].created_at:
@@ -207,11 +215,10 @@ def validate_attempt(
             return finish()
 
     # Ownership and roles around the transaction.
-    if action.action_type == "MIGRATE" and action.switch_id is not None:
+    if executed and action.switch_id is not None:
         sid = action.switch_id
         if any(v.owner_of(sid) != action.source_controller for v in before):
             report.error(f"before window: {sid} is not owned by the source")
-        status = None if transaction is None else transaction.status
         expected_after = {
             "COMMITTED": action.target_controller,
             "RESTORED": action.source_controller,
