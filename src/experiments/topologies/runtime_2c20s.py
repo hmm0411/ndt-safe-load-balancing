@@ -20,6 +20,7 @@ from src.experiments.topologies.capacity_smoke_2c20s import (
     validate_initialized_ownership,
     wait_for_controller_connections,
 )
+from src.experiments.workloads.profile_spec import parse_profile_specs
 from scripts.experiments.run_forecast_stable_2c20s import (
     run_forecast_stable,
 )
@@ -113,6 +114,13 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--git-commit", default=None)
     parser.add_argument("--target-utilization", type=float, default=0.60)
     parser.add_argument(
+        "--profile",
+        action="append",
+        default=None,
+        metavar="CONTROLLER=PROFILE",
+        help="per-controller load profile, e.g. --profile c1=stable --profile c2=constant:0.45",
+    )
+    parser.add_argument(
         "--orchestrator-url",
         default="http://127.0.0.1:9000",
     )
@@ -160,7 +168,16 @@ def initialize_forecast_runtime(
     print("*** Roles initialized successfully")
 
 def main() -> None:
-    args = build_arg_parser().parse_args()
+    parser = build_arg_parser()
+    args = parser.parse_args()
+    profile_modes = (
+        args.forecast_stable,
+        args.forecast_gradual,
+        args.forecast_burst,
+        args.forecast_oscillating,
+    )
+    if args.profile and not (any(profile_modes) or args.forecast_hot_switch):
+        parser.error("--profile is not supported for this workload yet")
     forecast_modes = (
         args.forecast_stable,
         args.forecast_gradual,
@@ -267,6 +284,7 @@ def main() -> None:
                 seed=args.seed,
                 capacity_artifact=args.capacity_artifact,
                 git_commit=args.git_commit,
+                profiles=parse_profile_specs(args.profile),
             )
 
         elif args.forecast_oscillating:
@@ -277,6 +295,7 @@ def main() -> None:
 
             run_forecast_oscillating(
                 net,
+                profiles=parse_profile_specs(args.profile),
                 capacity_runs_path=(
                     args.capacity_runs
                 ),
@@ -307,6 +326,7 @@ def main() -> None:
 
             run_forecast_burst(
                 net,
+                profiles=parse_profile_specs(args.profile),
                 capacity_runs_path=args.capacity_runs,
                 controller_capacity_path=(
                     args.controller_capacity
@@ -335,6 +355,7 @@ def main() -> None:
 
             run_forecast_gradual(
                 net,
+                profiles=parse_profile_specs(args.profile),
                 capacity_runs_path=args.capacity_runs,
                 controller_capacity_path=(
                     args.controller_capacity
@@ -375,6 +396,7 @@ def main() -> None:
                 target_utilization=(
                     args.target_utilization
                 ),
+                profiles=parse_profile_specs(args.profile),
                 orchestrator_url=(
                     args.orchestrator_url
                 ),

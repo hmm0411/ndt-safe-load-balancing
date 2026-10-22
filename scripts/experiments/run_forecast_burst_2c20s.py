@@ -24,6 +24,7 @@ from src.experiments.workloads.burst import BurstWorkload
 from src.experiments.workloads.capacity_mapper import (
     CapacityWorkloadMapper,
 )
+from src.experiments.workloads.profile_spec import controller_modes
 
 
 CONTROLLER_IDS = ("c1", "c2")
@@ -91,6 +92,7 @@ def run_forecast_burst(
     output_dir: Path,
     duration_seconds: float = 60.0,
     sampling_interval_seconds: float = 1.0,
+    profiles: dict[str, str] | None = None,
     orchestrator_url: str = DEFAULT_ORCHESTRATOR_URL,
     run_id: str | None = None,
     experiment_type: str | None = None,
@@ -180,6 +182,8 @@ def run_forecast_burst(
         encoding="utf-8",
     )
 
+    modes = controller_modes(profiles or {}, "burst", CONTROLLER_IDS)
+
     processes: list[subprocess.Popen[Any]] = []
 
     try:
@@ -218,13 +222,30 @@ def run_forecast_burst(
             target_ip,
         ) in enumerate(GENERATORS):
             controller_id = CONTROLLER_IDS[index]
+            level = modes[controller_id]
+            if level is None:
+                generator_module = "src.experiments.workloads.udp_dynamic_flow"
+                pattern_args = [
+                    "--pattern",
+                    "burst",
+                    "--rate-map",
+                    str(rate_map_paths[controller_id]),
+                ]
+            else:
+                generator_module = "src.experiments.workloads.udp_new_flow"
+                pattern_args = [
+                    "--pattern",
+                    "stable",
+                    "--rate",
+                    str(mapper.offered_rate_for_utilization(controller_id, level)),
+                ]
 
             process = start_host_process(
                 net.get(host_name),
                 [
                     "python3",
                     "-m",
-                    "src.experiments.workloads.udp_dynamic_flow",
+                    generator_module,
                     "--run-id",
                     f"{run_id}-{controller_id}",
                     "--source-host",
@@ -237,12 +258,7 @@ def run_forecast_burst(
                     target_ip,
                     "--target-port",
                     "9000",
-                    "--pattern",
-                    "burst",
-                    "--rate-map",
-                    str(
-                        rate_map_paths[controller_id]
-                    ),
+                    *pattern_args,
                     "--duration",
                     str(duration_seconds),
                     "--sample-interval",
