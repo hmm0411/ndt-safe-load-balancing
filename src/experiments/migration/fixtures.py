@@ -6,7 +6,10 @@ schema, metrics and (Day 2) validator; not used by the runner.
 """
 from __future__ import annotations
 
+import os
+import stat
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from typing import Any, Mapping
 
 T0 = datetime(2026, 10, 20, tzinfo=timezone.utc)
@@ -167,3 +170,88 @@ def failed_detail(switch_id: str = "s1", source: str = "c1", target: str = "c2")
         "rollback_error": "Rollback verification failed: timeout",
         "transaction": _transaction(switch_id, source, target, states, "rollback timeout"),
     }
+
+
+def attempt_inputs(
+    kind: str = "committed",
+    attempt_id: str = "mig-stable-middle-dst45-c1-c2-r01",
+    after_count: int = 5,
+) -> dict[str, Any]:
+    """Keyword arguments for writer.write_attempt, for one synthetic attempt.
+
+    kind: 'committed', 'restored', 'failed', 'skipped' or 'no_op'.
+    """
+    # Imported here: fixtures stay usable without the writer (Day 1 tests).
+    from src.experiments.migration.metrics import compute_outcome, summarize_quality
+    from src.experiments.migration.schema import (
+        AttemptMetadata,
+        MigrationAction,
+        StateSnapshotView,
+    )
+    from src.experiments.migration.writer import raw_transaction, transaction_from_raw
+
+    before_raw = make_window([{"c1": 0.80, "c2": 0.45}] * 5)
+    moved = dict(default_ownership())
+    moved["s1"] = "c2"
+    if kind == "committed":
+        after_raw = make_window([{"c1": 0.72, "c2": 0.53}] * after_count, 10,
+                                ownership=moved, ownership_version=2)
+    else:
+        after_raw = make_window([{"c1": 0.80, "c2": 0.45}] * after_count, 10)
+    if kind == "skipped":
+        after_raw = []
+
+    if kind == "no_op":
+        action = MigrationAction("NO_OP", "c1", "c2")
+        tx_raw = raw_transaction()
+    else:
+        action = MigrationAction("MIGRATE", "c1", "c2", switch_id="s1",
+                                 failure_injected=(kind == "restored"),
+                                 selection_rule="seeded_random")
+        tx_raw = {
+            "committed": raw_transaction(200, committed_response()),
+            "restored": raw_transaction(200, restored_response()),
+            "failed": raw_transaction(500, {"detail": failed_detail()}),
+            "skipped": raw_transaction(skip_reason="source_not_master"),
+        }[kind]
+    if kind == "no_op":
+        attempt_id = attempt_id.replace("mig-", "noop-", 1)
+
+    before = [StateSnapshotView.from_twin_state(x) for x in before_raw]
+    after = [StateSnapshotView.from_twin_state(x) for x in after_raw]
+    transaction = transaction_from_raw(tx_raw)
+    metadata = AttemptMetadata(
+        attempt_id=attempt_id,
+        workload="stable",
+        phase="middle",
+        destination_load_level=0.45,
+        source_controller="c1",
+        target_controller="c2",
+        repeat="r01",
+        seed=9201,
+        topology="2C20S",
+        git_commit="0" * 40,
+        config_sha256="f" * 64,
+        capacity_version="capacity-v3",
+        quality_version="quality-score-v1",
+        started_at=T0.isoformat(),
+    )
+    return {
+        "metadata": metadata,
+        "before_raw": before_raw,
+        "transition_raw": make_window([{"c1": 0.78, "c2": 0.47}], 6),
+        "after_raw": after_raw,
+        "forecast_raw": [],
+        "action": action,
+        "transaction_raw": tx_raw,
+        "outcome": compute_outcome(before, after, action, transaction),
+        "quality": summarize_quality(before, after),
+    }
+
+
+def unlock_tree(root: Path) -> None:
+    """Make a tree written by write_attempt deletable again (test cleanup)."""
+    for dirpath, _dirnames, filenames in os.walk(root):
+        os.chmod(dirpath, stat.S_IRWXU)
+        for name in filenames:
+            os.chmod(os.path.join(dirpath, name), stat.S_IRUSR | stat.S_IWUSR)
