@@ -1,0 +1,408 @@
+{
+  "root": "/home/tntvy112_gmail_com/w11-run/data/experiment_runs/migration-pilot-late",
+  "attempts": 2,
+  "gate": {
+    "enough_attempts": false,
+    "coverage": false,
+    "no_code_bugs": true,
+    "validator_pass": true,
+    "time_known": true,
+    "passed": false
+  },
+  "validator": {
+    "valid": 2,
+    "invalid": 0,
+    "training_eligible": 2,
+    "invalid_attempts": {},
+    "quarantined": []
+  },
+  "dataset_bugs": [],
+  "attempt_bugs": {},
+  "review": {},
+  "coverage": {
+    "seen": {
+      "workload": [
+        "stable"
+      ],
+      "direction": [
+        "c1->c2",
+        "c2->c1"
+      ],
+      "destination_load_level": [
+        0.45,
+        0.75
+      ]
+    },
+    "missing": {
+      "workload": [
+        "burst",
+        "gradual",
+        "hot_switch",
+        "oscillating"
+      ],
+      "direction": [],
+      "destination_load_level": []
+    },
+    "no_op_attempts": 0
+  },
+  "status_counts": {
+    "COMMITTED": 2
+  },
+  "skipped_rate": 0.0,
+  "unintended_rollbacks": 0,
+  "freeze": {
+    "git_commit": [
+      "4e2acf604925f6ab81b70f473a843b1441ef26d4"
+    ],
+    "config_sha256": [
+      "068c0f1e5648a9c2bd156a2208358e3cde06ba96314e0b0c9f59fafb02a9b8b5"
+    ],
+    "capacity_version": [
+      "controller_capacity.json@sha256:789d2ff9a1f1"
+    ],
+    "quality_version": [
+      "quality-src@sha256:a77c36a3b362"
+    ],
+    "topology": [
+      "2C20S"
+    ]
+  },
+  "timing": {
+    "duration_s": {
+      "n": 2,
+      "median": 128.8751445,
+      "p95": 129.252351,
+      "max": 129.252351
+    },
+    "cycle_s": {
+      "n": 2,
+      "median": 136.6193345,
+      "p95": 144.252351,
+      "max": 144.252351
+    },
+    "settle_s": {
+      "n": 2,
+      "median": 4.528031,
+      "p95": 4.888863,
+      "max": 4.888863
+    },
+    "transition_hard_gate_blocked": {
+      "n": 2,
+      "median": 1.5,
+      "p95": 2.0,
+      "max": 2.0
+    },
+    "per_workload": {
+      "burst": {
+        "planned": 68,
+        "pilot_attempts": 0,
+        "cycle_median_s": 136.6193345,
+        "cycle_p95_s": 144.252351
+      },
+      "gradual": {
+        "planned": 68,
+        "pilot_attempts": 0,
+        "cycle_median_s": 136.6193345,
+        "cycle_p95_s": 144.252351
+      },
+      "hot_switch": {
+        "planned": 68,
+        "pilot_attempts": 0,
+        "cycle_median_s": 136.6193345,
+        "cycle_p95_s": 144.252351
+      },
+      "oscillating": {
+        "planned": 68,
+        "pilot_attempts": 0,
+        "cycle_median_s": 136.6193345,
+        "cycle_p95_s": 144.252351
+      },
+      "stable": {
+        "planned": 68,
+        "pilot_attempts": 2,
+        "cycle_median_s": 136.6193345,
+        "cycle_p95_s": 144.252351
+      }
+    },
+    "extrapolated_workloads": [
+      "burst",
+      "gradual",
+      "hot_switch",
+      "oscillating"
+    ],
+    "planned_attempts": 340,
+    "estimate_hours": 12.902937147222223,
+    "estimate_hours_p95": 13.623833150000001,
+    "budget_hours": 38.400000000000006
+  },
+  "decisions": {
+    "collection_mode": "one attempt per run (p95 estimate fits the budget)",
+    "post_window_timeout_s": {
+      "current": 60.0,
+      "needed": 10,
+      "suggested": 60.0,
+      "incomplete_post_windows": 0
+    },
+    "no_op_controls": 40
+  },
+  "attempt_rows": [
+    {
+      "attempt_id": "mig-stable-late-dst45-c1-c2-r01",
+      "valid": true,
+      "training_eligible": true,
+      "errors": [],
+      "warnings": [],
+      "bugs": [],
+      "review": [],
+      "workload": "stable",
+      "phase": "late",
+      "destination_load_level": 0.45,
+      "direction": "c1->c2",
+      "repeat": "r01",
+      "action_type": "MIGRATE",
+      "switch_id": "s2",
+      "failure_injected": false,
+      "target_hot": false,
+      "transaction_status": "COMMITTED",
+      "started_at": "2026-10-23T15:56:24.241317+00:00",
+      "freeze": {
+        "git_commit": "4e2acf604925f6ab81b70f473a843b1441ef26d4",
+        "config_sha256": "068c0f1e5648a9c2bd156a2208358e3cde06ba96314e0b0c9f59fafb02a9b8b5",
+        "capacity_version": "controller_capacity.json@sha256:789d2ff9a1f1",
+        "quality_version": "quality-src@sha256:a77c36a3b362",
+        "topology": "2C20S"
+      },
+      "initial_ownership": [
+        [
+          "s1",
+          "c1"
+        ],
+        [
+          "s10",
+          "c1"
+        ],
+        [
+          "s11",
+          "c2"
+        ],
+        [
+          "s12",
+          "c2"
+        ],
+        [
+          "s13",
+          "c2"
+        ],
+        [
+          "s14",
+          "c2"
+        ],
+        [
+          "s15",
+          "c2"
+        ],
+        [
+          "s16",
+          "c2"
+        ],
+        [
+          "s17",
+          "c2"
+        ],
+        [
+          "s18",
+          "c2"
+        ],
+        [
+          "s19",
+          "c2"
+        ],
+        [
+          "s2",
+          "c1"
+        ],
+        [
+          "s20",
+          "c2"
+        ],
+        [
+          "s3",
+          "c1"
+        ],
+        [
+          "s4",
+          "c1"
+        ],
+        [
+          "s5",
+          "c1"
+        ],
+        [
+          "s6",
+          "c1"
+        ],
+        [
+          "s7",
+          "c1"
+        ],
+        [
+          "s8",
+          "c1"
+        ],
+        [
+          "s9",
+          "c1"
+        ]
+      ],
+      "duration_s": 128.497938,
+      "transaction_s": 1.612165,
+      "post_window_complete": true,
+      "first_post_gap_s": 0.165769,
+      "settle_s": 4.167199,
+      "transition_samples": 1,
+      "transition_hard_gate_blocked": 1,
+      "src_u_before_mean": 0.5771366351991896,
+      "dst_u_before_mean": 0.42707442340179763,
+      "delta_src_u_mean": -0.057936804970237454,
+      "delta_dst_u_mean": 0.05738572653750812,
+      "switch_share_before_mean": 0.10000046703891222,
+      "switch_rate_before_mean": 82.70475241133393,
+      "destination_level_error": -0.02292557659820238,
+      "total_rate_ratio": 0.9994485950406731,
+      "expected_delta_src": -0.05771371863991504,
+      "expected_delta_dst": 0.05771637153880857,
+      "delta_ratio_src": 1.003865395188175,
+      "delta_ratio_dst": 0.9942712094942052,
+      "cycle_s": 128.986318
+    },
+    {
+      "attempt_id": "mig-stable-late-dst75-c2-c1-r01",
+      "valid": true,
+      "training_eligible": true,
+      "errors": [],
+      "warnings": [],
+      "bugs": [],
+      "review": [],
+      "workload": "stable",
+      "phase": "late",
+      "destination_load_level": 0.75,
+      "direction": "c2->c1",
+      "repeat": "r01",
+      "action_type": "MIGRATE",
+      "switch_id": "s15",
+      "failure_injected": false,
+      "target_hot": false,
+      "transaction_status": "COMMITTED",
+      "started_at": "2026-10-23T15:58:33.227635+00:00",
+      "freeze": {
+        "git_commit": "4e2acf604925f6ab81b70f473a843b1441ef26d4",
+        "config_sha256": "068c0f1e5648a9c2bd156a2208358e3cde06ba96314e0b0c9f59fafb02a9b8b5",
+        "capacity_version": "controller_capacity.json@sha256:789d2ff9a1f1",
+        "quality_version": "quality-src@sha256:a77c36a3b362",
+        "topology": "2C20S"
+      },
+      "initial_ownership": [
+        [
+          "s1",
+          "c1"
+        ],
+        [
+          "s10",
+          "c1"
+        ],
+        [
+          "s11",
+          "c2"
+        ],
+        [
+          "s12",
+          "c2"
+        ],
+        [
+          "s13",
+          "c2"
+        ],
+        [
+          "s14",
+          "c2"
+        ],
+        [
+          "s15",
+          "c2"
+        ],
+        [
+          "s16",
+          "c2"
+        ],
+        [
+          "s17",
+          "c2"
+        ],
+        [
+          "s18",
+          "c2"
+        ],
+        [
+          "s19",
+          "c2"
+        ],
+        [
+          "s2",
+          "c1"
+        ],
+        [
+          "s20",
+          "c2"
+        ],
+        [
+          "s3",
+          "c1"
+        ],
+        [
+          "s4",
+          "c1"
+        ],
+        [
+          "s5",
+          "c1"
+        ],
+        [
+          "s6",
+          "c1"
+        ],
+        [
+          "s7",
+          "c1"
+        ],
+        [
+          "s8",
+          "c1"
+        ],
+        [
+          "s9",
+          "c1"
+        ]
+      ],
+      "duration_s": 129.252351,
+      "transaction_s": 1.861153,
+      "post_window_complete": true,
+      "first_post_gap_s": 0.88813,
+      "settle_s": 4.888863,
+      "transition_samples": 2,
+      "transition_hard_gate_blocked": 2,
+      "src_u_before_mean": 0.5769316879251722,
+      "dst_u_before_mean": 0.7270253128189484,
+      "delta_src_u_mean": -0.05805362985126772,
+      "delta_dst_u_mean": 0.05863203247706783,
+      "switch_share_before_mean": 0.10002400862241571,
+      "switch_rate_before_mean": 82.69144134593533,
+      "destination_level_error": -0.022974687181051556,
+      "total_rate_ratio": 1.000445630372483,
+      "expected_delta_src": -0.057707082273394876,
+      "expected_delta_dst": 0.057704429801476935,
+      "delta_ratio_src": 1.006005286772792,
+      "delta_ratio_dst": 1.0160750687387807,
+      "cycle_s": 144.252351
+    }
+  ]
+}
