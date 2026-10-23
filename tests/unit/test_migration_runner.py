@@ -12,6 +12,7 @@ from unittest import mock
 from src.experiments.migration import runner
 from src.experiments.migration.config import AttemptPlan
 from src.experiments.migration.schema import MigrationTransactionView
+from src.experiments.migration.writer import raw_transaction
 
 
 def raw_state(snapshot_id="snap-1", *, valid=True, owner=None, version=1):
@@ -229,17 +230,20 @@ class SendMigrationTest(unittest.TestCase):
                                return_value="VIEW") as parse:
             view, raw = self.send(200, {"status": "COMMITTED"})
         parse.assert_called_once_with({"status": "COMMITTED"})
-        self.assertEqual((view, raw), ("VIEW", {"status": "COMMITTED"}))
+        self.assertEqual(view, "VIEW")
+        self.assertEqual(raw, raw_transaction(200, {"status": "COMMITTED"}))
 
     def test_500_is_failed(self):
         view, raw = self.send(500, {"detail": "boom"})
+        assert view is not None
         self.assertEqual(view.status, "FAILED")
-        self.assertEqual(raw, {"http_status": 500, "detail": "boom"})
+        self.assertEqual(raw, raw_transaction(500, {"detail": "boom"}))
 
     def test_409_is_skipped(self):
         view, raw = self.send(409, {"detail": "busy"})
+        assert view is not None
         self.assertEqual(view.status, "SKIPPED")
-        self.assertIn("http_409", view.skip_reason)
+        self.assertIn("http_409", view.skip_reason or "")
 
 
 class WorkloadCommandTest(unittest.TestCase):
@@ -296,6 +300,43 @@ class PreflightTest(unittest.TestCase):
         text = str(ctx.exception)
         for part in ("6653", "6654", "9000", "capacity", "leftover OVS"):
             self.assertIn(part, text)
+
+
+class ResumeRuleTest(unittest.TestCase):
+    def settings(self, root):
+        return runner.RunnerSettings(
+            repo_root=root, output_root=root / "out", work_root=root / "work",
+            config_path=root / "c.yaml", controllers_config="x",
+            capacity_json=root / "cap.json", capacity_runs=root / "runs.csv")
+
+    def test_attempt_with_validation_json_is_skipped(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            settings = self.settings(Path(tmp))
+            done = settings.output_root / make_plan().attempt_id
+            done.mkdir(parents=True)
+            (done / "validation.json").write_text("{}")
+            self.assertEqual(runner.run_attempt(make_plan(), settings).status, "exists")
+
+    def test_half_written_directory_is_an_error(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            settings = self.settings(Path(tmp))
+            (settings.output_root / make_plan().attempt_id).mkdir(parents=True)
+            with self.assertRaises(runner.RunnerError):
+                runner.run_attempt(make_plan(), settings)
+
+
+class CleanDirTest(unittest.TestCase):
+    def test_removes_a_directory_with_files(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp) / "work"
+            (target / "workload").mkdir(parents=True)
+            (target / "workload" / "forecast_samples.jsonl").write_text("{}\n")
+            runner._clean_dir(target)
+            self.assertFalse(target.exists())
+
+    def test_missing_directory_is_fine(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            runner._clean_dir(Path(tmp) / "nothing")
 
 
 class FakeWorld:
@@ -364,7 +405,7 @@ class CollectAttemptTest(unittest.TestCase):
         got = self.collect(world)
         self.assertEqual(world.sent, [])
         self.assertIsNone(got.transaction)
-        self.assertIsNone(got.transaction_raw)
+        self.assertEqual(got.transaction_raw, raw_transaction())
         self.assertEqual(len(got.after), 5)
 
     def test_phase_never_reached_is_skipped(self):

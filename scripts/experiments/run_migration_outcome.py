@@ -61,6 +61,8 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--only", action="append", default=[], metavar="W:PHASE:dstNN:SRC-DST:rNN",
                    help="run only this matrix cell (repeatable)")
     p.add_argument("--action", choices=("MIGRATE", "NO_OP"), default=None)
+    p.add_argument("--repeat", action="append", default=[], metavar="rNN",
+                   help="run only this repeat (repeatable)")
     p.add_argument("--simulate-failure", choices=("none", "flow_mod"), default="none")
     p.add_argument("--output-root", default=None)
     p.add_argument("--work-root", default=DEFAULT_WORK_ROOT)
@@ -83,6 +85,8 @@ def main(argv=None) -> int:
     config_path = Path(args.config)
     config = load_outcome_config(config_path)
     plans = expand_attempts(config)
+    if args.repeat:
+        plans = [p for p in plans if p.repeat in args.repeat]
     if args.only:
         keys = [parse_only(s) for s in args.only]
         plans = [p for p in plans if any(matches(p, k) for k in keys)]
@@ -137,7 +141,7 @@ def main(argv=None) -> int:
         if result.status == "exists":
             print("    already done, skipped")
         else:
-            print(f"    {result.transaction_status or 'NO_OP'}  eligible={result.training_eligible}  "
+            print(f"    {result.transaction_status or 'NO_OP'}  valid={result.valid} eligible={result.training_eligible}  "
                   f"{result.seconds:.0f}s  {result.note}")
     return 1 if failures else 0
 

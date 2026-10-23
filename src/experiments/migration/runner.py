@@ -30,7 +30,7 @@ from typing import IO, Any, Callable, Sequence
 from urllib.parse import urlparse
 
 from .config import AttemptPlan, config_sha256
-from .metrics import compute_outcome
+from .metrics import compute_outcome, summarize_quality
 from .schema import (
     AttemptMetadata,
     MigrationAction,
@@ -38,6 +38,7 @@ from .schema import (
     StateSnapshotView,
 )
 from .selection import select_switch
+from .writer import raw_transaction, transaction_from_raw, write_attempt
 
 EXPECTED_SWITCHES = 20
 OPENFLOW_PORTS = (6653, 6654)
@@ -105,6 +106,7 @@ class AttemptResult:
     training_eligible: bool | None = None
     seconds: float = 0.0
     note: str = ""
+    valid: bool | None = None
 
 
 def now_iso() -> str:
@@ -376,22 +378,15 @@ def send_migration(
     switch_id: str,
     target_controller: str,
     failure: str,
-) -> tuple[MigrationTransactionView, Any]:
-    """POST /api/v1/migrations -> (transaction view, raw body for transaction.json)."""
+) -> tuple[MigrationTransactionView | None, dict[str, Any]]:
+    """POST /api/v1/migrations -> (transaction view, content of transaction.json)."""
     status, body = http_post_json(
         f"{orchestrator_url.rstrip('/')}/api/v1/migrations",
         {"switch_id": switch_id, "target_controller": target_controller, "simulate_failure": failure},
         timeout=MIGRATION_REQUEST_TIMEOUT_S,
     )
-    if status == 200:
-        return MigrationTransactionView.from_response(body), body
-    detail = body.get("detail", body) if isinstance(body, dict) else body
-    if status == 500:
-        return MigrationTransactionView.failed(detail), {"http_status": 500, "detail": detail}
-    return (
-        MigrationTransactionView.skipped(f"http_{status}: {detail}"),
-        {"http_status": status, "detail": detail},
-    )
+    raw = raw_transaction(status, body)
+    return transaction_from_raw(raw), raw
 
 
 # --------------------------------------------------------------------------
@@ -415,7 +410,7 @@ class Context:
 class Collected:
     action: MigrationAction
     transaction: Any | None
-    transaction_raw: Any | None
+    transaction_raw: Any
     before: list[Sample]
     transition: list[Sample]
     after: list[Sample]
@@ -485,12 +480,12 @@ def collect_attempt(
 
     send_index = len(ctx.samples)
     transaction: Any | None = None
-    transaction_raw: Any | None = None
+    transaction_raw: Any = raw_transaction()
     if is_migrate:
         if skip:
             reason = "; ".join(skip)
-            transaction = MigrationTransactionView.skipped(reason)
-            transaction_raw = {"status": "SKIPPED", "skip_reason": reason}
+            transaction_raw = raw_transaction(skip_reason=reason)
+            transaction = transaction_from_raw(transaction_raw)
         else:
             transaction, transaction_raw = ctx.send(switch_id, plan.target_controller, failure)
     done_index = len(ctx.samples)
@@ -499,7 +494,8 @@ def collect_attempt(
         return Collected(action, transaction, transaction_raw, before,
                          ctx.samples[send_index:], [], False, skip)
     if skip:  # NO_OP with a failed precondition: nothing more to wait for
-        return Collected(action, None, None, before, ctx.samples[send_index:], [], False, skip)
+        return Collected(action, None, transaction_raw, before,
+                         ctx.samples[send_index:], [], False, skip)
 
     expected_owner: str | None
     if transaction is not None and transaction.status == "COMMITTED":
@@ -683,43 +679,11 @@ def _raw(sample: Sample) -> Any:
     return {"error": sample.error, "observed_at": sample.observed_at}
 
 
-def write_json(path: Path, data: Any) -> None:
-    path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-
-
-def write_jsonl(path: Path, rows: Sequence[Any]) -> None:
-    with path.open("w", encoding="utf-8") as handle:
-        for row in rows:
-            handle.write(json.dumps(row, ensure_ascii=False) + "\n")
-
-
-def write_attempt_files(
-    target: Path,
-    metadata: AttemptMetadata,
-    collected: Collected,
-    outcome: Any,
-    forecasts: Sequence[dict[str, Any]],
-) -> None:
-    write_json(target / "metadata.json", metadata.to_dict())
-    write_jsonl(target / "before_samples.jsonl", [_raw(s) for s in collected.before])
-    write_json(target / "action.json", collected.action.to_dict())
-    if collected.transaction_raw is not None:  # MIGRATE only; NO_OP has no transaction
-        write_json(target / "transaction.json", collected.transaction_raw)
-    write_jsonl(target / "transition_samples.jsonl", [_raw(s) for s in collected.transition])
-    write_jsonl(target / "after_samples.jsonl", [_raw(s) for s in collected.after])
-    write_jsonl(target / "forecast_samples.jsonl", list(forecasts))
-    write_json(target / "outcome.json", outcome.to_dict())
-
-
-def quarantine(tmp_dir: Path, settings: RunnerSettings, name: str, work_dir: Path, exc: BaseException) -> Path:
-    """Move a failed attempt to _invalid/ (never into the dataset)."""
+def quarantine(settings: RunnerSettings, name: str, work_dir: Path, exc: BaseException) -> Path:
+    """Keep the error and the logs of a failed attempt in _invalid/ (never in the dataset)."""
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     dest = settings.output_root / "_invalid" / f"{name}-{stamp}"
-    dest.parent.mkdir(parents=True, exist_ok=True)
-    if tmp_dir.exists():
-        shutil.move(str(tmp_dir), str(dest))
-    else:
-        dest.mkdir(parents=True, exist_ok=True)
+    dest.mkdir(parents=True, exist_ok=True)
     (dest / "error.txt").write_text(
         "".join(traceback.format_exception(type(exc), exc, exc.__traceback__)), encoding="utf-8")
     for log_name in ("orchestrator.log", "workload.log"):
@@ -731,6 +695,15 @@ def quarantine(tmp_dir: Path, settings: RunnerSettings, name: str, work_dir: Pat
 # --------------------------------------------------------------------------
 # one attempt end to end
 # --------------------------------------------------------------------------
+def _clean_dir(path: Path) -> None:
+    """Remove a leftover work directory; the workload runs under sudo, so its files may belong to root."""
+    shutil.rmtree(path, ignore_errors=True)
+    if path.exists():
+        subprocess.run(["sudo", "rm", "-rf", "--", str(path)], check=False)
+    if path.exists():
+        raise RunnerError(f"cannot remove the leftover work directory {path}")
+
+
 def run_attempt(
     plan: AttemptPlan,
     settings: RunnerSettings,
@@ -741,8 +714,10 @@ def run_attempt(
 ) -> AttemptResult:
     name = attempt_dir_name(plan, failure)
     final_dir = settings.output_root / name
-    if final_dir.exists():
+    if (final_dir / "validation.json").exists():
         return AttemptResult(name, "exists", final_dir)
+    if final_dir.exists():
+        raise RunnerError(f"{final_dir} exists without validation.json: move it away first")
 
     started = time.monotonic()
     started_at = now_iso()
@@ -756,11 +731,8 @@ def run_attempt(
     cap_version = capacity_version(settings.capacity_json)
     qual_version = quality_version(settings.repo_root)
 
-    tmp_dir = settings.output_root / f".tmp-{name}"
     work_dir = settings.work_root / name
-    for path in (tmp_dir, work_dir):
-        shutil.rmtree(path, ignore_errors=True)
-    tmp_dir.mkdir(parents=True)
+    _clean_dir(work_dir)
     work_dir.mkdir(parents=True)
     workload_out = work_dir / "workload"
     samples_path = workload_out / name / "forecast_samples.jsonl"
@@ -802,10 +774,11 @@ def run_attempt(
         if code is None or code != 0:
             raise RunnerError(f"workload did not exit cleanly (exit code {code}), see workload.log")
 
-        outcome = compute_outcome(
-            [s.view for s in collected.before if s.view is not None],
-            [s.view for s in collected.after if s.view is not None],
-            collected.action, collected.transaction, required_window=window)
+        before_views = [s.view for s in collected.before if s.view is not None]
+        after_views = [s.view for s in collected.after if s.view is not None]
+        outcome = compute_outcome(before_views, after_views, collected.action,
+                                  collected.transaction, required_window=window)
+        quality = summarize_quality(before_views, after_views, required_window=window)
         metadata = AttemptMetadata(
             attempt_id=name, workload=plan.workload, phase=plan.phase,
             destination_load_level=plan.destination_load_level,
@@ -813,17 +786,21 @@ def run_attempt(
             repeat=plan.repeat, seed=plan.seed, topology=settings.topology, git_commit=commit,
             config_sha256=config_sha256(settings.config_path), capacity_version=cap_version,
             quality_version=qual_version, started_at=started_at, finished_at=now_iso())
-        write_attempt_files(tmp_dir, metadata, collected, outcome, poller.forecasts)
-        _run_validator(tmp_dir, log)
-        os.replace(tmp_dir, final_dir)
+        written = write_attempt(
+            settings.output_root, metadata,
+            [_raw(s) for s in collected.before], [_raw(s) for s in collected.transition],
+            [_raw(s) for s in collected.after], poller.forecasts,
+            collected.action, collected.transaction_raw, outcome, quality,
+            required_window=window)
         return AttemptResult(
-            name, "written", final_dir,
+            name, "written", written.path,
             None if collected.transaction is None else collected.transaction.status,
-            bool(outcome.training_eligible), time.monotonic() - started,
-            "; ".join(collected.skip_reasons))
+            bool(written.validation.get("training_eligible", outcome.training_eligible)),
+            time.monotonic() - started, "; ".join(collected.skip_reasons),
+            written.validation.get("valid"))
     except BaseException as exc:
         poller.stop()
-        dest = quarantine(tmp_dir, settings, name, work_dir, exc)
+        dest = quarantine(settings, name, work_dir, exc)
         log(f"[{name}] FAILED, moved to {dest}")
         raise
     finally:
@@ -838,15 +815,3 @@ def _healthy(url: str) -> bool:
         return True
     except Exception:
         return False
-
-
-def _run_validator(attempt_dir: Path, log: Callable[[str], None]) -> None:
-    """validation.json comes from My's validator (Day 2). Absent = not merged yet."""
-    try:
-        from .validator import validate_attempt
-    except ImportError:
-        log("validator not available yet: validation.json not written")
-        return
-    result = validate_attempt(attempt_dir)
-    data = result.to_dict() if hasattr(result, "to_dict") else result
-    write_json(attempt_dir / "validation.json", data)
