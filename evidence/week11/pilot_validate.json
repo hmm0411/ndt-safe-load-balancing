@@ -1,0 +1,45 @@
+{
+  "schema_version": "migration-outcome-v1",
+  "root": "/home/tntvy112_gmail_com/w11-run/data/experiment_runs/migration-pilot-d120",
+  "attempts": 17,
+  "valid": 17,
+  "invalid": 0,
+  "training_eligible": 17,
+  "duplicate_transactions": {},
+  "counts": {
+    "workload": {
+      "burst": 3,
+      "gradual": 4,
+      "hot_switch": 4,
+      "oscillating": 3,
+      "stable": 3
+    },
+    "phase": {
+      "burst:burst_1": 3,
+      "gradual:u60": 4,
+      "hot_switch:high": 4,
+      "oscillating:peak": 3,
+      "stable:middle": 3
+    },
+    "direction": {
+      "c1->c2": 9,
+      "c2->c1": 8
+    },
+    "destination_level": {
+      "dst45": 9,
+      "dst75": 8
+    },
+    "action_type": {
+      "MIGRATE": 15,
+      "NO_OP": 2
+    },
+    "transaction_status": {
+      "COMMITTED": 15,
+      "None": 2
+    }
+  },
+  "invalid_attempts": {},
+  "quarantined": [
+    "mig-hot_switch-high-dst45-c2-c1-r01-20261023T135856Z"
+  ]
+}
