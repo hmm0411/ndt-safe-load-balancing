@@ -59,15 +59,16 @@ WORKLOAD_FLAGS = {
     "hot_switch": "--forecast-hot-switch",
 }
 
-# Provisional: each value lets the planned phase start, the 5-snapshot pre
-# window, the migration and the post window fit inside the workload. The pilot
-# (Day 3) measures the real time and tunes these; override with --duration.
+# Frozen after the Day 3 pilot: 17 attempts ran at 120 s and every post window
+# completed (slowest 39.6 s after the transaction, timeout 60 s). The latest phase
+# start + pre window + migration + slowest post window stays under 120 s, so one
+# value serves every workload. Override with --duration.
 DEFAULT_DURATION_S = {
-    "stable": 60.0,
-    "gradual": 90.0,
-    "burst": 90.0,
-    "oscillating": 90.0,
-    "hot_switch": 60.0,
+    "stable": 120.0,
+    "gradual": 120.0,
+    "burst": 120.0,
+    "oscillating": 120.0,
+    "hot_switch": 120.0,
 }
 
 # Source files whose hash is recorded as quality_version in metadata.json.
