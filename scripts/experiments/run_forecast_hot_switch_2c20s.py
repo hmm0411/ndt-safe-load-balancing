@@ -96,6 +96,11 @@ def hot_switch_level() -> str | None:
     return raw
 
 
+def load_check_enabled() -> bool:
+    """False when NDT_HOT_SWITCH_CHECK_LOAD=0: a migration moves load on purpose."""
+    return os.environ.get("NDT_HOT_SWITCH_CHECK_LOAD", "1") != "0"
+
+
 def hot_switch_controller_modes(
     profiles: dict[str, str] | None,
 ) -> dict[str, float | None]:
@@ -659,6 +664,7 @@ def run_forecast_hot_switch(
 
         evidence["achieved_mean_utilization"] = achieved
         evidence["achieved_load_valid"] = not problems
+        evidence["achieved_load_checked"] = load_check_enabled()
 
         (
             run_dir
@@ -672,7 +678,7 @@ def run_forecast_hot_switch(
             encoding="utf-8",
         )
 
-        if problems:
+        if problems and load_check_enabled():
             raise RuntimeError(
                 "hot-switch run did not reach its target load "
                 "(adjust NDT_HOT_SWITCH_PIN_PER_FLOW): "
