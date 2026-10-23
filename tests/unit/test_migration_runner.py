@@ -271,6 +271,13 @@ class WorkloadCommandTest(unittest.TestCase):
         self.assertIn("c2=hot-switch", cmd)
         self.assertIn("c1=constant:0.75", cmd)
         self.assertIn("--forecast-hot-switch", cmd)
+        self.assertIn("NDT_HOT_SWITCH_CHECK_LOAD=0", cmd)
+
+    def test_hot_switch_no_op_keeps_the_load_check(self):
+        plan = make_plan(workload="hot_switch", phase="high", action_type="NO_OP")
+        cmd = runner.build_workload_command(plan, self.settings(), Path("/w"), "rid", 60.0)
+        self.assertIn("NDT_HOT_SWITCH_LEVEL=high", cmd)
+        self.assertNotIn("NDT_HOT_SWITCH_CHECK_LOAD=0", cmd)
 
 
 class AttemptNameTest(unittest.TestCase):

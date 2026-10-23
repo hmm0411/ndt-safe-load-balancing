@@ -588,6 +588,8 @@ def build_workload_command(
     env_pairs = [f"PYTHONPATH={settings.repo_root}", "PYTHONDONTWRITEBYTECODE=1"]
     if plan.workload == "hot_switch":
         env_pairs.append(f"NDT_HOT_SWITCH_LEVEL={plan.phase}")
+        if plan.action_type == "MIGRATE":  # the migration moves load on purpose
+            env_pairs.append("NDT_HOT_SWITCH_CHECK_LOAD=0")
     return [
         "sudo", "-E", "env", *env_pairs, settings.python,
         "src/experiments/topologies/runtime_2c20s.py", WORKLOAD_FLAGS[plan.workload],
