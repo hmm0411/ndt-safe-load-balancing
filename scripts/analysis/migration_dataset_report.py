@@ -97,17 +97,18 @@ def draw_figures(report: dict[str, Any], out_dir: Path) -> list[Path]:
 
     # 1. U before / after, source and destination (COMMITTED, eligible)
     fig, axes = plt.subplots(1, 2, figsize=(7.0, 2.6), sharey=True)
-    for ax, side, title in ((axes[0], "src", "Controller nguồn"), (axes[1], "dst", "Controller đích")):
+    for ax, side, title in ((axes[0], "src", "Source controller"), (axes[1], "dst", "Destination controller")):
         before = _values(committed, f"{side}_u_before_mean")
         after = _values(committed, f"{side}_u_after_mean")
         bins = [i / 20 for i in range(0, 25)]
-        ax.hist(before, bins=bins, color=GREY, alpha=0.7, label="trước")
-        ax.hist(after, bins=bins, histtype="step", color=ACCENT, linewidth=1.4, label="sau")
-        ax.axvline(1.0, color=DARK, linestyle="--", linewidth=0.8)
-        ax.set_title(title)
-        ax.set_xlabel("U (trung bình cửa sổ 5 snapshot)")
-    axes[0].set_ylabel("số attempt COMMITTED")
-    axes[1].legend()
+        ax.hist(before, bins=bins, color=GREY, alpha=0.7, label="before")
+        ax.hist(after, bins=bins, histtype="step", color=ACCENT, linewidth=1.4, label="after")
+        ax.axvline(1.0, color=DARK, linestyle="--", linewidth=0.8, label="U = 1 (overload)")
+        ax.set_title(f"{title} (n = {len(before)})")
+        ax.set_xlabel("U (mean over the 5-snapshot window)")
+    axes[0].set_ylabel("COMMITTED attempts")
+    handles, labels = axes[1].get_legend_handles_labels()
+    fig.legend(handles, labels, loc="lower center", ncol=3, bbox_to_anchor=(0.5, -0.2))
     _save(fig, figures / "fig_w11_01_u_before_after.png", written)
 
     # 2. control-load share of the moved switch
@@ -115,17 +116,17 @@ def draw_figures(report: dict[str, Any], out_dir: Path) -> list[Path]:
     hot = _values([r for r in committed if r.get("target_hot")], "switch_share_before_mean")
     other = _values([r for r in committed if not r.get("target_hot")], "switch_share_before_mean")
     bins = [i / 40 for i in range(0, 29)]
-    ax.hist(other, bins=bins, color=GREY, label="switch chọn ngẫu nhiên")
-    ax.hist(hot, bins=bins, color=ACCENT, label="switch nóng (hot_switch)")
-    ax.set_xlabel("control-load share của switch được migrate (cửa sổ trước)")
-    ax.set_ylabel("số attempt")
-    ax.legend()
+    ax.hist(other, bins=bins, color=GREY, label=f"random switch (n = {len(other)})")
+    ax.hist(hot, bins=bins, color=ACCENT, label=f"hot switch (n = {len(hot)})")
+    ax.set_xlabel("control-load share of the migrated switch (pre window)")
+    ax.set_ylabel("attempts")
+    ax.legend(loc="upper right")
     _save(fig, figures / "fig_w11_02_switch_share.png", written)
 
     # 3. Delta U source / destination per workload
     fig, axes = plt.subplots(1, 2, figsize=(7.4, 2.8))
-    _strip(axes[0], committed, "delta_src_u_mean", "ΔU nguồn (sau − trước)")
-    _strip(axes[1], committed, "delta_dst_u_mean", "ΔU đích (sau − trước)")
+    _strip(axes[0], committed, "delta_src_u_mean", "ΔU source (after − before)")
+    _strip(axes[1], committed, "delta_dst_u_mean", "ΔU destination (after − before)")
     for ax in axes:
         ax.axhline(0.0, color=DARK, linewidth=0.8)
     _save(fig, figures / "fig_w11_03_delta_u.png", written)
@@ -138,15 +139,15 @@ def draw_figures(report: dict[str, Any], out_dir: Path) -> list[Path]:
         top_value = max(max(p) for p in pairs) * 1.1
         ax.plot([0, top_value], [0, top_value], color=DARK, linestyle="--", linewidth=0.8)
         ax.scatter([p[0] for p in pairs], [p[1] for p in pairs], s=18, color=ACCENT, linewidths=0)
-    ax.set_xlabel("imbalance trước")
-    ax.set_ylabel("imbalance sau")
-    ax.set_title("Dưới đường chéo = cân bằng hơn")
+    ax.set_xlabel("imbalance before")
+    ax.set_ylabel("imbalance after")
+    ax.set_title(f"Below the diagonal = more balanced (n = {len(pairs)})")
     _save(fig, figures / "fig_w11_04_imbalance.png", written)
 
     # 5. migration latency and post-window settle time
     fig, axes = plt.subplots(1, 2, figsize=(7.4, 2.8))
-    _strip(axes[0], executed, "transaction_s", "thời gian giao dịch (s)")
-    _strip(axes[1], executed, "settle_s", "chờ đủ cửa sổ sau (s)")
+    _strip(axes[0], executed, "transaction_s", "transaction time (s)")
+    _strip(axes[1], executed, "settle_s", "time to a full post window (s)")
     _save(fig, figures / "fig_w11_05_latency.png", written)
 
     # 6. quality score before / after (minimum over each window)
@@ -157,8 +158,8 @@ def draw_figures(report: dict[str, Any], out_dir: Path) -> list[Path]:
         low = min(min(p) for p in q) - 0.02
         ax.plot([low, 1.0], [low, 1.0], color=DARK, linestyle="--", linewidth=0.8)
         ax.scatter([p[0] for p in q], [p[1] for p in q], s=18, color=ACCENT, linewidths=0)
-    ax.set_xlabel("Quality Score nhỏ nhất, cửa sổ trước")
-    ax.set_ylabel("Quality Score nhỏ nhất, cửa sổ sau")
+    ax.set_xlabel("min Quality Score, pre window")
+    ax.set_ylabel("min Quality Score, post window")
     _save(fig, figures / "fig_w11_06_quality.png", written)
 
     # 7. share vs -Delta U_src (the evidence for the Week 12 analytic model)
@@ -173,16 +174,16 @@ def draw_figures(report: dict[str, Any], out_dir: Path) -> list[Path]:
         xs = _values(subset, "switch_share_before_mean")
         ys = [-v for v in _values(subset, "delta_src_u_mean")]
         if len(xs) == len(ys):
-            ax.scatter(xs, ys, s=20, color=color, linewidths=0, label=label)
+            ax.scatter(xs, ys, s=20, color=color, linewidths=0, label=f"{label} (n = {len(xs)})")
     if check.get("slope") is not None:
         xs_all = _values(committed, "switch_share_before_mean")
         x_line = [0.0, max(xs_all) if xs_all else 0.6]
         ax.plot(x_line, [check["intercept"] + check["slope"] * x for x in x_line], color=ACCENT,
-                linewidth=1, label=f"fit stable+hot_switch, r = {check['pearson_r']:.2f}"
-                if check.get("pearson_r") is not None else "fit stable+hot_switch")
+                linewidth=1, label=f"least-squares fit, stable + hot_switch (n = {check['n']}, r = {check['pearson_r']:.2f})"
+                if check.get("pearson_r") is not None else "least-squares fit, stable + hot_switch")
     ax.axhline(0.0, color=DARK, linewidth=0.8)
-    ax.set_xlabel("control-load share của switch (cửa sổ trước)")
-    ax.set_ylabel("−ΔU nguồn")
+    ax.set_xlabel("control-load share of the migrated switch (pre window)")
+    ax.set_ylabel("−ΔU source")
     ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.2), ncol=1)
     _save(fig, figures / "fig_w11_07_share_vs_neg_delta_src.png", written)
 
@@ -201,9 +202,9 @@ def draw_figures(report: dict[str, Any], out_dir: Path) -> list[Path]:
             ys = [-v for v in _values(subset, "delta_src_u_mean")]
             if len(xs) == len(ys):
                 ax.scatter(xs, ys, s=20, color=color, linewidths=0)
-    ax.set_xlabel("ước lượng giải tích: tốc độ switch / C_safe")
-    ax.set_ylabel("−ΔU nguồn đo được")
-    ax.set_title("Xanh: stable, hot_switch; xám: workload còn lại")
+    ax.set_xlabel("analytic estimate: switch rate / C_safe")
+    ax.set_ylabel("observed −ΔU source")
+    ax.set_title("blue: stable, hot_switch; grey: other workloads")
     ax.legend(loc="upper left")
     _save(fig, figures / "fig_w11_08_expected_vs_observed.png", written)
     return written
