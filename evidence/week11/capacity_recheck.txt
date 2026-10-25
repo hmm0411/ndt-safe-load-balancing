@@ -1,0 +1,42 @@
+# Capacity re-measurement on the Week 11 VM (30 runs, 2026-10-25)
+# code: tag w11-collect-freeze 47c1984d7fa987f27e6f616c3061f44de6d9a1dc
+# old = data/benchmarks/capacity_runs.csv (capacity-v3), new = this re-run
+# qos_success_ratio 0 means no successful QoS probe, so setup latency is reported as 0 (not measurable)
+CPU(s):                                  8
+Model name:                              Intel(R) Xeon(R) CPU @ 2.20GHz
+
+c1 @ 140 flows/s
+  processed_packet_in_rate_mean  old 1433 (sd 0.146, n=5)             new 1433 (sd 0.941, n=5)   change +0.0%
+  cpu_p95                        old 92.9 (sd 1.79, n=5)              new 100.8 (sd 0.179, n=5)   change +8.5%
+  flow_setup_latency_p95_ms      old 46.43 (sd 2, n=5)                new 283.7 (sd 18.6, n=5)   change +511.0%
+  qos_success_ratio              old 1 (sd 0, n=5)                    new 1 (sd 0, n=5)   change +0.0%
+
+c1 @ 160 flows/s
+  processed_packet_in_rate_mean  old 1633 (sd 0.37, n=5)              new 1594 (sd 8, n=5)   change -2.4%
+  cpu_p95                        old 97.84 (sd 0.875, n=5)            new 100.8 (sd 0.0748, n=5)   change +3.0%
+  flow_setup_latency_p95_ms      old 70.04 (sd 19.4, n=5)             new 0 (sd 0, n=5)   change -100.0%
+  qos_success_ratio              old 1 (sd 0, n=5)                    new 0 (sd 0, n=5)   change -100.0%
+
+c1 @ 200 flows/s
+  processed_packet_in_rate_mean  old 2034 (sd 0.819, n=5)             new 1593 (sd 7.68, n=5)   change -21.7%
+  cpu_p95                        old 100.8 (sd 0.16, n=5)             new 100.8 (sd 0.102, n=5)   change +0.0%
+  flow_setup_latency_p95_ms      old 231.5 (sd 27.7, n=5)             new 0 (sd 0, n=5)   change -100.0%
+  qos_success_ratio              old 1 (sd 0, n=5)                    new 0 (sd 0, n=5)   change -100.0%
+
+c2 @ 140 flows/s
+  processed_packet_in_rate_mean  old 1433 (sd 0.187, n=5)             new 1433 (sd 0.45, n=5)   change -0.0%
+  cpu_p95                        old 91.26 (sd 0.441, n=5)            new 100.7 (sd 0.04, n=5)   change +10.4%
+  flow_setup_latency_p95_ms      old 46.48 (sd 2.2, n=5)              new 243.6 (sd 8, n=5)   change +424.1%
+  qos_success_ratio              old 1 (sd 0, n=5)                    new 1 (sd 0, n=5)   change +0.0%
+
+c2 @ 160 flows/s
+  processed_packet_in_rate_mean  old 1633 (sd 0.502, n=5)             new 1603 (sd 9.1, n=5)   change -1.8%
+  cpu_p95                        old 96.82 (sd 0.637, n=5)            new 100.9 (sd 0.049, n=5)   change +4.3%
+  flow_setup_latency_p95_ms      old 65.01 (sd 13.1, n=5)             new 0 (sd 0, n=5)   change -100.0%
+  qos_success_ratio              old 1 (sd 0, n=5)                    new 0 (sd 0, n=5)   change -100.0%
+
+c2 @ 200 flows/s
+  processed_packet_in_rate_mean  old 2033 (sd 0.793, n=5)             new 1607 (sd 9.49, n=5)   change -21.0%
+  cpu_p95                        old 100.9 (sd 0.21, n=5)             new 100.9 (sd 0.0748, n=5)   change +0.0%
+  flow_setup_latency_p95_ms      old 205 (sd 16.4, n=5)               new 0 (sd 0, n=5)   change -100.0%
+  qos_success_ratio              old 1 (sd 0, n=5)                    new 0 (sd 0, n=5)   change -100.0%

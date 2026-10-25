@@ -1,4 +1,4 @@
-# Week 11 Definition of Done, generated 2026-10-25T16:24:43.744669+00:00
+# Week 11 Definition of Done, generated 2026-10-25T17:42:19.763051+00:00
 # PASS = evidence found and criterion met; MISSING = not proven yet; FAIL = not met
 
 Nhánh dev có lại trên GitHub, đã bật bảo vệ                 MISSING  needs --confirm (not provable from files in the repo)
@@ -33,10 +33,10 @@ Thống kê dataset                                            PASS     dataset_
 Không chia ngẫu nhiên theo dòng                             PASS     split_manifest.json (rule + disjoint repeats)
 Không tự bù dữ liệu raw                                     PASS     dataset_quality_report.json (no invalid/quarantined/duplicate/unplanned)
 make ci và git diff --check sạch                            PASS     ci.txt (run with --ci)
-Capacity đã kiểm trên VM mới                                PASS     confirmed: not re-measured yet (Vy decision, for My to review). R2 vs R1: READY 0.945=0.945, alerts 0=0, OOD fallback 0.0 vs 0.0698 differs (response-time features, not a capacity quantity). Capacity checked on W11 data instead: dataset_card analytic_check Pearson r=0.951, observed/expected median=0.984 (n=120)
+Capacity đã kiểm trên VM mới                                MISSING  needs --confirm (not provable from files in the repo)
 Attempt dùng lỗi giả lập có failure_injected = true         PASS     smoke_rollback.json
 Dữ liệu thô đã sao lưu ngoài VM, có sha256                  PASS     confirmed: gs://kltn-ndt-backup-2026/week11/migration-outcome-raw-v1.tar.gz sha256 314c3f7124d0b02ec20fa8b20cfcea340b589b89afdfb3bcaf0560bd39739464, plus mlflow.db and data/forecasting
 Có nhóm đối chứng NO_OP                                     PASS     noop_vs_migrate.csv, no_op_count=40
 Tag migration-outcome-raw-v1 trên main, sau PR dev -> main  MISSING  PENDING (tag is set after the DoD and the dev -> main merge)
 
-35/37 PASS
+34/37 PASS
