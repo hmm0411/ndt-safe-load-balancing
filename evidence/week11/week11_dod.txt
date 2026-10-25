@@ -1,0 +1,42 @@
+# Week 11 Definition of Done, generated 2026-10-25T16:24:43.744669+00:00
+# PASS = evidence found and criterion met; MISSING = not proven yet; FAIL = not met
+
+Nhánh dev có lại trên GitHub, đã bật bảo vệ                 MISSING  needs --confirm (not provable from files in the repo)
+Tag forecast-v1 nằm trên main có đủ code Tuần 10            PASS     confirmed: forecast-v1 is an ancestor of origin/main and week10_evidence.py is on main (checked 2026-10-25)
+MLflow dựng lại, alias champion đã đặt                      PASS     confirmed: ndt-forecast-xgboost alias champion=1, 61 runs in mlflow.db (checked 2026-10-25)
+R2, R5 trên VM mới đã chạy; DoD Tuần 10 vẫn 36/36           PASS     confirmed: PR 70 w10/newvm-r2-r5 merged, evidence/week10/forecasting_dod.txt 36/36 PASS
+Schema State-Action-Outcome                                 PASS     src/experiments/migration/schema.py
+Phiên bản schema                                            PASS     dataset_quality_report.json, migration_outcome_manifest.json
+Lưu Quality Score                                           PASS     attempt_summary.csv
+Lưu Consistency Score                                       PASS     attempt_summary.csv
+Trạng thái controller nguồn và đích                         PASS     attempt_summary.csv
+Thông tin switch được migrate                               PASS     attempt_summary.csv
+Hành động migration                                         PASS     smoke_success.json
+Lịch sử giao dịch                                           PASS     rollback_summary.csv, smoke_rollback.json
+Xử lý COMMITTED                                             PASS     committed_summary.csv (300 rows, committed_count=300)
+Xử lý RESTORED                                              PASS     smoke_rollback.json
+Giữ giao dịch lỗi                                           PASS     smoke_rollback.json (valid, not training_eligible)
+Cửa sổ trước (5 snapshot hợp lệ)                            PASS     smoke_success.json, valid_pre_count=340/340
+Cửa sổ sau (5 snapshot hợp lệ)                              PASS     smoke_success.json, valid_post_count=340/340
+Metadata workload                                           PASS     attempt_summary.csv
+Cả hai hướng migration                                      PASS     direction_counts={'c1->c2': 170, 'c2->c1': 170}
+Đa dạng mức tải đích                                        PASS     destination_load_counts={'dst45': 170, 'dst75': 170}
+Runner tự động                                              PASS     src/experiments/migration/runner.py
+Pilot PASS                                                  PASS     pilot_report.json (gate.passed)
+Thu chính thức                                              PASS     340/340 valid, freeze_consistent=True
+Lưu trữ raw bất biến                                        PASS     confirmed: 0 files with write permission, SHA256SUMS verified in 340/340 attempts (checked 2026-10-25)
+Validator cho dataset                                       PASS     src/experiments/migration/validator.py
+Manifest dataset                                            PASS     migration_outcome_manifest.json
+Quality report                                              PASS     dataset_quality_report.json
+Chia tập theo repeat                                        PASS     split_manifest.json
+Thống kê dataset                                            PASS     dataset_statistics.csv
+Không chia ngẫu nhiên theo dòng                             PASS     split_manifest.json (rule + disjoint repeats)
+Không tự bù dữ liệu raw                                     PASS     dataset_quality_report.json (no invalid/quarantined/duplicate/unplanned)
+make ci và git diff --check sạch                            PASS     ci.txt (run with --ci)
+Capacity đã kiểm trên VM mới                                PASS     confirmed: not re-measured yet (Vy decision, for My to review). R2 vs R1: READY 0.945=0.945, alerts 0=0, OOD fallback 0.0 vs 0.0698 differs (response-time features, not a capacity quantity). Capacity checked on W11 data instead: dataset_card analytic_check Pearson r=0.951, observed/expected median=0.984 (n=120)
+Attempt dùng lỗi giả lập có failure_injected = true         PASS     smoke_rollback.json
+Dữ liệu thô đã sao lưu ngoài VM, có sha256                  PASS     confirmed: gs://kltn-ndt-backup-2026/week11/migration-outcome-raw-v1.tar.gz sha256 314c3f7124d0b02ec20fa8b20cfcea340b589b89afdfb3bcaf0560bd39739464, plus mlflow.db and data/forecasting
+Có nhóm đối chứng NO_OP                                     PASS     noop_vs_migrate.csv, no_op_count=40
+Tag migration-outcome-raw-v1 trên main, sau PR dev -> main  MISSING  PENDING (tag is set after the DoD and the dev -> main merge)
+
+35/37 PASS
