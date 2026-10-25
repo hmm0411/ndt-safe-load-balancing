@@ -128,6 +128,17 @@ class DatasetReportTest(unittest.TestCase):
         cell = tables["noop_vs_migrate"][0]
         self.assertEqual((cell["migrate_n"], cell["no_op_n"]), (3, 1))
         self.assertAlmostEqual(cell["migration_effect_src"], -0.08, places=6)
+        self.assertAlmostEqual(cell["migration_effect_dst"], 0.08, places=6)
+
+    def test_statistics_tables(self) -> None:
+        tables = self.report["tables"]
+        stats = {r["variable"]: r for r in tables["dataset_statistics"]}
+        self.assertEqual(stats["delta_src_u_mean"]["n"], 3)
+        self.assertAlmostEqual(stats["delta_src_u_mean"]["median"], -0.08, places=6)
+        self.assertAlmostEqual(stats["dst_u_after_mean"]["max"], 0.53, places=6)
+        self.assertEqual({r["workload"] for r in tables["dataset_statistics_by_workload"]},
+                         {"stable"})
+        self.assertEqual(self.report["quality_report"]["destination_overload_after_count"], 0)
         self.assertAlmostEqual(tables["workload_distribution"][0]["attempts"], 3)
 
     def test_latency_report(self) -> None:
@@ -144,7 +155,8 @@ class DatasetReportTest(unittest.TestCase):
                          "dataset_quality_report.json", "migration_latency.json",
                          "analytic_check.json", "attempt_summary.csv", "committed_summary.csv",
                          "rollback_summary.csv", "workload_distribution.csv",
-                         "noop_vs_migrate.csv"):
+                         "noop_vs_migrate.csv", "dataset_statistics.csv",
+                         "dataset_statistics_by_workload.csv"):
                 self.assertIn(name, names)
             raw = (Path(tmp) / "attempt_summary.csv").read_bytes()
             self.assertNotIn(b"\r\n", raw)

@@ -10,6 +10,7 @@ Day 6). Reads only; writes into --out (default results/week11/<ROOT name>):
   migration_latency.json  analytic_check.json
   attempt_summary.csv  committed_summary.csv  rollback_summary.csv
   workload_distribution.csv  noop_vs_migrate.csv
+  dataset_statistics.csv  dataset_statistics_by_workload.csv
   figures/fig_w11_01 ... fig_w11_08 (.png)
 
 Plan sections 27, 28, 36, 44, 45. Every number in the figures comes from
@@ -205,7 +206,7 @@ def draw_figures(report: dict[str, Any], out_dir: Path) -> list[Path]:
     ax.set_xlabel("analytic estimate: switch rate / C_safe")
     ax.set_ylabel("observed −ΔU source")
     ax.set_title("blue: stable, hot_switch; grey: other workloads")
-    ax.legend(loc="upper left")
+    ax.legend(loc="lower right")
     _save(fig, figures / "fig_w11_08_expected_vs_observed.png", written)
     return written
 
