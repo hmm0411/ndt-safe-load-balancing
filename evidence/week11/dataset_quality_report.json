@@ -64,6 +64,7 @@
   "duplicate_transaction_count": 0,
   "ownership_mismatch_count": 0,
   "code_bug_attempts": 0,
+  "destination_overload_after_count": 0,
   "progress_by_repeat": {
     "r01": {
       "planned": 68,

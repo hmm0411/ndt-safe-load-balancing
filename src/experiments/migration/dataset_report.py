@@ -12,7 +12,9 @@ what plan sections 27, 28, 36 and 44-46 ask for:
   repeat and the freeze values;
 * tables: ``attempt_summary.csv``, ``committed_summary.csv``,
   ``rollback_summary.csv``, ``workload_distribution.csv``,
-  ``noop_vs_migrate.csv``;
+  ``noop_vs_migrate.csv`` (source and destination), ``dataset_statistics.csv`` and
+  ``dataset_statistics_by_workload.csv`` (count, mean, std, quantiles of every
+  section-45 variable, the week10_evidence layout);
 * ``migration_latency.json``            transaction time, post-window settle
   time, snapshots blocked by the Hard Gate;
 * ``analytic_check.json``               -Delta U_src against the switch's
@@ -65,6 +67,20 @@ ROLLBACK_COLUMNS = (
     "attempt_id", "workload", "phase", "direction", "repeat", "switch_id", "failure_injected",
     "transaction_status", "failure_reason", "history", "transaction_s", "valid",
     "post_window_complete",
+)
+# Section 45 variables, summarised in dataset_statistics*.csv (COMMITTED, eligible).
+STAT_VARIABLES = (
+    "src_u_before_mean", "src_u_after_mean", "dst_u_before_mean", "dst_u_after_mean",
+    "switch_share_before_mean", "delta_src_u_mean", "delta_dst_u_mean",
+    "imbalance_before_mean", "imbalance_after_mean", "delta_imbalance_mean",
+    "transaction_s", "settle_s", "transition_hard_gate_blocked",
+    "before_quality_min", "after_quality_min",
+)
+STAT_COLUMNS = ("variable", "n", "mean", "std", "min", "p25", "median", "p75", "p95", "max")
+NOOP_COLUMNS = (
+    "workload", "phase", "migrate_n", "migrate_delta_src_mean", "no_op_n", "no_op_delta_src_mean",
+    "migration_effect_src", "migrate_delta_dst_mean", "no_op_delta_dst_mean",
+    "migration_effect_dst",
 )
 DISTRIBUTION_KEYS = (
     "workload", "phase", "destination_load_level", "direction", "action_type",
@@ -238,6 +254,8 @@ def build_dataset_report(
                 ROLLBACK_COLUMNS),
             "workload_distribution": workload_distribution(readable),
             "noop_vs_migrate": noop_vs_migrate(readable),
+            "dataset_statistics": statistics_table(_committed(readable)),
+            "dataset_statistics_by_workload": statistics_by_workload(_committed(readable)),
         },
         "rows": rows,
     }
@@ -337,6 +355,9 @@ def quality_report(
         "ownership_mismatch_count": count(
             lambda r: mentions(r, ("owned by", "not owned", "ownership", "roles"))),
         "code_bug_attempts": count(lambda r: bool(r.get("bugs"))),
+        "destination_overload_after_count": count(
+            lambda r: r.get("transaction_status") == "COMMITTED"
+            and (r.get("dst_u_after_mean") or 0.0) >= 1.0),
         "progress_by_repeat": {
             repeat: {"planned": planned_by_repeat[repeat], "present": present.get(repeat, 0),
                      "valid": valid.get(repeat, 0), "training_eligible": eligible.get(repeat, 0)}
@@ -422,28 +443,60 @@ def workload_distribution(rows: Sequence[Mapping[str, Any]]) -> list[dict[str, A
 
 
 def noop_vs_migrate(rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
-    """Section 28: how much the load moves by itself (NO_OP) vs with a migration."""
-    cells: dict[tuple[str, str], dict[str, list[float]]] = defaultdict(
+    """Section 28: how much the load moves by itself (NO_OP) vs with a migration.
+
+    Per (workload, phase): mean Delta U of eligible COMMITTED attempts and of eligible
+    NO_OP controls, source and destination; effect = MIGRATE mean - NO_OP mean.
+    """
+    cells: dict[tuple[str, str], dict[str, list[tuple[float, float | None]]]] = defaultdict(
         lambda: {"MIGRATE": [], "NO_OP": []})
     for r in rows:
         if not r.get("training_eligible") or r.get("delta_src_u_mean") is None:
             continue
         if r.get("action_type") == "MIGRATE" and r.get("transaction_status") != "COMMITTED":
             continue
+        dst = r.get("delta_dst_u_mean")
         cells[(str(r["workload"]), str(r["phase"]))][str(r["action_type"])].append(
-            float(r["delta_src_u_mean"]))
+            (float(r["delta_src_u_mean"]), None if dst is None else float(dst)))
+
+    def mean(values: Iterable[float | None]) -> float | None:
+        kept = [v for v in values if v is not None]
+        return statistics.fmean(kept) if kept else None
+
+    def diff(a: float | None, b: float | None) -> float | None:
+        return a - b if a is not None and b is not None else None
+
     out = []
     for (workload, phase), values in sorted(cells.items()):
         mig, noop = values["MIGRATE"], values["NO_OP"]
-        mig_mean = statistics.fmean(mig) if mig else None
-        noop_mean = statistics.fmean(noop) if noop else None
+        mig_src, noop_src = mean(v[0] for v in mig), mean(v[0] for v in noop)
+        mig_dst, noop_dst = mean(v[1] for v in mig), mean(v[1] for v in noop)
         out.append({
             "workload": workload, "phase": phase,
-            "migrate_n": len(mig), "migrate_delta_src_mean": mig_mean,
-            "no_op_n": len(noop), "no_op_delta_src_mean": noop_mean,
-            "migration_effect_src": (mig_mean - noop_mean
-                                     if mig_mean is not None and noop_mean is not None else None),
+            "migrate_n": len(mig), "migrate_delta_src_mean": mig_src,
+            "no_op_n": len(noop), "no_op_delta_src_mean": noop_src,
+            "migration_effect_src": diff(mig_src, noop_src),
+            "migrate_delta_dst_mean": mig_dst, "no_op_delta_dst_mean": noop_dst,
+            "migration_effect_dst": diff(mig_dst, noop_dst),
         })
+    return out
+
+
+def _committed(rows: Sequence[Mapping[str, Any]]) -> list[Mapping[str, Any]]:
+    return [r for r in rows
+            if r.get("transaction_status") == "COMMITTED" and r.get("training_eligible")]
+
+
+def statistics_table(rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    """One row per section-45 variable: count, mean, std and quantiles."""
+    return [{"variable": name, **describe(_numbers(rows, name))} for name in STAT_VARIABLES]
+
+
+def statistics_by_workload(rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    out = []
+    for workload in sorted({str(r["workload"]) for r in rows}):
+        own = [r for r in rows if r.get("workload") == workload]
+        out += [{"workload": workload, **record} for record in statistics_table(own)]
     return out
 
 
@@ -493,8 +546,9 @@ def write_report(report: Mapping[str, Any], out_dir: Path) -> list[Path]:
         "committed_summary": ATTEMPT_COLUMNS,
         "rollback_summary": ROLLBACK_COLUMNS,
         "workload_distribution": (*DISTRIBUTION_KEYS, "attempts", "training_eligible"),
-        "noop_vs_migrate": ("workload", "phase", "migrate_n", "migrate_delta_src_mean", "no_op_n",
-                            "no_op_delta_src_mean", "migration_effect_src"),
+        "noop_vs_migrate": NOOP_COLUMNS,
+        "dataset_statistics": STAT_COLUMNS,
+        "dataset_statistics_by_workload": ("workload", *STAT_COLUMNS),
     }
     for name, records in report["tables"].items():
         path = out_dir / f"{name}.csv"
