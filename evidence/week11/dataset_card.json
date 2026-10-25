@@ -1,0 +1,357 @@
+{
+  "dataset_version": "migration-outcome-raw-v1",
+  "schema_version": "migration-outcome-v1",
+  "purpose": "Post-migration state modelling: observed outcome of one switch-ownership migration (or of no action) on a 2-controller SDN, for the Week 12 post-migration outcome model (analytic estimate + learned residual).",
+  "topology": "2C20S v1 (2 Ryu controllers x 20 OVS switches, Mininet, GCP e2-standard-8)",
+  "action": "switch ownership migration (OpenFlow role change + barrier + verification), one per attempt",
+  "workloads": [
+    "stable",
+    "gradual",
+    "burst",
+    "oscillating",
+    "hot_switch"
+  ],
+  "action_phases": {
+    "stable": [
+      "early",
+      "middle",
+      "late"
+    ],
+    "gradual": [
+      "u40",
+      "u60",
+      "u95"
+    ],
+    "burst": [
+      "baseline_1",
+      "burst_1",
+      "recovery"
+    ],
+    "oscillating": [
+      "rising",
+      "peak",
+      "falling"
+    ],
+    "hot_switch": [
+      "moderate",
+      "high",
+      "peak"
+    ]
+  },
+  "phases_per_workload": [
+    3
+  ],
+  "destination_load_levels": [
+    0.45,
+    0.75
+  ],
+  "directions": [
+    "c1->c2",
+    "c2->c1"
+  ],
+  "repeats": {
+    "r01": 9201,
+    "r02": 9202,
+    "r03": 9203,
+    "r04": 9204,
+    "r05": 9205
+  },
+  "planned_attempts": {
+    "migrate": 300,
+    "no_op": 40,
+    "total": 340
+  },
+  "actual_attempts": {
+    "total_attempts": 340,
+    "missing_attempts": 0,
+    "valid_count": 340,
+    "invalid_count": 0,
+    "committed_count": 300,
+    "restored_count": 0,
+    "failed_count": 0,
+    "skipped_count": 0,
+    "no_op_count": 40,
+    "training_eligible_committed_count": 300,
+    "training_eligible_no_op_count": 40,
+    "valid_pre_count": 340,
+    "valid_post_count": 340,
+    "destination_overload_after_count": 0
+  },
+  "pre_window": "5 valid snapshots",
+  "post_window": "5 valid snapshots",
+  "post_window_timeout_s": 60.0,
+  "quality_gate": "required: every window snapshot passes the Hard Gate (valid = fresh and complete and consistent)",
+  "failed_transactions": "retained (RESTORED / FAILED / SKIPPED are kept, training_eligible = false)",
+  "raw_imputation": "none",
+  "split": {
+    "rule": "split by repeat (scenario + repeat), never by row: every pre/post sample of an attempt stays in that attempt's split; NO_OP controls follow their repeat",
+    "train": {
+      "repeats": [
+        "r01",
+        "r02",
+        "r03"
+      ],
+      "attempts": 204,
+      "migrate": 180,
+      "no_op": 24
+    },
+    "validation": {
+      "repeats": [
+        "r04"
+      ],
+      "attempts": 68,
+      "migrate": 60,
+      "no_op": 8
+    },
+    "test": {
+      "repeats": [
+        "r05"
+      ],
+      "attempts": 68,
+      "migrate": 60,
+      "no_op": 8
+    },
+    "attempts_in_more_than_one_split": 0
+  },
+  "collection": {
+    "mode": "one attempt per run: orchestrator restart, fresh workload, controllers reset to the default ownership before every attempt",
+    "collected": "2026-10-24 to 2026-10-25 (official collection, about 12.4 h)",
+    "workload_duration_s": [
+      120.0
+    ],
+    "attempt_duration_s_median": 129.3,
+    "freeze_tag": "w11-collect-freeze",
+    "git_commit": [
+      "47c1984d7fa987f27e6f616c3061f44de6d9a1dc"
+    ],
+    "config_sha256": [
+      "068c0f1e5648a9c2bd156a2208358e3cde06ba96314e0b0c9f59fafb02a9b8b5"
+    ],
+    "capacity_version": [
+      "controller_capacity.json@sha256:789d2ff9a1f1"
+    ],
+    "quality_version": [
+      "quality-src@sha256:a77c36a3b362"
+    ],
+    "freeze_consistent": true,
+    "dirty_tree_check": "manual (git status --short empty and git describe --tags --exact-match before every repeat); the runner on the tag only warns on a dirty tree"
+  },
+  "switch_selection": {
+    "seeded_random": "uniform among the switches owned by the source, seeded by (seed, attempt_id)",
+    "hot_switch_alternating": "hot_switch workload only; in each matrix cell about half of the repeats move the hot switch, the others a seeded random switch"
+  },
+  "measured_ranges": {
+    "src_u_before_mean": {
+      "min": 0.363,
+      "median": 0.709,
+      "max": 0.955
+    },
+    "src_u_after_mean": {
+      "min": 0.349,
+      "median": 0.562,
+      "max": 0.969
+    },
+    "dst_u_before_mean": {
+      "min": 0.386,
+      "median": 0.557,
+      "max": 0.786
+    },
+    "dst_u_after_mean": {
+      "min": 0.474,
+      "median": 0.773,
+      "max": 0.902
+    },
+    "switch_share_before_mean": {
+      "min": 0.054,
+      "median": 0.1,
+      "max": 0.528
+    },
+    "delta_src_u_mean": {
+      "min": -0.513,
+      "median": -0.058,
+      "max": 0.518
+    },
+    "delta_dst_u_mean": {
+      "min": -0.028,
+      "median": 0.062,
+      "max": 0.418
+    },
+    "transaction_s": {
+      "min": 1.095,
+      "median": 1.739,
+      "max": 2.735
+    },
+    "settle_s": {
+      "min": 3.999,
+      "median": 14.476,
+      "max": 54.848
+    },
+    "transition_hard_gate_blocked": {
+      "min": 0.0,
+      "median": 10.0,
+      "max": 49.0
+    }
+  },
+  "measured_vs_planned": {
+    "hot_switch_share": {
+      "moderate": {
+        "planned_share": 0.25,
+        "n": 9,
+        "measured_share_median": 0.217
+      },
+      "high": {
+        "planned_share": 0.4,
+        "n": 9,
+        "measured_share_median": 0.375
+      },
+      "peak": {
+        "planned_share": 0.55,
+        "n": 10,
+        "measured_share_median": 0.508
+      }
+    },
+    "destination_u_before": {
+      "stable@0.45": {
+        "n": 30,
+        "median": 0.427,
+        "min": 0.414
+      },
+      "stable@0.75": {
+        "n": 30,
+        "median": 0.727,
+        "min": 0.596
+      },
+      "gradual@0.45": {
+        "n": 30,
+        "median": 0.432,
+        "min": 0.405
+      },
+      "gradual@0.75": {
+        "n": 30,
+        "median": 0.73,
+        "min": 0.606
+      },
+      "burst@0.45": {
+        "n": 30,
+        "median": 0.455,
+        "min": 0.414
+      },
+      "burst@0.75": {
+        "n": 30,
+        "median": 0.729,
+        "min": 0.665
+      },
+      "oscillating@0.45": {
+        "n": 30,
+        "median": 0.475,
+        "min": 0.386
+      },
+      "oscillating@0.75": {
+        "n": 30,
+        "median": 0.759,
+        "min": 0.599
+      },
+      "hot_switch@0.45": {
+        "n": 30,
+        "median": 0.448,
+        "min": 0.388
+      },
+      "hot_switch@0.75": {
+        "n": 30,
+        "median": 0.692,
+        "min": 0.612
+      }
+    }
+  },
+  "analytic_check": {
+    "definition": "x = control-load share of the moved switch (pre window), y = -Delta U_src (after_mean - before_mean); expected = switch rate / C_safe of the source",
+    "stable_and_hot_switch": {
+      "n": 120,
+      "share_vs_neg_delta_src_pearson_r": 0.951,
+      "observed_over_expected_median": 0.984
+    },
+    "hot_switch_moves": {
+      "n": 28,
+      "observed_over_expected_median": 1.0
+    }
+  },
+  "noop_controls": [
+    {
+      "workload": "burst",
+      "phase": "burst_1",
+      "no_op_n": 8,
+      "migration_effect_src": -0.25,
+      "migration_effect_dst": 0.088
+    },
+    {
+      "workload": "gradual",
+      "phase": "u60",
+      "no_op_n": 8,
+      "migration_effect_src": -0.034,
+      "migration_effect_dst": 0.058
+    },
+    {
+      "workload": "hot_switch",
+      "phase": "high",
+      "no_op_n": 8,
+      "migration_effect_src": -0.16,
+      "migration_effect_dst": 0.124
+    },
+    {
+      "workload": "oscillating",
+      "phase": "peak",
+      "no_op_n": 8,
+      "migration_effect_src": -0.153,
+      "migration_effect_dst": 0.013
+    },
+    {
+      "workload": "stable",
+      "phase": "middle",
+      "no_op_n": 8,
+      "migration_effect_src": -0.057,
+      "migration_effect_dst": 0.058
+    }
+  ],
+  "backup": {
+    "file": "migration-outcome-raw-v1.tar.gz",
+    "sha256": "314c3f7124d0b02ec20fa8b20cfcea340b589b89afdfb3bcaf0560bd39739464",
+    "uri": "gs://kltn-ndt-backup-2026/week11/migration-outcome-raw-v1.tar.gz",
+    "verified": "sha256sum -c OK and 340 validation.json in the archive (My, 2026-10-25)"
+  },
+  "known_limitations": [
+    "no destination overload: destination U after migration stays in [0.47, 0.90]; any prediction at U >= 1 is an extrapolation",
+    "measured loads are below the planned levels: hot-switch share (moderate, high, peak) and the 0.75 destination level of the hot_switch workload (see measured_vs_planned); use the measured values, never the plan",
+    "the source side is dominated by the workload trend in burst, gradual and oscillating; NO_OP controls exist only for the middle phase of each workload (8 per workload: 2 per destination level and direction)",
+    "official collection has no failure injection; RESTORED behaviour is covered by the smoke rollback attempt only (evidence/week11/smoke_rollback.json)",
+    "after a migration the twin needs 4-55 s to give 5 Hard-Gate-valid snapshots again (stepped around 5, 15 and 35 s); mechanism to confirm"
+  ],
+  "notes": [
+    "phase early includes the workload warm-up: delta_*_mean and delta_*_last can differ (keep both, Week 12 chooses)",
+    "every attempt is kept, none imputed or dropped; invalid attempts would stay in the dataset with valid = false"
+  ],
+  "open_decisions": [
+    "overload region (U >= 1): keep v1 as is (chosen to close Week 11) and ask the advisor at the start of Week 12 whether to collect a separate stress dataset (destination 0.85 / 0.95, hot_switch only) or to check it in the closed-loop experiments"
+  ],
+  "evidence": [
+    "analytic_check.json",
+    "attempt_summary.csv",
+    "committed_summary.csv",
+    "dataset_quality_report.json",
+    "dataset_statistics.csv",
+    "dataset_statistics_by_workload.csv",
+    "freeze.md",
+    "migration_latency.json",
+    "migration_outcome_manifest.json",
+    "noop_vs_migrate.csv",
+    "pilot_late.json",
+    "pilot_late.md",
+    "pilot_report.json",
+    "pilot_report.md",
+    "pilot_validate.json",
+    "rollback_summary.csv",
+    "smoke_rollback.json",
+    "smoke_success.json",
+    "split_manifest.json",
+    "workload_distribution.csv"
+  ]
+}
