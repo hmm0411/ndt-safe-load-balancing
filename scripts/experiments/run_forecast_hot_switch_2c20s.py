@@ -22,7 +22,9 @@ from src.experiments.runners.forecast_data_runner import (
     ForecastRunConfig,
 )
 from src.twin.capacity.model import CapacityModel
+from src.experiments.workloads.constant import ConstantProfile
 from src.experiments.workloads.hot_switch import (
+    HOT_SWITCH_LEVELS,
     HotSwitchWorkload,
 )
 
@@ -78,10 +80,75 @@ def local_packet_in_per_flow() -> float:
     return value
 
 
+def hot_switch_level() -> str | None:
+    """Level from NDT_HOT_SWITCH_LEVEL (moderate/high/peak); None = Week 10 behaviour."""
+    raw = os.environ.get("NDT_HOT_SWITCH_LEVEL")
+
+    if not raw:
+        return None
+
+    if raw not in HOT_SWITCH_LEVELS:
+        raise ValueError(
+            f"NDT_HOT_SWITCH_LEVEL={raw!r}; "
+            f"expected one of {sorted(HOT_SWITCH_LEVELS)}"
+        )
+
+    return raw
+
+
+def load_check_enabled() -> bool:
+    """False when NDT_HOT_SWITCH_CHECK_LOAD=0: a migration moves load on purpose."""
+    return os.environ.get("NDT_HOT_SWITCH_CHECK_LOAD", "1") != "0"
+
+
+def hot_switch_controller_modes(
+    profiles: dict[str, str] | None,
+) -> dict[str, float | None]:
+    """None = run the hot-switch workload; float = constant utilization level."""
+    modes: dict[str, float | None] = {c: None for c in CONTROLLER_IDS}
+
+    for controller_id, spec in (profiles or {}).items():
+        if controller_id not in modes:
+            raise ValueError(
+                f"unknown controller in --profile: {controller_id!r}"
+            )
+
+        if spec in ("hot-switch", "hot_switch"):
+            modes[controller_id] = None
+        elif spec.startswith("constant:"):
+            try:
+                value = ConstantProfile(
+                    float(spec.split(":", 1)[1])
+                ).target_at(0.0).target_utilization
+            except (ValueError, TypeError) as exc:
+                raise ValueError(
+                    f"invalid --profile for {controller_id}: {spec!r} ({exc})"
+                ) from exc
+            if not value > 0:
+                raise ValueError(
+                    f"constant level must be > 0 for {controller_id}: {spec!r}"
+                )
+            modes[controller_id] = value
+        else:
+            raise ValueError(
+                f"--profile for hot-switch must be 'hot-switch' or "
+                f"'constant:<u>', got {spec!r} for {controller_id}"
+            )
+
+    if all(mode is not None for mode in modes.values()):
+        raise ValueError(
+            "at least one controller must run the hot-switch workload"
+        )
+
+    return modes
+
+
 def build_distribution(
     safe_capacity_pps: float,
     controller_id: str,
     packet_in_per_flow: float,
+    hot_share: float = HOT_SHARE,
+    target_utilization: float = TARGET_UTILIZATION,
 ) -> dict[int, float]:
     """Per-host new-flow rates that load one controller to the target."""
     if safe_capacity_pps <= 0 or packet_in_per_flow <= 0:
@@ -89,8 +156,11 @@ def build_distribution(
             "safe_capacity_pps and packet_in_per_flow must be > 0"
         )
 
+    if not 0.0 < hot_share < 1.0:
+        raise ValueError("hot_share must be in (0, 1)")
+
     total_rate = (
-        TARGET_UTILIZATION
+        target_utilization
         * safe_capacity_pps
         / packet_in_per_flow
     )
@@ -106,12 +176,12 @@ def build_distribution(
 
     hot_rate = (
         total_rate
-        * HOT_SHARE
+        * hot_share
     )
 
     cold_rate = (
         total_rate
-        * (1.0 - HOT_SHARE)
+        * (1.0 - hot_share)
         / len(cold_hosts)
     )
 
@@ -158,25 +228,27 @@ def achieved_utilization(
 
 def check_achieved_utilization(
     achieved: dict[str, float],
+    targets: dict[str, float] | None = None,
 ) -> list[str]:
     """Problems that make the run unusable as an 80%-load hot-switch run."""
     problems: list[str] = []
 
     for controller_id in CONTROLLER_IDS:
         value = achieved.get(controller_id)
+        target = (targets or {}).get(controller_id, TARGET_UTILIZATION)
 
         if value is None:
             problems.append(
                 f"{controller_id}: no utilization samples"
             )
         elif (
-            abs(value - TARGET_UTILIZATION)
+            abs(value - target)
             > UTILIZATION_TOLERANCE
         ):
             problems.append(
                 f"{controller_id}: achieved utilization "
                 f"{value:.3f}, target "
-                f"{TARGET_UTILIZATION:.2f} "
+                f"{target:.2f} "
                 f"+/- {UTILIZATION_TOLERANCE:.2f}"
             )
 
@@ -234,6 +306,7 @@ def run_forecast_hot_switch(
     seed: int | None = None,
     capacity_artifact: str | None = None,
     git_commit: str | None = None,
+    profiles: dict[str, str] | None = None,
 ) -> Path:
     if duration_seconds < 60.0:
         raise ValueError(
@@ -249,6 +322,21 @@ def run_forecast_hot_switch(
 
     packet_in_per_flow = local_packet_in_per_flow()
 
+    level = hot_switch_level()
+    hot_share = (
+        HOT_SWITCH_LEVELS[level]
+        if level
+        else HOT_SHARE
+    )
+
+    modes = hot_switch_controller_modes(profiles)
+    targets = {
+        controller_id: (
+            TARGET_UTILIZATION if mode is None else mode
+        )
+        for controller_id, mode in modes.items()
+    }
+
     distributions = {
         controller_id: build_distribution(
             capacity_model.safe_capacity(
@@ -256,6 +344,10 @@ def run_forecast_hot_switch(
             ),
             controller_id,
             packet_in_per_flow,
+            hot_share
+            if modes[controller_id] is None
+            else 1.0 / len(CONTROLLER_HOSTS[controller_id]),
+            targets[controller_id],
         )
         for controller_id in CONTROLLER_IDS
     }
@@ -299,8 +391,16 @@ def run_forecast_hot_switch(
             TARGET_UTILIZATION
         ),
         "target_hot_switch_share": (
-            HOT_SHARE
+            hot_share
         ),
+        "hot_switch_level": level,
+        "controller_modes": {
+            controller_id: (
+                "hot-switch" if mode is None else f"constant:{mode}"
+            )
+            for controller_id, mode in modes.items()
+        },
+        "target_utilization_per_controller": targets,
         "traffic_model": (
             "local-source-to-local-sink"
         ),
@@ -507,7 +607,8 @@ def run_forecast_hot_switch(
                 TARGET_UTILIZATION
             ),
             hot_switch_id="s1",
-            hot_switch_share=HOT_SHARE,
+            hot_switch_share=hot_share,
+            level=level,
         )
 
         runner = ForecastDataRunner(
@@ -557,11 +658,13 @@ def run_forecast_hot_switch(
         )
 
         problems = check_achieved_utilization(
-            achieved
+            achieved,
+            targets,
         )
 
         evidence["achieved_mean_utilization"] = achieved
         evidence["achieved_load_valid"] = not problems
+        evidence["achieved_load_checked"] = load_check_enabled()
 
         (
             run_dir
@@ -575,7 +678,7 @@ def run_forecast_hot_switch(
             encoding="utf-8",
         )
 
-        if problems:
+        if problems and load_check_enabled():
             raise RuntimeError(
                 "hot-switch run did not reach its target load "
                 "(adjust NDT_HOT_SWITCH_PIN_PER_FLOW): "

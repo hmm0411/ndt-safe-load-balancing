@@ -1,0 +1,222 @@
+{
+  "action": {
+    "action_type": "MIGRATE",
+    "failure_injected": false,
+    "selection_rule": "seeded_random",
+    "source_controller": "c1",
+    "switch_id": "s4",
+    "target_controller": "c2",
+    "target_hot": false
+  },
+  "after_samples": {
+    "count": 5,
+    "owner_of_switch": [
+      "c2"
+    ],
+    "quality_valid": [
+      true,
+      true,
+      true,
+      true,
+      true
+    ],
+    "snapshot_ids": [
+      "snap-a8da089254f9",
+      "snap-ed7e9b3b0d47",
+      "snap-7d4eabbec1a0",
+      "snap-35e0ac0dcb9f",
+      "snap-bab2a87e0e20"
+    ]
+  },
+  "attempt_id": "mig-stable-early-dst45-c1-c2-r01",
+  "before_samples": {
+    "count": 5,
+    "owner_of_switch": [
+      "c1"
+    ],
+    "quality_valid": [
+      true,
+      true,
+      true,
+      true,
+      true
+    ],
+    "snapshot_ids": [
+      "snap-613e3f0b8a15",
+      "snap-e27bf453db97",
+      "snap-f9d6eef3c56b",
+      "snap-707166c62ae6",
+      "snap-ea96d56b42c6"
+    ]
+  },
+  "metadata": {
+    "attempt_id": "mig-stable-early-dst45-c1-c2-r01",
+    "capacity_version": "controller_capacity.json@sha256:789d2ff9a1f1",
+    "config_sha256": "068c0f1e5648a9c2bd156a2208358e3cde06ba96314e0b0c9f59fafb02a9b8b5",
+    "destination_load_level": 0.45,
+    "finished_at": "2026-10-23T12:55:14.379581+00:00",
+    "git_commit": "133020228e73babb3d90eec5e503b1f548ee0d34",
+    "phase": "early",
+    "quality_version": "quality-src@sha256:a77c36a3b362",
+    "repeat": "r01",
+    "schema_version": "migration-outcome-v1",
+    "seed": 9201,
+    "source_controller": "c1",
+    "started_at": "2026-10-23T12:54:05.052763+00:00",
+    "target_controller": "c2",
+    "topology": "2C20S",
+    "workload": "stable"
+  },
+  "outcome": {
+    "outcome": {
+      "action_type": "MIGRATE",
+      "delta_dst_u_last": 0.043813203745146856,
+      "delta_dst_u_mean": 0.07362740849473282,
+      "delta_imbalance_mean": -0.04248840226957385,
+      "delta_src_u_last": -0.07135018894761569,
+      "delta_src_u_mean": -0.00662985904549751,
+      "dst_response_p95_after_mean": 0.7604176,
+      "dst_response_p95_before_mean": 0.7082407999999999,
+      "dst_u_after_mean": 0.4849495605462108,
+      "dst_u_before_last": 0.44113635680106394,
+      "dst_u_before_mean": 0.411322152051478,
+      "imbalance_after_mean": 0.017478008913791948,
+      "imbalance_before_last": 0.07505970526017322,
+      "imbalance_before_mean": 0.0599664111833658,
+      "ineligible_reasons": [],
+      "max_u_after_mean": 0.5199055783737947,
+      "max_u_before_mean": 0.5288952059187509,
+      "src_u_after_mean": 0.5199055783737947,
+      "src_u_before_last": 0.5912557673214104,
+      "src_u_before_mean": 0.5265354374192922,
+      "switch_rate_before_mean": 75.31355086496458,
+      "switch_share_before_mean": 0.09760027980266166,
+      "training_eligible": true,
+      "transaction_status": "COMMITTED"
+    },
+    "quality": {
+      "after_all_valid": true,
+      "after_consistency_min": 1.0,
+      "after_count": 5,
+      "after_quality_min": 0.974672,
+      "before_all_valid": true,
+      "before_consistency_min": 1.0,
+      "before_count": 5,
+      "before_quality_min": 0.969895,
+      "post_window_complete": true,
+      "required_window": 5
+    },
+    "schema_version": "migration-outcome-v1"
+  },
+  "sha256sums": [
+    "89de8a988de8f75867c50067f3463ddf48cca782e2dcceb8452a4b084140afdf  action.json",
+    "9026cc52d9412a302477a83ff967cde891ed92aff6d020dc1b414ce9a18b1a1d  after_samples.jsonl",
+    "344ab4b1c1c6ae49a113b507b5839990f2cffdb61763f43a2d3aad45ee791b19  before_samples.jsonl",
+    "90c7b7d92457b9984b963ca8db0f53c82d9ab6e00ae400cd1ee1cbad1087ec8b  forecast_samples.jsonl",
+    "14c3f2517ff2a45fdeb7066e5f686b6f73aca850b89611598da8a0f025d9c850  metadata.json",
+    "9205975fcbde5897cc61f8dec08900f24197bbb992d535986342b69384f2414d  outcome.json",
+    "f6eac883d755afcde3a0932ca3982f4b10b732c7a514da051947f7ef8402beb6  transaction.json",
+    "3b3ede2d2704d01ff800fea54d5ce0436eb868807f97622cace72bdea990bbdf  transition_samples.jsonl",
+    "8501bbc8def513bb04d17128cf1ec6b10e6f5dd69ea75d42c03431d26aeacb29  validation.json"
+  ],
+  "source_dir": "data/experiment_runs/migration-smoke/mig-stable-early-dst45-c1-c2-r01",
+  "transaction": {
+    "body": {
+      "ownership_version": 2,
+      "status": "COMMITTED",
+      "transaction": {
+        "failure_reason": null,
+        "finished_at": "2026-10-23T12:54:18.291459+00:00",
+        "generation_id": 1792760056979210909,
+        "history": [
+          {
+            "at": "2026-10-23T12:54:16.979137+00:00",
+            "detail": null,
+            "state": "PREPARING"
+          },
+          {
+            "at": "2026-10-23T12:54:16.979218+00:00",
+            "detail": null,
+            "state": "ROLE_SWITCHING"
+          },
+          {
+            "at": "2026-10-23T12:54:17.103430+00:00",
+            "detail": null,
+            "state": "VERIFYING"
+          },
+          {
+            "at": "2026-10-23T12:54:18.291450+00:00",
+            "detail": "{\"ok\": true, \"source_role\": \"SLAVE\", \"target_role\": \"MASTER\", \"source_connected\": true, \"target_connected\": true, \"packet_in_verified\": true, \"flow_mod_verified\": true, \"reasons\": []}",
+            "state": "COMMITTED"
+          }
+        ],
+        "source_controller": "c1",
+        "started_at": "2026-10-23T12:54:16.979137+00:00",
+        "state": "COMMITTED",
+        "switch_id": "s4",
+        "target_controller": "c2",
+        "transaction_id": "tx-8be91c471321"
+      },
+      "verification": {
+        "flow_mod_verified": true,
+        "ok": true,
+        "packet_in_verified": true,
+        "reasons": [],
+        "source_connected": true,
+        "source_role": "SLAVE",
+        "target_connected": true,
+        "target_role": "MASTER"
+      }
+    },
+    "http_status": 200,
+    "skip_reason": null
+  },
+  "transition_samples": {
+    "count": 13,
+    "owner_of_switch": [
+      "c1",
+      "c2"
+    ],
+    "quality_valid": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ],
+    "snapshot_ids": [
+      "snap-e1212027458b",
+      "snap-ceba71c398e2",
+      "snap-450bbd6e7faa",
+      "snap-8d5f06a71bf6",
+      "snap-52dfe62c6ddd",
+      "snap-53d17a29d918",
+      "snap-3a25c70adb35",
+      "snap-9b4daf7964f1",
+      "snap-f422543727dd",
+      "snap-7777d2777e49",
+      "snap-e33f0f180512",
+      "snap-69db6614eb34",
+      "snap-9302f6de3a38"
+    ]
+  },
+  "validation": {
+    "action_type": "MIGRATE",
+    "attempt_id": "mig-stable-early-dst45-c1-c2-r01",
+    "errors": [],
+    "schema_version": "migration-outcome-v1",
+    "training_eligible": true,
+    "transaction_id": "tx-8be91c471321",
+    "transaction_status": "COMMITTED",
+    "valid": true,
+    "warnings": []
+  }
+}

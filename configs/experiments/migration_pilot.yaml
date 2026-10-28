@@ -1,0 +1,25 @@
+# Week 11 Day 3: thresholds of the pilot report (scripts/experiments/report_migration_pilot.py).
+# Report only: these are things to look at by hand before freezing the collector,
+# never validator rules (real measurements are noisy, plan section 14).
+# Owner: My. Changing this file does not change any collected data.
+pilot_root: data/experiment_runs/migration-pilot
+min_attempts: 10
+
+# Day 4-5 official collection window and the share of it we plan to fill
+# (the rest is kept for re-runs, VM restarts and the NO_OP pass).
+collection_budget_hours: 48
+budget_utilisation: 0.8
+# Orchestrator/workload shutdown happens after metadata.finished_at is stamped.
+cleanup_overhead_s: 15
+
+# |mean destination U in the pre window - planned destination level|.
+destination_level_tolerance: 0.10
+# |measured share of the migrated hot switch - its level (0.25 / 0.40 / 0.55)|.
+# MIGRATE hot_switch runs set NDT_HOT_SWITCH_CHECK_LOAD=0, so this is the only check.
+hot_switch_share_tolerance: 0.10
+# Sum of processed Packet-In over both controllers, after / before, below this.
+workload_drop_ratio: 0.5
+# Observed / expected Delta-U of a COMMITTED move (expected = switch rate / C_safe).
+delta_ratio_range: [0.3, 3.0]
+# Suggested post_window_timeout_s = max observed settle time x headroom, rounded up to 5 s.
+timeout_headroom: 1.5

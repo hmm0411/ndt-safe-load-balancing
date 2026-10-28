@@ -1,0 +1,58 @@
+# Week 11 Data Card: the fields people decide (section 37). Every number in
+# evidence/week11/dataset_card.json comes from the evidence files and the
+# matrix config through scripts/analysis/migration_dataset_card.py; only the
+# text below is written by hand. Owner: My (writes), Vy (reviews).
+dataset_version: migration-outcome-raw-v1
+purpose: >-
+  Post-migration state modelling: observed outcome of one switch-ownership
+  migration (or of no action) on a 2-controller SDN, for the Week 12
+  post-migration outcome model (analytic estimate + learned residual).
+topology: 2C20S v1 (2 Ryu controllers x 20 OVS switches, Mininet, GCP e2-standard-8)
+action: switch ownership migration (OpenFlow role change + barrier + verification), one per attempt
+collection_mode: >-
+  one attempt per run: orchestrator restart, fresh workload, controllers reset
+  to the default ownership before every attempt
+collected: 2026-10-24 to 2026-10-25 (official collection, about 12.4 h)
+switch_selection:
+  seeded_random: uniform among the switches owned by the source, seeded by (seed, attempt_id)
+  hot_switch_alternating: hot_switch workload only; in each matrix cell about half of the
+    repeats move the hot switch, the others a seeded random switch
+freeze:
+  tag: w11-collect-freeze
+  dirty_tree_check: >-
+    manual (git status --short empty and git describe --tags --exact-match before
+    every repeat); the runner on the tag only warns on a dirty tree
+backup:
+  file: migration-outcome-raw-v1.tar.gz
+  sha256: 314c3f7124d0b02ec20fa8b20cfcea340b589b89afdfb3bcaf0560bd39739464
+  uri: gs://kltn-ndt-backup-2026/week11/migration-outcome-raw-v1.tar.gz
+  verified: sha256sum -c OK and 340 validation.json in the archive (My, 2026-10-25)
+known_limitations:
+  - >-
+    no destination overload: destination U after migration stays in
+    [0.47, 0.90]; any prediction at U >= 1 is an extrapolation
+  - >-
+    measured loads are below the planned levels: hot-switch share (moderate,
+    high, peak) and the 0.75 destination level of the hot_switch workload
+    (see measured_vs_planned); use the measured values, never the plan
+  - >-
+    the source side is dominated by the workload trend in burst, gradual and
+    oscillating; NO_OP controls exist only for the middle phase of each
+    workload (8 per workload: 2 per destination level and direction)
+  - official collection has no failure injection; RESTORED behaviour is
+    covered by the smoke rollback attempt only (evidence/week11/smoke_rollback.json)
+  - >-
+    after a migration the twin needs 4-55 s to give 5 Hard-Gate-valid
+    snapshots again (stepped around 5, 15 and 35 s); mechanism to confirm
+notes:
+  - >-
+    phase early includes the workload warm-up: delta_*_mean and delta_*_last
+    can differ (keep both, Week 12 chooses)
+  - every attempt is kept, none imputed or dropped; invalid attempts would stay
+    in the dataset with valid = false
+open_decisions:
+  - >-
+    overload region (U >= 1): keep v1 as is (chosen to close Week 11) and ask
+    the advisor at the start of Week 12 whether to collect a separate stress
+    dataset (destination 0.85 / 0.95, hot_switch only) or to check it in the
+    closed-loop experiments

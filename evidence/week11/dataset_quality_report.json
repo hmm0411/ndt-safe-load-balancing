@@ -1,0 +1,119 @@
+{
+  "schema_version": "migration-outcome-v1",
+  "total_attempts": 340,
+  "planned_attempts": 340,
+  "missing_attempts": 0,
+  "unplanned_attempts": 0,
+  "quarantined": 0,
+  "valid_count": 340,
+  "invalid_count": 0,
+  "migrate_count": 300,
+  "no_op_count": 40,
+  "committed_count": 300,
+  "restored_count": 0,
+  "failed_count": 0,
+  "skipped_count": 0,
+  "failure_injected_count": 0,
+  "valid_pre_count": 340,
+  "valid_post_count": 340,
+  "post_window_incomplete_count": 0,
+  "training_eligible_count": 340,
+  "training_eligible_committed_count": 300,
+  "training_eligible_no_op_count": 40,
+  "workload_counts": {
+    "burst": 68,
+    "gradual": 68,
+    "hot_switch": 68,
+    "oscillating": 68,
+    "stable": 68
+  },
+  "phase_counts": {
+    "burst:baseline_1": 20,
+    "burst:burst_1": 28,
+    "burst:recovery": 20,
+    "gradual:u40": 20,
+    "gradual:u60": 28,
+    "gradual:u95": 20,
+    "hot_switch:high": 28,
+    "hot_switch:moderate": 20,
+    "hot_switch:peak": 20,
+    "oscillating:falling": 20,
+    "oscillating:peak": 28,
+    "oscillating:rising": 20,
+    "stable:early": 20,
+    "stable:late": 20,
+    "stable:middle": 28
+  },
+  "direction_counts": {
+    "c1->c2": 170,
+    "c2->c1": 170
+  },
+  "destination_load_counts": {
+    "dst45": 170,
+    "dst75": 170
+  },
+  "split_counts": {
+    "test": 68,
+    "train": 204,
+    "validation": 68
+  },
+  "rollback_count": 0,
+  "verification_failure_count": 0,
+  "missing_field_count": 0,
+  "invalid_quality_count": 0,
+  "duplicate_transaction_count": 0,
+  "ownership_mismatch_count": 0,
+  "code_bug_attempts": 0,
+  "destination_overload_after_count": 0,
+  "progress_by_repeat": {
+    "r01": {
+      "planned": 68,
+      "present": 68,
+      "valid": 68,
+      "training_eligible": 68
+    },
+    "r02": {
+      "planned": 68,
+      "present": 68,
+      "valid": 68,
+      "training_eligible": 68
+    },
+    "r03": {
+      "planned": 68,
+      "present": 68,
+      "valid": 68,
+      "training_eligible": 68
+    },
+    "r04": {
+      "planned": 68,
+      "present": 68,
+      "valid": 68,
+      "training_eligible": 68
+    },
+    "r05": {
+      "planned": 68,
+      "present": 68,
+      "valid": 68,
+      "training_eligible": 68
+    }
+  },
+  "freeze": {
+    "git_commit": [
+      "47c1984d7fa987f27e6f616c3061f44de6d9a1dc"
+    ],
+    "config_sha256": [
+      "068c0f1e5648a9c2bd156a2208358e3cde06ba96314e0b0c9f59fafb02a9b8b5"
+    ],
+    "capacity_version": [
+      "controller_capacity.json@sha256:789d2ff9a1f1"
+    ],
+    "quality_version": [
+      "quality-src@sha256:a77c36a3b362"
+    ],
+    "topology": [
+      "2C20S"
+    ]
+  },
+  "freeze_consistent": true,
+  "invalid_attempts": {}
+}

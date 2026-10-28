@@ -1,0 +1,235 @@
+{
+  "action": {
+    "action_type": "MIGRATE",
+    "failure_injected": true,
+    "selection_rule": "seeded_random",
+    "source_controller": "c1",
+    "switch_id": "s4",
+    "target_controller": "c2",
+    "target_hot": false
+  },
+  "after_samples": {
+    "count": 5,
+    "owner_of_switch": [
+      "c1"
+    ],
+    "quality_valid": [
+      true,
+      true,
+      true,
+      true,
+      true
+    ],
+    "snapshot_ids": [
+      "snap-8771f8c19f49",
+      "snap-6752a60ca212",
+      "snap-162e345f3f5d",
+      "snap-e99da7a6a9a8",
+      "snap-d18e403e4a2b"
+    ]
+  },
+  "attempt_id": "mig-stable-early-dst45-c1-c2-r01-fail-flow_mod",
+  "before_samples": {
+    "count": 5,
+    "owner_of_switch": [
+      "c1"
+    ],
+    "quality_valid": [
+      true,
+      true,
+      true,
+      true,
+      true
+    ],
+    "snapshot_ids": [
+      "snap-e05f38244754",
+      "snap-f5dcc02775e0",
+      "snap-51f58da4c932",
+      "snap-de645dfa972f",
+      "snap-2349aa1fe3f4"
+    ]
+  },
+  "metadata": {
+    "attempt_id": "mig-stable-early-dst45-c1-c2-r01-fail-flow_mod",
+    "capacity_version": "controller_capacity.json@sha256:789d2ff9a1f1",
+    "config_sha256": "068c0f1e5648a9c2bd156a2208358e3cde06ba96314e0b0c9f59fafb02a9b8b5",
+    "destination_load_level": 0.45,
+    "finished_at": "2026-10-23T12:57:11.104610+00:00",
+    "git_commit": "133020228e73babb3d90eec5e503b1f548ee0d34",
+    "phase": "early",
+    "quality_version": "quality-src@sha256:a77c36a3b362",
+    "repeat": "r01",
+    "schema_version": "migration-outcome-v1",
+    "seed": 9201,
+    "source_controller": "c1",
+    "started_at": "2026-10-23T12:56:01.818090+00:00",
+    "target_controller": "c2",
+    "topology": "2C20S",
+    "workload": "stable"
+  },
+  "outcome": {
+    "outcome": {
+      "action_type": "MIGRATE",
+      "delta_dst_u_last": -0.0001771510731126691,
+      "delta_dst_u_mean": 0.0019241808621781042,
+      "delta_imbalance_mean": 0.011217479840692254,
+      "delta_src_u_last": 0.0003794695446405205,
+      "delta_src_u_mean": 0.024359140543562585,
+      "dst_response_p95_after_mean": 0.7604453999999999,
+      "dst_response_p95_before_mean": 0.7652228000000001,
+      "dst_u_after_mean": 0.42702868496083485,
+      "dst_u_before_last": 0.4272058360339475,
+      "dst_u_before_mean": 0.42510450409865674,
+      "imbalance_after_mean": 0.07482196385076435,
+      "imbalance_before_last": 0.07454365354188777,
+      "imbalance_before_mean": 0.0636044840100721,
+      "ineligible_reasons": [
+        "transaction_restored",
+        "failure_injected"
+      ],
+      "max_u_after_mean": 0.5766726126623636,
+      "max_u_before_mean": 0.552313472118801,
+      "src_u_after_mean": 0.5766726126623636,
+      "src_u_before_last": 0.5762931431177231,
+      "src_u_before_mean": 0.552313472118801,
+      "switch_rate_before_mean": 79.3074138878873,
+      "switch_share_before_mean": 0.10045268788176058,
+      "training_eligible": false,
+      "transaction_status": "RESTORED"
+    },
+    "quality": {
+      "after_all_valid": true,
+      "after_consistency_min": 1.0,
+      "after_count": 5,
+      "after_quality_min": 0.9975,
+      "before_all_valid": true,
+      "before_consistency_min": 1.0,
+      "before_count": 5,
+      "before_quality_min": 1.0,
+      "post_window_complete": true,
+      "required_window": 5
+    },
+    "schema_version": "migration-outcome-v1"
+  },
+  "sha256sums": [
+    "100d2508a246043018d5ba01030deb42a12d72c5e81a022ec2dd47eda642aa56  action.json",
+    "a6a78320c032294bc64a3e427f9259d3ac19378f619844a37fe80c272e8d8cef  after_samples.jsonl",
+    "dbc3d800b113b977b8e794a7608e191454c5429899e58d81631b999f39bb9852  before_samples.jsonl",
+    "8ce50f9062cc82d0472e7ff2231d9b8409c2e753ce66678673461c661bba8ff6  forecast_samples.jsonl",
+    "5d8b3af5798dcd3b203139734fffe3196304a8e1be5d14e2fd9995923723a002  metadata.json",
+    "b4db069bdae0baf4f6a80204455176814f3c6c40e653ff94f5edbb943f140be3  outcome.json",
+    "483a9d038c0b0343e823b09c8949e4d58f029881047bf8b9842bfc4cd70956f9  transaction.json",
+    "42ca2e18b73333e9048d1429b850fb449b38d4a301370c6be651f213fbc8725f  transition_samples.jsonl",
+    "1921fdfd8a08468dc8bfcccdf76998203f751b5debf50bcf421c96529e6a4cd7  validation.json"
+  ],
+  "source_dir": "data/experiment_runs/migration-smoke/mig-stable-early-dst45-c1-c2-r01-fail-flow_mod",
+  "transaction": {
+    "body": {
+      "failure_reason": "Verification failed: simulated_flow_mod_failure",
+      "ownership_version": 2,
+      "rollback_verification": {
+        "flow_mod_verified": false,
+        "ok": true,
+        "packet_in_verified": false,
+        "reasons": [],
+        "source_connected": true,
+        "source_role": "MASTER",
+        "target_connected": true,
+        "target_role": "SLAVE"
+      },
+      "status": "RESTORED",
+      "transaction": {
+        "failure_reason": "Verification failed: simulated_flow_mod_failure",
+        "finished_at": "2026-10-23T12:56:15.616285+00:00",
+        "generation_id": 1792760173747761908,
+        "history": [
+          {
+            "at": "2026-10-23T12:56:13.747694+00:00",
+            "detail": null,
+            "state": "PREPARING"
+          },
+          {
+            "at": "2026-10-23T12:56:13.747769+00:00",
+            "detail": null,
+            "state": "ROLE_SWITCHING"
+          },
+          {
+            "at": "2026-10-23T12:56:13.762261+00:00",
+            "detail": null,
+            "state": "VERIFYING"
+          },
+          {
+            "at": "2026-10-23T12:56:15.470452+00:00",
+            "detail": "Verification failed: simulated_flow_mod_failure",
+            "state": "FAILED"
+          },
+          {
+            "at": "2026-10-23T12:56:15.470466+00:00",
+            "detail": null,
+            "state": "ROLLING_BACK"
+          },
+          {
+            "at": "2026-10-23T12:56:15.616272+00:00",
+            "detail": "{\"ok\": true, \"source_role\": \"MASTER\", \"target_role\": \"SLAVE\", \"source_connected\": true, \"target_connected\": true, \"packet_in_verified\": false, \"flow_mod_verified\": false, \"reasons\": []}",
+            "state": "RESTORED"
+          }
+        ],
+        "source_controller": "c1",
+        "started_at": "2026-10-23T12:56:13.747694+00:00",
+        "state": "RESTORED",
+        "switch_id": "s4",
+        "target_controller": "c2",
+        "transaction_id": "tx-68fc781ca97f"
+      }
+    },
+    "http_status": 200,
+    "skip_reason": null
+  },
+  "transition_samples": {
+    "count": 13,
+    "owner_of_switch": [
+      "c1"
+    ],
+    "quality_valid": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ],
+    "snapshot_ids": [
+      "snap-5a06dd857810",
+      "snap-c70bb0e818f9",
+      "snap-494ccd07d19d",
+      "snap-35056bc74a03",
+      "snap-56723b3ccfcb",
+      "snap-2d4034475532",
+      "snap-67e1592197ba",
+      "snap-359301429c5b",
+      "snap-c42a18201b29",
+      "snap-d5075b40b395",
+      "snap-01f8754d2539",
+      "snap-f763dce6cab1",
+      "snap-a34ebaa4ca24"
+    ]
+  },
+  "validation": {
+    "action_type": "MIGRATE",
+    "attempt_id": "mig-stable-early-dst45-c1-c2-r01-fail-flow_mod",
+    "errors": [],
+    "schema_version": "migration-outcome-v1",
+    "training_eligible": false,
+    "transaction_id": "tx-68fc781ca97f",
+    "transaction_status": "RESTORED",
+    "valid": true,
+    "warnings": []
+  }
+}

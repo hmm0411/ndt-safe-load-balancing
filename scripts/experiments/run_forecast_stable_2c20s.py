@@ -15,6 +15,7 @@ from src.experiments.runners.forecast_data_runner import (
     ForecastRunConfig,
 )
 from src.experiments.workloads.capacity_mapper import CapacityWorkloadMapper
+from src.experiments.workloads.profile_spec import stable_utilizations
 from src.experiments.workloads.stable import StableWorkload
 
 
@@ -151,6 +152,7 @@ def run_forecast_stable(
     duration_seconds: float = 60.0,
     sampling_interval_seconds: float = 1.0,
     target_utilization: float = 0.60,
+    profiles: dict[str, str] | None = None,
     orchestrator_url: str = DEFAULT_ORCHESTRATOR_URL,
     run_id: str | None = None,
     experiment_type: str | None = None,
@@ -165,16 +167,22 @@ def run_forecast_stable(
         controller_capacity_path=controller_capacity_path,
     )
 
+    utilizations = stable_utilizations(
+        profiles or {}, target_utilization, CONTROLLER_IDS
+    )
     offered_rates = {
         controller_id: mapper.offered_rate_for_utilization(
             controller_id,
-            target_utilization,
+            utilizations[controller_id],
         )
         for controller_id in CONTROLLER_IDS
     }
 
+    # Phases (early/middle/late) only in the new per-controller mode;
+    # without --profile the phase stays "stable" as in Week 10.
     stable_profile = StableWorkload(
-        target_utilization
+        target_utilization,
+        duration_seconds=duration_seconds if profiles else None,
     )
 
     processes: list[subprocess.Popen[Any]] = []
