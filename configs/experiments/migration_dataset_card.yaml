@@ -29,8 +29,17 @@ backup:
   verified: sha256sum -c OK and 340 validation.json in the archive (My, 2026-10-25)
 known_limitations:
   - >-
-    no destination overload: destination U after migration stays in
-    [0.47, 0.90]; any prediction at U >= 1 is an extrapolation
+    U is processed Packet-In rate / C_safe of capacity-v3 (1433 pps, measured on
+    the old VM); every snapshot also keeps the rate in pps and safe_capacity_pps
+  - >-
+    capacity re-measured on the collection VM is lower than capacity-v3: the
+    capacity-v3 health rules pass at 80 flows/s, are borderline at 100 flows/s
+    and fail from 120 flows/s (capacity-v3: 140 flows/s); same result with the
+    old code, so the cause is the VM (evidence/week11/capacity_decision.md)
+  - >-
+    no destination overload in capacity-v3 units: destination U after migration
+    stays in [0.47, 0.90]; on the collection VM's own capacity part of these
+    attempts would be at or above U = 1 (indicative, capacity_decision.md)
   - >-
     measured loads are below the planned levels: hot-switch share (moderate,
     high, peak) and the 0.75 destination level of the hot_switch workload
@@ -51,6 +60,10 @@ notes:
   - every attempt is kept, none imputed or dropped; invalid attempts would stay
     in the dataset with valid = false
 open_decisions:
+  - >-
+    capacity of the collection VM: capacity-v4 (same protocol as capacity-v3) is
+    the first task of Week 12; the processed dataset then computes U from pps
+    with capacity-v4, the raw data stays unchanged
   - >-
     overload region (U >= 1): keep v1 as is (chosen to close Week 11) and ask
     the advisor at the start of Week 12 whether to collect a separate stress
