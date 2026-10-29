@@ -1,0 +1,205 @@
+{
+  "definition": "x = control-load share of the moved switch (pre window), y = -Delta U_src (after_mean - before_mean); expected = switch rate / C_safe of the source",
+  "all_committed": {
+    "n": 300,
+    "share_vs_neg_delta_src": {
+      "n": 300,
+      "intercept": -0.019244955610144124,
+      "slope": 1.028896304933083,
+      "pearson_r": 0.4294009285813683,
+      "slope_through_origin": 0.9198613302715793
+    },
+    "expected_vs_observed_neg_delta_src": {
+      "n": 300,
+      "intercept": -0.0223697558545473,
+      "slope": 1.4509068424512754,
+      "pearson_r": 0.5320193157128706,
+      "slope_through_origin": 1.2982564680738249
+    },
+    "observed_over_expected": {
+      "n": 300,
+      "mean": 0.8835724947139534,
+      "std": 2.8206332659789437,
+      "min": -10.63173158693111,
+      "p25": 0.46733859711580295,
+      "median": 1.1141965776797447,
+      "p75": 2.3785875605058715,
+      "p95": 3.9063254236005718,
+      "max": 6.075081278628079
+    }
+  },
+  "stationary_workloads": {
+    "workloads": [
+      "stable",
+      "hot_switch"
+    ],
+    "n": 120,
+    "share_vs_neg_delta_src": {
+      "n": 120,
+      "intercept": -0.02473325449807448,
+      "slope": 1.0417791744530982,
+      "pearson_r": 0.9574260413656429,
+      "slope_through_origin": 0.9430197149084881
+    },
+    "expected_vs_observed_neg_delta_src": {
+      "n": 120,
+      "intercept": -0.0026263500415876773,
+      "slope": 1.2188297563096646,
+      "pearson_r": 0.9764075922262092,
+      "slope_through_origin": 1.2064751144033907
+    },
+    "observed_over_expected": {
+      "n": 120,
+      "mean": 1.1591696285816921,
+      "std": 0.41245832157056606,
+      "min": -0.11148078322489875,
+      "p25": 0.9954993794035647,
+      "median": 1.0708214143497627,
+      "p75": 1.2274299965182012,
+      "p95": 2.012244544754099,
+      "max": 2.753363298887436
+    }
+  },
+  "by_workload": {
+    "burst": {
+      "n": 60,
+      "share_vs_neg_delta_src": {
+        "n": 60,
+        "intercept": 0.5528424309467802,
+        "slope": -5.375357522397055,
+        "pearson_r": -0.008081601692684468,
+        "slope_through_origin": 0.15888809361230827
+      },
+      "expected_vs_observed_neg_delta_src": {
+        "n": 60,
+        "intercept": -0.6547888320726061,
+        "slope": 9.54414740783364,
+        "pearson_r": 0.5505685244676566,
+        "slope_through_origin": 0.8264738578489115
+      },
+      "observed_over_expected": {
+        "n": 60,
+        "mean": -0.5312906178611903,
+        "std": 5.380943702361199,
+        "min": -10.63173158693111,
+        "p25": -5.790591704890564,
+        "median": 1.398898787830098,
+        "p75": 3.411668294426386,
+        "p95": 5.3130313348226705,
+        "max": 6.075081278628079
+      }
+    },
+    "gradual": {
+      "n": 60,
+      "share_vs_neg_delta_src": {
+        "n": 60,
+        "intercept": -0.4795272779972737,
+        "slope": 4.723964054321194,
+        "pearson_r": 0.0347346668379112,
+        "slope_through_origin": -0.07555891792717018
+      },
+      "expected_vs_observed_neg_delta_src": {
+        "n": 60,
+        "intercept": -0.148248491046417,
+        "slope": 2.242168565129956,
+        "pearson_r": 0.7009766934492007,
+        "slope_through_origin": 0.09709263522019644
+      },
+      "observed_over_expected": {
+        "n": 60,
+        "mean": -0.37384832808513707,
+        "std": 1.325604513084669,
+        "min": -5.297961154821563,
+        "p25": -1.1017888387116574,
+        "median": -0.16140285772868118,
+        "p75": 0.4446453566626266,
+        "p95": 0.8069188796626046,
+        "max": 1.8727623737153571
+      }
+    },
+    "hot_switch": {
+      "n": 60,
+      "share_vs_neg_delta_src": {
+        "n": 60,
+        "intercept": 0.0027199828434416873,
+        "slope": 0.9768568997327831,
+        "pearson_r": 0.9671661711338898,
+        "slope_through_origin": 0.9853057559226932
+      },
+      "expected_vs_observed_neg_delta_src": {
+        "n": 60,
+        "intercept": 0.0019738465700255836,
+        "slope": 1.2018349849741692,
+        "pearson_r": 0.9803123607010596,
+        "slope_through_origin": 1.2092993863648163
+      },
+      "observed_over_expected": {
+        "n": 60,
+        "mean": 1.1954127161160595,
+        "std": 0.4197789730372737,
+        "min": -0.11148078322489875,
+        "p25": 1.0582603008238065,
+        "median": 1.1983003138364074,
+        "p75": 1.2762044873497038,
+        "p95": 2.0040980739004572,
+        "max": 2.537937481538836
+      }
+    },
+    "oscillating": {
+      "n": 60,
+      "share_vs_neg_delta_src": {
+        "n": 60,
+        "intercept": 1.170631145462138,
+        "slope": -9.2179308437,
+        "pearson_r": -0.04489770156589993,
+        "slope_through_origin": 2.494428511483222
+      },
+      "expected_vs_observed_neg_delta_src": {
+        "n": 60,
+        "intercept": -0.6107323819288789,
+        "slope": 10.56777442431129,
+        "pearson_r": 0.9757722501162885,
+        "slope_through_origin": 3.121340966130186
+      },
+      "observed_over_expected": {
+        "n": 60,
+        "mean": 3.0046621623527097,
+        "std": 0.7028230410905932,
+        "min": 1.142105146827293,
+        "p25": 2.372222003459707,
+        "median": 3.0455121540349896,
+        "p75": 3.5774811950133403,
+        "p95": 4.0431248305413865,
+        "max": 4.164203980517854
+      }
+    },
+    "stable": {
+      "n": 60,
+      "share_vs_neg_delta_src": {
+        "n": 60,
+        "intercept": -0.35358585374348095,
+        "slope": 4.191135458419759,
+        "pearson_r": 0.06687433620238031,
+        "slope_through_origin": 0.6567727613883023
+      },
+      "expected_vs_observed_neg_delta_src": {
+        "n": 60,
+        "intercept": -0.5053981539356235,
+        "slope": 9.943144537024223,
+        "pearson_r": 0.9976671678891775,
+        "slope_through_origin": 1.1677164519821188
+      },
+      "observed_over_expected": {
+        "n": 60,
+        "mean": 1.1229265410473246,
+        "std": 0.4017489577750529,
+        "min": 0.6443685833439282,
+        "p25": 0.9923957284806714,
+        "median": 1.00068325327234,
+        "p75": 1.0683244127942,
+        "p95": 2.012244544754099,
+        "max": 2.753363298887436
+      }
+    }
+  }
+}

@@ -1,0 +1,16 @@
+workload,phase,migrate_n,migrate_delta_src_mean,no_op_n,no_op_delta_src_mean,migration_effect_src,migrate_delta_dst_mean,no_op_delta_dst_mean,migration_effect_dst
+burst,baseline_1,20,0.356337,0,,,0.0681216,,
+burst,burst_1,20,-0.182255,8,0.127657,-0.309912,0.0944707,0.00393368,0.0905371
+burst,recovery,20,-0.221736,0,,,-0.0106065,,
+gradual,u40,20,0.0494702,0,,,0.0289535,,
+gradual,u60,20,0.0210804,8,0.0709959,-0.0499155,0.109235,0.0522209,0.0570142
+gradual,u95,20,-0.0478716,0,,,0.114678,,
+hot_switch,high,20,-0.195584,8,0.0292056,-0.22479,0.137421,0.00680004,0.130621
+hot_switch,moderate,20,-0.172405,0,,,0.0752031,,
+hot_switch,peak,20,-0.256887,0,,,0.186525,,
+oscillating,falling,20,-0.186133,0,,,-0.0096856,,
+oscillating,peak,20,-0.340111,8,-0.139623,-0.200487,0.00464044,0.0173876,-0.0127471
+oscillating,rising,20,-0.221738,0,,,0.00806237,,
+stable,early,20,-0.084639,0,,,0.0288824,,
+stable,late,20,-0.0567901,0,,,0.0564182,,
+stable,middle,20,-0.0556575,8,0.000953003,-0.0566105,0.056422,-0.000718123,0.0571401
