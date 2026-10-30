@@ -1,0 +1,356 @@
+{
+  "dataset_version": "migration-outcome-raw-v2",
+  "schema_version": "migration-outcome-v1",
+  "purpose": "Post-migration state modelling: observed outcome of one switch-ownership migration (or of no action) on a 2-controller SDN. Re-collection of the v1 matrix with capacity-v4 (c_safe 933 pps on the current VM), because v1 was collected with capacity-v3 (1433 pps, measured on an older VM) and most v1 attempts ran with a saturated controller.",
+  "topology": "2C20S v1 (2 Ryu controllers x 20 OVS switches, Mininet, GCP e2-standard-8)",
+  "action": "switch ownership migration (OpenFlow role change + barrier + verification), one per attempt",
+  "workloads": [
+    "stable",
+    "gradual",
+    "burst",
+    "oscillating",
+    "hot_switch"
+  ],
+  "action_phases": {
+    "stable": [
+      "early",
+      "middle",
+      "late"
+    ],
+    "gradual": [
+      "u40",
+      "u60",
+      "u95"
+    ],
+    "burst": [
+      "baseline_1",
+      "burst_1",
+      "recovery"
+    ],
+    "oscillating": [
+      "rising",
+      "peak",
+      "falling"
+    ],
+    "hot_switch": [
+      "moderate",
+      "high",
+      "peak"
+    ]
+  },
+  "phases_per_workload": [
+    3
+  ],
+  "destination_load_levels": [
+    0.45,
+    0.75
+  ],
+  "directions": [
+    "c1->c2",
+    "c2->c1"
+  ],
+  "repeats": {
+    "r01": 9201,
+    "r02": 9202,
+    "r03": 9203,
+    "r04": 9204,
+    "r05": 9205
+  },
+  "planned_attempts": {
+    "migrate": 300,
+    "no_op": 40,
+    "total": 340
+  },
+  "actual_attempts": {
+    "total_attempts": 340,
+    "missing_attempts": 0,
+    "valid_count": 340,
+    "invalid_count": 0,
+    "committed_count": 300,
+    "restored_count": 0,
+    "failed_count": 0,
+    "skipped_count": 0,
+    "no_op_count": 40,
+    "training_eligible_committed_count": 300,
+    "training_eligible_no_op_count": 40,
+    "valid_pre_count": 340,
+    "valid_post_count": 340,
+    "destination_overload_after_count": 10
+  },
+  "pre_window": "5 valid snapshots",
+  "post_window": "5 valid snapshots",
+  "post_window_timeout_s": 60.0,
+  "quality_gate": "required: every window snapshot passes the Hard Gate (valid = fresh and complete and consistent)",
+  "failed_transactions": "retained (RESTORED / FAILED / SKIPPED are kept, training_eligible = false)",
+  "raw_imputation": "none",
+  "split": {
+    "rule": "split by repeat (scenario + repeat), never by row: every pre/post sample of an attempt stays in that attempt's split; NO_OP controls follow their repeat",
+    "train": {
+      "repeats": [
+        "r01",
+        "r02",
+        "r03"
+      ],
+      "attempts": 204,
+      "migrate": 180,
+      "no_op": 24
+    },
+    "validation": {
+      "repeats": [
+        "r04"
+      ],
+      "attempts": 68,
+      "migrate": 60,
+      "no_op": 8
+    },
+    "test": {
+      "repeats": [
+        "r05"
+      ],
+      "attempts": 68,
+      "migrate": 60,
+      "no_op": 8
+    },
+    "attempts_in_more_than_one_split": 0
+  },
+  "collection": {
+    "mode": "one attempt per run: orchestrator restart, fresh workload, controllers reset to the default ownership before every attempt",
+    "collected": "2026-10-28 to 2026-10-29 (official collection, started 2026-10-28 16:22 UTC)",
+    "workload_duration_s": [
+      120.0
+    ],
+    "attempt_duration_s_median": 129.3,
+    "freeze_tag": "w12-collect-freeze",
+    "git_commit": [
+      "b47a2d9f458bdb89d0283e49cc8a2d50a75b611a"
+    ],
+    "config_sha256": [
+      "f6ad042873c1f1a480a126eb242135a94d156ce7cde6eeeba7c3a444692ec434"
+    ],
+    "capacity_version": [
+      "controller_capacity.json@sha256:952c64644b99"
+    ],
+    "quality_version": [
+      "quality-src@sha256:a77c36a3b362"
+    ],
+    "freeze_consistent": true,
+    "dirty_tree_check": "git status --short empty and HEAD equal to the tag commit (b47a2d9) when the collection finished; the runner on the tag only warns on a dirty tree"
+  },
+  "switch_selection": {
+    "seeded_random": "uniform among the switches owned by the source, seeded by (seed, attempt_id)",
+    "hot_switch_alternating": "hot_switch workload only; in each matrix cell about half of the repeats move the hot switch, the others a seeded random switch"
+  },
+  "measured_ranges": {
+    "src_u_before_mean": {
+      "min": 0.39,
+      "median": 0.74,
+      "max": 1.064
+    },
+    "src_u_after_mean": {
+      "min": 0.349,
+      "median": 0.557,
+      "max": 0.979
+    },
+    "dst_u_before_mean": {
+      "min": 0.414,
+      "median": 0.622,
+      "max": 0.851
+    },
+    "dst_u_after_mean": {
+      "min": 0.46,
+      "median": 0.762,
+      "max": 1.158
+    },
+    "switch_share_before_mean": {
+      "min": 0.053,
+      "median": 0.1,
+      "max": 0.524
+    },
+    "delta_src_u_mean": {
+      "min": -0.646,
+      "median": -0.07,
+      "max": 0.494
+    },
+    "delta_dst_u_mean": {
+      "min": -0.141,
+      "median": 0.053,
+      "max": 0.446
+    },
+    "transaction_s": {
+      "min": 1.09,
+      "median": 1.571,
+      "max": 2.184
+    },
+    "settle_s": {
+      "min": 4.003,
+      "median": 14.66,
+      "max": 35.974
+    },
+    "transition_hard_gate_blocked": {
+      "min": 1.0,
+      "median": 11.0,
+      "max": 33.0
+    }
+  },
+  "measured_vs_planned": {
+    "hot_switch_share": {
+      "moderate": {
+        "planned_share": 0.25,
+        "n": 9,
+        "measured_share_median": 0.228
+      },
+      "high": {
+        "planned_share": 0.4,
+        "n": 9,
+        "measured_share_median": 0.352
+      },
+      "peak": {
+        "planned_share": 0.55,
+        "n": 10,
+        "measured_share_median": 0.488
+      }
+    },
+    "destination_u_before": {
+      "stable@0.45": {
+        "n": 30,
+        "median": 0.415,
+        "min": 0.414
+      },
+      "stable@0.75": {
+        "n": 30,
+        "median": 0.715,
+        "min": 0.649
+      },
+      "gradual@0.45": {
+        "n": 30,
+        "median": 0.426,
+        "min": 0.415
+      },
+      "gradual@0.75": {
+        "n": 30,
+        "median": 0.722,
+        "min": 0.648
+      },
+      "burst@0.45": {
+        "n": 30,
+        "median": 0.459,
+        "min": 0.414
+      },
+      "burst@0.75": {
+        "n": 30,
+        "median": 0.715,
+        "min": 0.639
+      },
+      "oscillating@0.45": {
+        "n": 30,
+        "median": 0.483,
+        "min": 0.43
+      },
+      "oscillating@0.75": {
+        "n": 30,
+        "median": 0.781,
+        "min": 0.665
+      },
+      "hot_switch@0.45": {
+        "n": 30,
+        "median": 0.512,
+        "min": 0.478
+      },
+      "hot_switch@0.75": {
+        "n": 30,
+        "median": 0.75,
+        "min": 0.688
+      }
+    }
+  },
+  "analytic_check": {
+    "definition": "x = control-load share of the moved switch (pre window), y = -Delta U_src (after_mean - before_mean); expected = switch rate / C_safe of the source",
+    "stable_and_hot_switch": {
+      "n": 120,
+      "share_vs_neg_delta_src_pearson_r": 0.957,
+      "observed_over_expected_median": 1.071
+    },
+    "hot_switch_moves": {
+      "n": 28,
+      "observed_over_expected_median": 1.214
+    }
+  },
+  "noop_controls": [
+    {
+      "workload": "burst",
+      "phase": "burst_1",
+      "no_op_n": 8,
+      "migration_effect_src": -0.31,
+      "migration_effect_dst": 0.091
+    },
+    {
+      "workload": "gradual",
+      "phase": "u60",
+      "no_op_n": 8,
+      "migration_effect_src": -0.05,
+      "migration_effect_dst": 0.057
+    },
+    {
+      "workload": "hot_switch",
+      "phase": "high",
+      "no_op_n": 8,
+      "migration_effect_src": -0.225,
+      "migration_effect_dst": 0.131
+    },
+    {
+      "workload": "oscillating",
+      "phase": "peak",
+      "no_op_n": 8,
+      "migration_effect_src": -0.2,
+      "migration_effect_dst": -0.013
+    },
+    {
+      "workload": "stable",
+      "phase": "middle",
+      "no_op_n": 8,
+      "migration_effect_src": -0.057,
+      "migration_effect_dst": 0.057
+    }
+  ],
+  "backup": {
+    "file": "migration-outcome-raw-v2.tar.gz",
+    "sha256": "d8f14b8dad27b8f473e44708e3d17f61c2523674b5ab27785d25353dbfb5f59a",
+    "uri": "gs://kltn-ndt-backup-2026/week12/migration-outcome-raw-v2.tar.gz",
+    "verified": "SHA256 computed before upload; per-attempt SHA256SUMS OK for 340/340 (Vy, 2026-10-29)"
+  },
+  "known_limitations": [
+    "capacity-v4 (c_safe 933 pps, controller_capacity.json sha256:952c64644b99) was measured on the current VM; U values are comparable with v1 only after rescaling by 1433/933, and v1 U is censored where its controller was saturated",
+    "20 of 340 attempts (14 MIGRATE, 6 NO_OP) have a saturated controller (CPU p95 >= 95%) in at least one phase, concentrated in burst_1 and hot_switch peak with destination 0.75; see evidence/week12/attempt_saturation.csv",
+    "measured loads can differ from the planned levels (hot-switch share and the destination levels); use the measured values, never the plan",
+    "official collection has no failure injection; every migration committed"
+  ],
+  "notes": [
+    "destination overload after migration: 10 of 300 COMMITTED attempts have dst_u_after_mean >= 1.0 (about 1.04), all in hot_switch high/peak with destination 0.75, two directions; v1 had none",
+    "saturation check: CPU p95 stays below 95% for U < 1.0 and reaches 97.9% for U >= 1.0 (evidence/week12/cpu_vs_u_v2.txt); v1 reached 98.7% already at U 0.70-0.72",
+    "phase early includes the workload warm-up: delta_*_mean and delta_*_last can differ (keep both, later weeks choose)",
+    "every attempt is kept, none imputed or dropped; saturated attempts are flagged in attempt_saturation.csv, not removed"
+  ],
+  "open_decisions": [
+    "cause of the capacity difference between the old and the current VM is not identified; capacity-v4 adoption and the setup/throughput knees (140 / 160 flows/s) need My and the advisor"
+  ],
+  "evidence": [
+    "analytic_check.json",
+    "attempt_saturation.csv",
+    "attempt_summary.csv",
+    "committed_summary.csv",
+    "cpu_vs_u_v2.txt",
+    "dataset_quality_report.json",
+    "dataset_statistics.csv",
+    "dataset_statistics_by_workload.csv",
+    "migration-outcome-raw-v2.tar.gz.sha256",
+    "migration_latency.json",
+    "migration_outcome_manifest.json",
+    "noop_vs_migrate.csv",
+    "per_attempt_cpu.csv",
+    "rollback_summary.csv",
+    "split_manifest.json",
+    "validate.json",
+    "vm_spec.txt",
+    "workload_distribution.csv"
+  ]
+}

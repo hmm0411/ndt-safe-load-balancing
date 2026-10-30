@@ -1,0 +1,59 @@
+# Week 12 Data Card for migration-outcome-raw-v2 (re-collection with capacity-v4).
+# Numbers in evidence/week12/dataset_card.json come from the evidence files and
+# the matrix config through scripts/analysis/migration_dataset_card.py; only the
+# text below is written by hand. Owner: My (writes), Vy (reviews).
+dataset_version: migration-outcome-raw-v2
+purpose: >-
+  Post-migration state modelling: observed outcome of one switch-ownership
+  migration (or of no action) on a 2-controller SDN. Re-collection of the
+  v1 matrix with capacity-v4 (c_safe 933 pps on the current VM), because v1
+  was collected with capacity-v3 (1433 pps, measured on an older VM) and most
+  v1 attempts ran with a saturated controller.
+topology: 2C20S v1 (2 Ryu controllers x 20 OVS switches, Mininet, GCP e2-standard-8)
+action: switch ownership migration (OpenFlow role change + barrier + verification), one per attempt
+collection_mode: >-
+  one attempt per run: orchestrator restart, fresh workload, controllers reset
+  to the default ownership before every attempt
+collected: 2026-10-28 to 2026-10-29 (official collection, started 2026-10-28 16:22 UTC)
+switch_selection:
+  seeded_random: uniform among the switches owned by the source, seeded by (seed, attempt_id)
+  hot_switch_alternating: hot_switch workload only; in each matrix cell about half of the
+    repeats move the hot switch, the others a seeded random switch
+freeze:
+  tag: w12-collect-freeze
+  dirty_tree_check: >-
+    git status --short empty and HEAD equal to the tag commit (b47a2d9) when the
+    collection finished; the runner on the tag only warns on a dirty tree
+backup:
+  file: migration-outcome-raw-v2.tar.gz
+  sha256: d8f14b8dad27b8f473e44708e3d17f61c2523674b5ab27785d25353dbfb5f59a
+  uri: gs://kltn-ndt-backup-2026/week12/migration-outcome-raw-v2.tar.gz
+  verified: SHA256 computed before upload; per-attempt SHA256SUMS OK for 340/340 (Vy, 2026-10-29)
+known_limitations:
+  - >-
+    capacity-v4 (c_safe 933 pps, controller_capacity.json sha256:952c64644b99)
+    was measured on the current VM; U values are comparable with v1 only after
+    rescaling by 1433/933, and v1 U is censored where its controller was saturated
+  - >-
+    20 of 340 attempts (14 MIGRATE, 6 NO_OP) have a saturated controller
+    (CPU p95 >= 95%) in at least one phase, concentrated in burst_1 and
+    hot_switch peak with destination 0.75; see evidence/week12/attempt_saturation.csv
+  - >-
+    measured loads can differ from the planned levels (hot-switch share and the
+    destination levels); use the measured values, never the plan
+  - official collection has no failure injection; every migration committed
+notes:
+  - "destination overload after migration: 10 of 300 COMMITTED attempts have dst_u_after_mean >= 1.0 (about 1.04), all in hot_switch high/peak with destination 0.75, two directions; v1 had none"
+  - >-
+    saturation check: CPU p95 stays below 95% for U < 1.0 and reaches 97.9% for
+    U >= 1.0 (evidence/week12/cpu_vs_u_v2.txt); v1 reached 98.7% already at U 0.70-0.72
+  - >-
+    phase early includes the workload warm-up: delta_*_mean and delta_*_last
+    can differ (keep both, later weeks choose)
+  - every attempt is kept, none imputed or dropped; saturated attempts are flagged
+    in attempt_saturation.csv, not removed
+open_decisions:
+  - >-
+    cause of the capacity difference between the old and the current VM is not
+    identified; capacity-v4 adoption and the setup/throughput knees (140 / 160
+    flows/s) need My and the advisor

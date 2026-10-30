@@ -1,0 +1,56 @@
+{
+  "schema_version": "migration-outcome-v1",
+  "root": "data/experiment_runs/migration-outcome-v2",
+  "attempts": 340,
+  "valid": 340,
+  "invalid": 0,
+  "training_eligible": 340,
+  "duplicate_transactions": {},
+  "counts": {
+    "workload": {
+      "burst": 68,
+      "gradual": 68,
+      "hot_switch": 68,
+      "oscillating": 68,
+      "stable": 68
+    },
+    "phase": {
+      "burst:baseline_1": 20,
+      "burst:burst_1": 28,
+      "burst:recovery": 20,
+      "gradual:u40": 20,
+      "gradual:u60": 28,
+      "gradual:u95": 20,
+      "hot_switch:high": 28,
+      "hot_switch:moderate": 20,
+      "hot_switch:peak": 20,
+      "oscillating:falling": 20,
+      "oscillating:peak": 28,
+      "oscillating:rising": 20,
+      "stable:early": 20,
+      "stable:late": 20,
+      "stable:middle": 28
+    },
+    "direction": {
+      "c1->c2": 170,
+      "c2->c1": 170
+    },
+    "destination_level": {
+      "dst45": 170,
+      "dst75": 170
+    },
+    "action_type": {
+      "MIGRATE": 300,
+      "NO_OP": 40
+    },
+    "transaction_status": {
+      "COMMITTED": 300,
+      "None": 40
+    }
+  },
+  "invalid_attempts": {},
+  "quarantined": [],
+  "planned": 340,
+  "missing": [],
+  "unplanned": []
+}
