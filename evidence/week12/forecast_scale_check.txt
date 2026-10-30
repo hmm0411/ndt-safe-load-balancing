@@ -1,0 +1,21 @@
+status: {'NOT_READY': 17132, 'READY': 10712}
+NOT_READY reasons: {'INVALID_SNAPSHOT': 9204, 'INSUFFICIENT_HISTORY': 5828, 'HISTORY_GAP': 2100}
+READY with a measured target: 9466 (ood_fallback 2934)
+--- all READY | model really predicting | ood_fallback (= persistence)
+all                    n=  9466  RMSE ratio 1.22  MAE ratio 1.78  bias +0.0424
+model-only             n=  6532  RMSE ratio 1.32  MAE ratio 2.14  bias +0.0641
+ood                    n=  2934  RMSE ratio 1.00  MAE ratio 1.00  bias -0.0057
+--- model-only by U (measured U at prediction time)
+U 0.0-0.6              n=  2648  RMSE ratio 1.65  MAE ratio 3.32  bias +0.1300
+U 0.6-0.9              n=  3510  RMSE ratio 1.36  MAE ratio 1.72  bias +0.0173
+U 0.9-9.9              n=   374  RMSE ratio 0.37  MAE ratio 0.50  bias +0.0356
+--- model-only by workload (original = XGBoost RMSE ratio of forecast-v1 test)
+burst                  n=   987  RMSE ratio 0.57  MAE ratio 0.67  bias -0.0040  original 0.53
+gradual                n=  1633  RMSE ratio 1.11  MAE ratio 1.38  bias +0.0082  original 0.47
+hot_switch             n=     2  RMSE ratio 1.07  MAE ratio 1.07  bias -0.1787  original 2.65
+oscillating            n=    72  RMSE ratio 0.97  MAE ratio 0.93  bias -0.0567  original 0.11
+stable                 n=  3838  RMSE ratio 2.98  MAE ratio 4.50  bias +0.1078  original 0.75
+--- model-only by kind
+MIGRATE                n=  5771  RMSE ratio 1.30  MAE ratio 2.13  bias +0.0643
+NO_OP                  n=   761  RMSE ratio 1.47  MAE ratio 2.28  bias +0.0621
+wrote evidence/week12/forecast_scale_check.json
