@@ -63,6 +63,29 @@ class SnapshotViewTest(unittest.TestCase):
         self.assertEqual(len(snap.switches), 40)
         self.assertEqual(snap.owner_of("s31"), "c4")
 
+    def test_memory_is_optional_and_none_when_missing(self) -> None:
+        raw = fx.make_twin_state({"c1": 0.8, "c2": 0.45})
+        for controller in raw["controllers"]:
+            controller.pop("process_memory_rss_mb", None)
+        view = StateSnapshotView.from_twin_state(raw).controller("c1")
+        self.assertIsNone(view.process_memory_rss_mb)
+        self.assertNotIn("process_memory_rss_mb", view.to_dict())
+
+    def test_memory_is_read_when_present(self) -> None:
+        raw = fx.make_twin_state({"c1": 0.8, "c2": 0.45})
+        cid = raw["controllers"][0]["controller_id"]
+        raw["controllers"][0]["process_memory_rss_mb"] = 123.4
+        view = StateSnapshotView.from_twin_state(raw).controller(cid)
+        self.assertEqual(view.process_memory_rss_mb, 123.4)
+        self.assertEqual(view.to_dict()["process_memory_rss_mb"], 123.4)
+
+    def test_memory_that_is_not_a_finite_number_is_rejected(self) -> None:
+        for bad in ("lots", float("nan")):
+            raw = fx.make_twin_state({"c1": 0.8, "c2": 0.45})
+            raw["controllers"][0]["process_memory_rss_mb"] = bad
+            with self.assertRaisesRegex(ValueError, "process_memory_rss_mb"):
+                StateSnapshotView.from_twin_state(raw)
+
 
 class ActionTest(unittest.TestCase):
     def test_valid_migrate_and_noop(self) -> None:
