@@ -1,0 +1,90 @@
+# Capacity follow-up on this VM (2026-10-25/26)
+# A: commit a188beb (code of the old capacity-v3 measurement), 140 flows/s, c1+c2, 5 repeats.
+# B: tag w11-collect-freeze (47c1984), 80/100/120 flows/s, c1+c2, 5 repeats.
+# Old = data/benchmarks/capacity_runs.csv (capacity-v3). In section B the blocks at 140/160/200 with 'old n=0' are the earlier re-measure (new data only).
+
+
+c1 @ 140 flows/s
+  processed_packet_in_rate_mean  old 1433 (sd 0.146, n=5)             new 1433 (sd 0.775, n=5)   change +0.0%
+  cpu_p95                        old 92.9 (sd 1.79, n=5)              new 100.7 (sd 0.08, n=5)   change +8.4%
+  flow_setup_latency_p95_ms      old 46.43 (sd 2, n=5)                new 276.8 (sd 8.62, n=5)   change +496.1%
+  qos_success_ratio              old 1 (sd 0, n=5)                    new 1 (sd 0, n=5)   change +0.0%
+
+c2 @ 140 flows/s
+  processed_packet_in_rate_mean  old 1433 (sd 0.187, n=5)             new 1434 (sd 0.514, n=5)   change +0.0%
+  cpu_p95                        old 91.26 (sd 0.441, n=5)            new 100.9 (sd 0.242, n=5)   change +10.5%
+  flow_setup_latency_p95_ms      old 46.48 (sd 2.2, n=5)              new 266.5 (sd 19, n=5)   change +473.4%
+  qos_success_ratio              old 1 (sd 0, n=5)                    new 1 (sd 0, n=5)   change +0.0%
+
+
+c1 @ 80 flows/s
+  processed_packet_in_rate_mean  old 832.9 (sd 0.0298, n=5)           new 833.2 (sd 0.12, n=5)   change +0.0%
+  cpu_p95                        old 68.32 (sd 0.791, n=5)            new 81.1 (sd 0.4, n=5)   change +18.7%
+  flow_setup_latency_p95_ms      old 27.82 (sd 1.81, n=5)             new 37.91 (sd 1.72, n=5)   change +36.3%
+  qos_success_ratio              old 1 (sd 0, n=5)                    new 1 (sd 0, n=5)   change +0.0%
+
+c1 @ 100 flows/s
+  processed_packet_in_rate_mean  old 1033 (sd 0.152, n=5)             new 1033 (sd 0.134, n=5)   change -0.0%
+  cpu_p95                        old 78.7 (sd 0.748, n=5)             new 95.06 (sd 0.32, n=5)   change +20.8%
+  flow_setup_latency_p95_ms      old 34.14 (sd 3.68, n=5)             new 47.99 (sd 1.24, n=5)   change +40.6%
+  qos_success_ratio              old 1 (sd 0, n=5)                    new 1 (sd 0, n=5)   change +0.0%
+
+c1 @ 120 flows/s
+  processed_packet_in_rate_mean  old 1233 (sd 0.29, n=5)              new 1233 (sd 0.302, n=5)   change -0.0%
+  cpu_p95                        old 85.3 (sd 0.49, n=5)              new 100.7 (sd 0.08, n=5)   change +18.0%
+  flow_setup_latency_p95_ms      old 38.86 (sd 3.92, n=5)             new 87.07 (sd 10.3, n=5)   change +124.1%
+  qos_success_ratio              old 1 (sd 0, n=5)                    new 1 (sd 0, n=5)   change +0.0%
+
+c1 @ 140 flows/s
+  processed_packet_in_rate_mean  old n=0                              new 1433 (sd 0.941, n=5)
+  cpu_p95                        old n=0                              new 100.8 (sd 0.179, n=5)
+  flow_setup_latency_p95_ms      old n=0                              new 283.7 (sd 18.6, n=5)
+  qos_success_ratio              old n=0                              new 1 (sd 0, n=5)
+
+c1 @ 160 flows/s
+  processed_packet_in_rate_mean  old n=0                              new 1594 (sd 8, n=5)
+  cpu_p95                        old n=0                              new 100.8 (sd 0.0748, n=5)
+  flow_setup_latency_p95_ms      old n=0                              new 0 (sd 0, n=5)
+  qos_success_ratio              old n=0                              new 0 (sd 0, n=5)
+
+c1 @ 200 flows/s
+  processed_packet_in_rate_mean  old n=0                              new 1593 (sd 7.68, n=5)
+  cpu_p95                        old n=0                              new 100.8 (sd 0.102, n=5)
+  flow_setup_latency_p95_ms      old n=0                              new 0 (sd 0, n=5)
+  qos_success_ratio              old n=0                              new 0 (sd 0, n=5)
+
+c2 @ 80 flows/s
+  processed_packet_in_rate_mean  old 833.2 (sd 0.162, n=5)            new 833.2 (sd 0.165, n=5)   change -0.0%
+  cpu_p95                        old 69.52 (sd 0.786, n=5)            new 81.1 (sd 0.4, n=5)   change +16.7%
+  flow_setup_latency_p95_ms      old 30.31 (sd 2.19, n=5)             new 36.73 (sd 1.02, n=5)   change +21.2%
+  qos_success_ratio              old 1 (sd 0, n=5)                    new 1 (sd 0, n=5)   change +0.0%
+
+c2 @ 100 flows/s
+  processed_packet_in_rate_mean  old 1033 (sd 0.201, n=5)             new 1033 (sd 0.21, n=5)   change +0.0%
+  cpu_p95                        old 78.7 (sd 0.724, n=5)             new 94.28 (sd 0.466, n=5)   change +19.8%
+  flow_setup_latency_p95_ms      old 35.9 (sd 2.76, n=5)              new 49.07 (sd 1.7, n=5)   change +36.7%
+  qos_success_ratio              old 1 (sd 0, n=5)                    new 1 (sd 0, n=5)   change +0.0%
+
+c2 @ 120 flows/s
+  processed_packet_in_rate_mean  old 1233 (sd 0.282, n=5)             new 1233 (sd 0.243, n=5)   change +0.0%
+  cpu_p95                        old 85.32 (sd 0.791, n=5)            new 100.2 (sd 0.369, n=5)   change +17.4%
+  flow_setup_latency_p95_ms      old 42.88 (sd 3.23, n=5)             new 82.49 (sd 2.86, n=5)   change +92.3%
+  qos_success_ratio              old 1 (sd 0, n=5)                    new 1 (sd 0, n=5)   change +0.0%
+
+c2 @ 140 flows/s
+  processed_packet_in_rate_mean  old n=0                              new 1433 (sd 0.45, n=5)
+  cpu_p95                        old n=0                              new 100.7 (sd 0.04, n=5)
+  flow_setup_latency_p95_ms      old n=0                              new 243.6 (sd 8, n=5)
+  qos_success_ratio              old n=0                              new 1 (sd 0, n=5)
+
+c2 @ 160 flows/s
+  processed_packet_in_rate_mean  old n=0                              new 1603 (sd 9.1, n=5)
+  cpu_p95                        old n=0                              new 100.9 (sd 0.049, n=5)
+  flow_setup_latency_p95_ms      old n=0                              new 0 (sd 0, n=5)
+  qos_success_ratio              old n=0                              new 0 (sd 0, n=5)
+
+c2 @ 200 flows/s
+  processed_packet_in_rate_mean  old n=0                              new 1607 (sd 9.49, n=5)
+  cpu_p95                        old n=0                              new 100.9 (sd 0.0748, n=5)
+  flow_setup_latency_p95_ms      old n=0                              new 0 (sd 0, n=5)
+  qos_success_ratio              old n=0                              new 0 (sd 0, n=5)

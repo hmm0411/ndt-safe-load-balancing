@@ -29,8 +29,24 @@ backup:
   verified: sha256sum -c OK and 340 validation.json in the archive (My, 2026-10-25)
 known_limitations:
   - >-
-    no destination overload: destination U after migration stays in
-    [0.47, 0.90]; any prediction at U >= 1 is an extrapolation
+    U is processed Packet-In rate / C_safe of capacity-v3 (1433 pps, measured on
+    the old VM); every snapshot also keeps the rate in pps and safe_capacity_pps
+  - >-
+    capacity re-measured on the collection VM is lower than capacity-v3: the
+    capacity-v3 health rules pass at 80 flows/s, are borderline at 100 flows/s
+    and fail from 120 flows/s (capacity-v3: 140 flows/s); same result with the
+    old code, so the cause is the VM (evidence/week11/capacity_decision.md)
+  - >-
+    no destination overload in capacity-v3 units: destination U after migration
+    stays in [0.47, 0.90]; on the collection VM's own capacity part of these
+    attempts would be at or above U = 1 (indicative, capacity_decision.md)
+  - >-
+    v1 was collected with saturated controllers: only 61 of 340 attempts
+    (53 MIGRATE, 8 NO_OP) have CPU p95 < 95% on both controllers in every phase,
+    220 are saturated in both phases (188 MIGRATE, 32 NO_OP); CPU p95 already
+    reaches 98.7% at U 0.70-0.72, so U is censored above about 0.70 and
+    rescaling it does not recover the true load; the main dataset is
+    migration-outcome-raw-v2 (capacity-v4, 933 pps), v1 is kept as collected
   - >-
     measured loads are below the planned levels: hot-switch share (moderate,
     high, peak) and the 0.75 destination level of the hot_switch workload
@@ -51,6 +67,10 @@ notes:
   - every attempt is kept, none imputed or dropped; invalid attempts would stay
     in the dataset with valid = false
 open_decisions:
+  - >-
+    capacity of the collection VM: capacity-v4 (c_safe 933 pps, same protocol as
+    capacity-v3) was measured in Week 12 and the matrix was re-collected as
+    migration-outcome-raw-v2; v1 stays as collected and is not edited
   - >-
     overload region (U >= 1): keep v1 as is (chosen to close Week 11) and ask
     the advisor at the start of Week 12 whether to collect a separate stress
