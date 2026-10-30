@@ -11,7 +11,8 @@ Outputs (default data/outcome/reports/direct/, gitignored):
   hyperparameter_search.csv   every candidate with its validation metrics
   hyperparameters.json        selected parameters per family and target (frozen for Day 4)
   direct_ml_metrics.csv       Analytical, Direct-RF, Direct-XGB on train and validation, 6 targets
-  selection_scores.json       validation score S (plan section 35) per model
+  selection_scores.json       validation S (without the targets in selection_exclude, used to
+                              choose models on Day 4) and S_plan (plan weights) per model
   models/                     direct_<rf|xgb>_<target>.(joblib|json)
 """
 from __future__ import annotations
@@ -86,9 +87,14 @@ def stage_direct(args: argparse.Namespace) -> int:
     for name, by_split in predictions.items():
         table += trainer.metrics_table(name, "train", train, by_split["train"])
         table += trainer.metrics_table(name, "validation", validation, by_split["validation"])
-    truth = {t: [float(r[t]) for r in validation] for t in data_config.selection_weights}
-    scores = {name: selection_score(truth, {t: by_split["validation"][t] for t in truth},
-                                    data_config.selection_weights, data_config.selection_epsilon)
+    def score(by_split: dict[str, dict[str, list[float]]],
+              weights: dict[str, float]) -> dict[str, float]:
+        truth = {t: [float(r[t]) for r in validation] for t in weights}
+        return selection_score(truth, {t: by_split["validation"][t] for t in weights},
+                               weights, data_config.selection_epsilon)
+
+    scores = {name: {"selection": score(by_split, data_config.effective_selection_weights),
+                     "plan": score(by_split, data_config.selection_weights)}
               for name, by_split in predictions.items()}
 
     out.mkdir(parents=True, exist_ok=True)
@@ -103,6 +109,9 @@ def stage_direct(args: argparse.Namespace) -> int:
         "feature_schema": schema["feature_schema"],
         "model_features": features,
         "selection": "lowest validation RMSE of the target; train only for fitting; test unused",
+        "selection_score": {"weights": data_config.effective_selection_weights,
+                            "excluded": list(data_config.selection_exclude),
+                            "plan_weights": data_config.selection_weights},
         "rows": {"train": len(train), "validation": len(validation), "test_dropped": dropped},
         "candidates_per_target": {f: len(c.candidates())
                                   for f, c in models_config.families.items()},
@@ -121,12 +130,15 @@ def stage_direct(args: argparse.Namespace) -> int:
           f"{len(features)} model features")
     print(f"candidates per target: {hyper['candidates_per_target']}, fitted {len(records)}")
     print(f"\nvalidation RMSE (n = {len(validation)})")
-    print(f"{'model':<12}" + "".join(f"{t:>14}" for t in ALL_TARGETS) + f"{'S':>9}")
+    print(f"{'model':<12}" + "".join(f"{t:>14}" for t in ALL_TARGETS) + f"{'S':>9}{'S_plan':>9}")
     for name in predictions:
         rmse = {r["target"]: r["rmse"] for r in table
                 if r["model"] == name and r["split"] == "validation"}
         print(f"{name:<12}" + "".join(f"{rmse[t]:>14.4f}" for t in ALL_TARGETS)
-              + f"{scores[name]['score']:>9.3f}")
+              + f"{scores[name]['selection']['score']:>9.3f}"
+              + f"{scores[name]['plan']['score']:>9.3f}")
+    excluded = ", ".join(data_config.selection_exclude) or "none"
+    print(f"S = selection score without {excluded} (chooses models); S_plan = plan weights")
     print(f"\nsave/load identical: {reload_ok}")
     print(f"wrote {out}")
     return 0 if reload_ok else 1

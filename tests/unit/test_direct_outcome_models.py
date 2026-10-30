@@ -144,6 +144,10 @@ class DirectModelsTest(unittest.TestCase):
         self.assertEqual(len(hyper["selected"]), 8)
         scores = json.loads((out / "selection_scores.json").read_text())
         self.assertEqual(set(scores), {"analytical", "direct_rf", "direct_xgb"})
+        self.assertEqual(set(scores["direct_xgb"]), {"selection", "plan"})
+        self.assertNotIn("n_r95_post", scores["direct_xgb"]["selection"])
+        self.assertIn("n_r95_post", scores["direct_xgb"]["plan"])
+        self.assertEqual(hyper["selection_score"]["excluded"], ["r95_post"])
         with (out / "direct_ml_metrics.csv").open() as handle:
             self.assertEqual(len(list(csv.DictReader(handle))), 3 * 2 * 6)
 

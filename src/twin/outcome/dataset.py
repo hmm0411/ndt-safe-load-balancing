@@ -67,6 +67,7 @@ class OutcomeDatasetConfig:
     switch_share_bins: tuple[float, float]
     selection_weights: dict[str, float]
     selection_epsilon: float
+    selection_exclude: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         if self.required_window < 2:
@@ -78,6 +79,19 @@ class OutcomeDatasetConfig:
             raise ValueError("selection_weights must sum to 1")
         if self.capacity_tolerance_pps < 0 or self.selection_epsilon <= 0:
             raise ValueError("capacity_tolerance_pps >= 0 and selection_epsilon > 0 required")
+        unknown = [t for t in self.selection_exclude if t not in self.selection_weights]
+        if unknown:
+            raise ValueError(f"selection_exclude names unknown targets: {unknown}")
+        if set(self.selection_exclude) >= set(self.selection_weights):
+            raise ValueError("selection_exclude cannot remove every target")
+
+    @property
+    def effective_selection_weights(self) -> dict[str, float]:
+        """Weights used to choose models: plan weights without the excluded targets,
+        renormalized to sum to 1."""
+        kept = {t: w for t, w in self.selection_weights.items() if t not in self.selection_exclude}
+        total = sum(kept.values())
+        return {t: w / total for t, w in kept.items()}
 
 
 def load_dataset_config(path: Path) -> OutcomeDatasetConfig:
@@ -95,6 +109,7 @@ def load_dataset_config(path: Path) -> OutcomeDatasetConfig:
             switch_share_bins=(bins[0], bins[1]),
             selection_weights={str(k): float(v) for k, v in dict(data["selection_weights"]).items()},
             selection_epsilon=float(data["selection_epsilon"]),
+            selection_exclude=tuple(str(t) for t in data.get("selection_exclude") or ()),
         )
     except KeyError as exc:
         raise ValueError(f"{path}: missing key {exc}") from exc

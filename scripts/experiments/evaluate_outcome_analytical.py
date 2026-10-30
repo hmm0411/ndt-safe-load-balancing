@@ -65,18 +65,23 @@ def main() -> int:
         writer.writeheader()
         writer.writerows({c: r[c] for c in COLUMNS} for r in results)
 
-    score = selection_score({t: [r[t] for r in rows] for t in config.selection_weights},
-                            {t: [r[f"analytical_{t}"] for r in rows]
-                             for t in config.selection_weights},
-                            config.selection_weights, config.selection_epsilon)
+    def score_with(weights: dict[str, float]) -> dict[str, float]:
+        return selection_score({t: [r[t] for r in rows] for t in weights},
+                               {t: [r[f"analytical_{t}"] for r in rows] for t in weights},
+                               weights, config.selection_epsilon)
+
+    score = score_with(config.effective_selection_weights)
+    plan = score_with(config.selection_weights)
     print(f"Analytical on {args.split} (n = {len(rows)})")
     print(f"{'target':<14}{'MAE':>9}{'RMSE':>9}{'P95|e|':>9}{'bias':>9}{'R2':>8}")
     for r in results:
         if r["group"] == "all":
             print(f"{r['target']:<14}{r['mae']:>9.4f}{r['rmse']:>9.4f}{r['p95_abs_error']:>9.4f}"
                   f"{r['bias']:>9.4f}{r['r2']:>8.3f}")
-    terms = ", ".join(f"{k} {v:.3f}" for k, v in score.items() if k != "score")
-    print(f"selection score S = {score['score']:.4f} ({terms})")
+    terms = ", ".join(f"{k} {v:.3f}" for k, v in plan.items() if k != "score")
+    excluded = ", ".join(config.selection_exclude) or "none"
+    print(f"selection score S = {score['score']:.4f} (without {excluded}; used to choose models)")
+    print(f"plan score S_plan = {plan['score']:.4f} ({terms})")
     print(f"wrote {out}")
     return 0
 
