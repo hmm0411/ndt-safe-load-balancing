@@ -1,0 +1,28 @@
+# Week 12 Direct ML / residual model settings (scripts/experiments/train_outcome_models.py).
+# One model per base target. Grids follow plan section 22; every candidate is fitted on
+# TRAIN and scored on VALIDATION (RMSE of that target); test is never read here.
+# Owner: My (writes), Vy (reviews).
+targets: [u_src_post, u_dst_post, r_src95_post, r_dst95_post]
+
+random_forest:
+  fixed:
+    n_jobs: -1
+    random_state: 42
+  grid:                        # 2 x 3 x 2 x 2 = 24 candidates per target
+    n_estimators: [100, 200]
+    max_depth: [4, 8, null]
+    min_samples_leaf: [2, 5]
+    max_features: [sqrt, 0.8]
+
+xgboost:
+  fixed:
+    objective: reg:squarederror
+    tree_method: hist
+    n_jobs: -1
+    random_state: 42
+  grid:                        # 2 x 2 x 2 x 2 x 2 = 32 candidates per target
+    n_estimators: [100, 200]
+    max_depth: [2, 4]
+    learning_rate: [0.03, 0.1]
+    subsample: [0.8, 1.0]
+    colsample_bytree: [0.8, 1.0]
