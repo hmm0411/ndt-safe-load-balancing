@@ -52,12 +52,13 @@ forecast-only, NDT không có feedback. Cấu hình: 2 controller × 20 switch v
 | Orchestrator FastAPI (ownership, transaction, state) | `src/orchestrator/` | Có |
 | Telemetry, snapshot builder/validator | `src/telemetry/` | Có |
 | TwinState + quality / twinning rate | `src/twin/state/` | Có |
-| Safe capacity model | `src/twin/capacity/`, `data/benchmarks/controller_capacity.json` | Có (capacity-v3, e2-standard-8) |
+| Safe capacity model | `src/twin/capacity/`, `data/benchmarks/controller_capacity.json` | Có (capacity-v4: c_safe 933 pps trên VM hiện tại, tag `capacity-v4`; capacity-v3 1433 pps của VM cũ ở tag `capacity-v3`) |
 | Forecasting (features, splitter, baselines, LR/RF/XGB, MLflow) | `src/twin/forecasting/`, `scripts/experiments/train_forecast_baselines.py` | Có, `forecast-models-v2` |
 | Overload detector (`upper_bound = pred + margin ≥ 1`) | `src/twin/decision/overload_detector.py` | Có |
 | Migration / verification / rollback | `src/execution/` | Có |
 | Candidate Generator | — | **Chưa có** |
-| Post-Migration Outcome Model | — (`data/outcome/` mới là thư mục rỗng) | **Chưa có** |
+| State–Action–Outcome dataset | `src/experiments/migration/`, `evidence/week11/` (raw-v1), `evidence/week12/` (raw-v2) | Có: dùng raw-v2 (tag `migration-outcome-raw-v2`) |
+| Post-Migration Outcome Model | `src/twin/outcome/` (Tuần 12) | **Đang làm** |
 | Safety Gate, Ranking & Selection | — | **Chưa có** |
 | Feedback & Calibration (cập nhật biên) | — | **Chưa có** |
 | Baselines vòng kín, ablation, kịch bản lỗi | — | **Chưa có** |
@@ -88,7 +89,8 @@ Nguyên tắc chung: không tạo file/package rỗng "để dành", không comm
 ## 3. Môi trường
 
 - VM GCP `kltn-sdn` (zone `asia-southeast1-b`), **e2-standard-8**, Ubuntu, Python 3.10.
-- **VM dùng chung**: Vy và My SSH cùng một Linux user, cùng một thư mục repo. Hậu quả:
+- **VM dùng chung**: Vy và My có Linux user riêng, nhưng repo, venv và dữ liệu nằm ở
+  `/home/tntvy112_gmail_com` và mọi lệnh repo chạy bằng user `tntvy112_gmail_com`. Hậu quả:
   - Trước khi chạy gì đụng tới Mininet/OVS/port, kiểm tra người kia có đang chạy không:
     `pgrep -af "ryu-manager|uvicorn|mininet|mn "; ss -ltnp | grep -E ':(6653|6654|8081|8082|9000|5000)'`
   - `sudo mn -c` / `scripts/cleanup.sh` **giết run của người kia** → hỏi trước khi chạy nếu thấy tiến trình đang sống.
@@ -118,7 +120,7 @@ Phạm vi: ruff `src scripts tests`, mypy `src tests/unit` (toàn bộ, kể c�
 cho qua — sửa lỗi thật. Job `repo-guards` còn chặn: commit `.env`/`mlflow.db`/`mlruns/`/`data/raw|snapshots|experiment_runs`,
 file > 25 MB, artifact capacity/model JSON hỏng hoặc thiếu so với `MODEL_VERSION`, và kế hoạch 25 run
 (`collect_forecast_data.sh --dry-run`) sai. Đổi `MODEL_VERSION` → phải commit đủ manifest của version mới.
-Test dùng **`unittest`**, không phải pytest (~327 test).
+Test dùng **`unittest`**, không phải pytest (~620 test, 10/2026).
 `test_capacity_2c20s_topology` import `mininet` nên lỗi ImportError ở máy không có Mininet (sandbox);
 đó là lỗi môi trường, không phải regression — trên VM phải xanh.
 
@@ -161,7 +163,11 @@ Collection có **environment freeze**: cần git sạch + tag, fingerprint VM/ph
 - Run id: `{workload}-r{NN}-s{seed}`, seeds 101–105 (repeat N ↔ seeds[N-1]); 180 s/run, 2 controller.
 - Split cố định theo run: train repeat 1–3, validation 4, test 5; **hot-switch = unseen**, không bao giờ
   dùng cho train, chọn mô hình hay tính biên. Không xáo trộn theo dòng.
-- U = processed Packet-In rate / safe capacity (c_safe ≈ 1433 pps mỗi controller). Ngưỡng quá tải U = 1.
+- U = processed Packet-In rate / safe capacity. Hiện tại c_safe ≈ 933 pps mỗi controller (capacity-v4,
+  VM hiện tại, rate an toàn 90 flows/s). Ngưỡng quá tải U = 1. Thang cũ 1433 pps (capacity-v3, VM cũ)
+  còn trong `forecast-v1` và `migration-outcome-raw-v1`; so sánh với dữ liệu mới phải đổi thang.
+- Đổi capacity → tạo version mới + tag `capacity-vN`, ghi vào Data Card và manifest; không coi số cũ là
+  đúng trên VM khác. raw-v1 bị bão hòa trên VM hiện tại (chỉ 61/340 attempt khỏe), không dùng để huấn luyện.
 - Horizon h = 3 bước (1 s/bước) là **provisional** (`configs/forecasting/forecast.yaml`): còn thiếu
   decision p95. Khi có decision latency đo được thì tính lại theo `estimate_horizon()`.
 - Mô hình cây dự báo **ΔU = U(t+h) − U(t)**; forecast = U(t) + predict(X). `managed_switch_count` và
