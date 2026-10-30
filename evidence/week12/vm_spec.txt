@@ -1,0 +1,8 @@
+8
+CPU(s):                                  8
+Model name:                              Intel(R) Xeon(R) CPU @ 2.20GHz
+Thread(s) per core:                      2
+Hypervisor vendor:                       KVM
+6.8.0-1070-gcp
+e2-standard-8
+Intel Broadwell
