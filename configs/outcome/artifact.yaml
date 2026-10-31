@@ -1,0 +1,16 @@
+# Week 12 Day 5: uncertainty margins and the post-migration-v1 artifact
+# (scripts/experiments/export_outcome_artifact.py). Owner: My (writes), Vy (reviews).
+model_version: post-migration-v1          # must match src/twin/outcome/predictor.py
+artifact_dir: data/models/outcome/post-migration-v1
+# Deployed model: lowest VALIDATION S among Analytical, Best Direct and Best Hybrid, the
+# rule already written in the Week 12 plan and guide before the test was opened ("the
+# final artifact may be Direct or Analytical, as long as it is chosen on validation").
+# It reads model_selection.json only, so the test result cannot change it.
+deploy_rule: lowest_validation_S
+# One-sided split-conformal margins on validation (plan sections 37-39).
+margin_level: 0.95
+margins:
+  m_U: u_dst_post       # Safety Gate: U_dst_post + m_U <= U_safe
+  m_R: r95_post         # Safety Gate: R95_post + m_R <= R95_max
+# Coverage on test is reported for these groups (plus overload_after and saturation).
+coverage_groups: [workload, destination_load_level, direction, switch_share_group]
