@@ -1,0 +1,164 @@
+{
+  "deployed": {
+    "model": "hybrid_xgb",
+    "parameters": {
+      "u_src_post": {
+        "objective": "reg:squarederror",
+        "tree_method": "hist",
+        "n_jobs": -1,
+        "random_state": 42,
+        "n_estimators": 200,
+        "max_depth": 2,
+        "learning_rate": 0.1,
+        "subsample": 1.0,
+        "colsample_bytree": 1.0
+      },
+      "u_dst_post": {
+        "objective": "reg:squarederror",
+        "tree_method": "hist",
+        "n_jobs": -1,
+        "random_state": 42,
+        "n_estimators": 200,
+        "max_depth": 4,
+        "learning_rate": 0.03,
+        "subsample": 0.8,
+        "colsample_bytree": 0.8
+      },
+      "r_src95_post": {
+        "objective": "reg:squarederror",
+        "tree_method": "hist",
+        "n_jobs": -1,
+        "random_state": 42,
+        "n_estimators": 200,
+        "max_depth": 2,
+        "learning_rate": 0.1,
+        "subsample": 0.8,
+        "colsample_bytree": 1.0
+      },
+      "r_dst95_post": {
+        "objective": "reg:squarederror",
+        "tree_method": "hist",
+        "n_jobs": -1,
+        "random_state": 42,
+        "n_estimators": 200,
+        "max_depth": 2,
+        "learning_rate": 0.1,
+        "subsample": 1.0,
+        "colsample_bytree": 1.0
+      }
+    }
+  },
+  "best_direct": {
+    "model": "direct_xgb",
+    "parameters": {
+      "u_src_post": {
+        "objective": "reg:squarederror",
+        "tree_method": "hist",
+        "n_jobs": -1,
+        "random_state": 42,
+        "n_estimators": 200,
+        "max_depth": 2,
+        "learning_rate": 0.1,
+        "subsample": 1.0,
+        "colsample_bytree": 0.8
+      },
+      "u_dst_post": {
+        "objective": "reg:squarederror",
+        "tree_method": "hist",
+        "n_jobs": -1,
+        "random_state": 42,
+        "n_estimators": 200,
+        "max_depth": 2,
+        "learning_rate": 0.1,
+        "subsample": 1.0,
+        "colsample_bytree": 0.8
+      },
+      "r_src95_post": {
+        "objective": "reg:squarederror",
+        "tree_method": "hist",
+        "n_jobs": -1,
+        "random_state": 42,
+        "n_estimators": 100,
+        "max_depth": 2,
+        "learning_rate": 0.1,
+        "subsample": 1.0,
+        "colsample_bytree": 1.0
+      },
+      "r_dst95_post": {
+        "objective": "reg:squarederror",
+        "tree_method": "hist",
+        "n_jobs": -1,
+        "random_state": 42,
+        "n_estimators": 100,
+        "max_depth": 2,
+        "learning_rate": 0.1,
+        "subsample": 0.8,
+        "colsample_bytree": 1.0
+      }
+    }
+  },
+  "grids": {
+    "targets": [
+      "u_src_post",
+      "u_dst_post",
+      "r_src95_post",
+      "r_dst95_post"
+    ],
+    "random_forest": {
+      "fixed": {
+        "n_jobs": -1,
+        "random_state": 42
+      },
+      "grid": {
+        "n_estimators": [
+          100,
+          200
+        ],
+        "max_depth": [
+          4,
+          8,
+          null
+        ],
+        "min_samples_leaf": [
+          2,
+          5
+        ],
+        "max_features": [
+          "sqrt",
+          0.8
+        ]
+      }
+    },
+    "xgboost": {
+      "fixed": {
+        "objective": "reg:squarederror",
+        "tree_method": "hist",
+        "n_jobs": -1,
+        "random_state": 42
+      },
+      "grid": {
+        "n_estimators": [
+          100,
+          200
+        ],
+        "max_depth": [
+          2,
+          4
+        ],
+        "learning_rate": [
+          0.03,
+          0.1
+        ],
+        "subsample": [
+          0.8,
+          1.0
+        ],
+        "colsample_bytree": [
+          0.8,
+          1.0
+        ]
+      }
+    }
+  },
+  "selection": "Best Direct / Best Hybrid = lowest validation S (selection weights without selection_exclude); ties keep the candidate order"
+}

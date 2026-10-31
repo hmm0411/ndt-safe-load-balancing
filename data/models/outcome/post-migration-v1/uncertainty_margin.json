@@ -1,0 +1,81 @@
+{
+  "model_version": "post-migration-v1",
+  "deployed_model": "hybrid_xgb",
+  "m_U": 0.036629233239997006,
+  "m_R": 0.009170841218852921,
+  "units": {
+    "m_U": "utilization (pps / c_safe_pps)",
+    "m_R": "ms"
+  },
+  "split": "validation",
+  "level": 0.95,
+  "by_model": {
+    "analytical": {
+      "m_U": {
+        "value": 0.06283419456228956,
+        "n": 60,
+        "rank": 58,
+        "level": 0.95,
+        "under_predicted": 22,
+        "max_under_error": 0.13560970842255982,
+        "method": "split conformal, one-sided: element ceil((n + 1) * level) of the sorted max(0, actual - predicted) on validation",
+        "target": "u_dst_post"
+      },
+      "m_R": {
+        "value": 0.0684806,
+        "n": 60,
+        "rank": 58,
+        "level": 0.95,
+        "under_predicted": 25,
+        "max_under_error": 0.07810220000000001,
+        "method": "split conformal, one-sided: element ceil((n + 1) * level) of the sorted max(0, actual - predicted) on validation",
+        "target": "r95_post"
+      }
+    },
+    "direct_xgb": {
+      "m_U": {
+        "value": 0.04347425734060162,
+        "n": 60,
+        "rank": 58,
+        "level": 0.95,
+        "under_predicted": 27,
+        "max_under_error": 0.08772749897923826,
+        "method": "split conformal, one-sided: element ceil((n + 1) * level) of the sorted max(0, actual - predicted) on validation",
+        "target": "u_dst_post"
+      },
+      "m_R": {
+        "value": 0.011012431784057641,
+        "n": 60,
+        "rank": 58,
+        "level": 0.95,
+        "under_predicted": 29,
+        "max_under_error": 0.02851822480239863,
+        "method": "split conformal, one-sided: element ceil((n + 1) * level) of the sorted max(0, actual - predicted) on validation",
+        "target": "r95_post"
+      }
+    },
+    "hybrid_xgb": {
+      "m_U": {
+        "value": 0.036629233239997006,
+        "n": 60,
+        "rank": 58,
+        "level": 0.95,
+        "under_predicted": 22,
+        "max_under_error": 0.06508903920068176,
+        "method": "split conformal, one-sided: element ceil((n + 1) * level) of the sorted max(0, actual - predicted) on validation",
+        "target": "u_dst_post"
+      },
+      "m_R": {
+        "value": 0.009170841218852921,
+        "n": 60,
+        "rank": 58,
+        "level": 0.95,
+        "under_predicted": 24,
+        "max_under_error": 0.02821379659857748,
+        "method": "split conformal, one-sided: element ceil((n + 1) * level) of the sorted max(0, actual - predicted) on validation",
+        "target": "r95_post"
+      }
+    }
+  },
+  "rule": "fixed on validation before any coverage is computed; not re-tuned on test"
+}
