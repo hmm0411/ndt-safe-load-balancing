@@ -14,3 +14,13 @@ selection_weights:
   r95_post: 0.25
   i_post: 0.15
 selection_epsilon: 1.0e-9
+# Decision 2026-10-30 (Vy, My), fixed BEFORE Day 4, i.e. before the test split is opened:
+# Best Direct and Best Hybrid are chosen with S WITHOUT r95_post (option b); the remaining
+# weights are renormalized (u_dst 0.35/0.75, u_src 0.25/0.75, i 0.15/0.75). r95_post is
+# still predicted, and reported in its own metric table and as S_plan (plan weights).
+# Why: response_p95_ms is controller processing time, about 0.78 ms with P95 - P5 of a few
+# hundredths of a ms, and it does not rise with overload on this testbed (capacity benchmark:
+# 0.77 ms healthy, 0.59 ms saturated). Normalizing by that tiny spread made n_r95_post 1.26 for
+# Analytical on validation against 0.15-0.36 for the other terms, so S would rank models by
+# noise in a quantity that carries no safety information.
+selection_exclude: [r95_post]
