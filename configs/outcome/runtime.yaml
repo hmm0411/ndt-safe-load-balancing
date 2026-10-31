@@ -1,0 +1,6 @@
+# Runtime what-if predictor used by the orchestrator (Week 12, Day 4).
+# artifact_dir follows plan section 46; until it exists the endpoint answers
+# NOT_READY / ARTIFACT_MISSING (fail-closed), it never invents numbers.
+artifact_dir: data/models/outcome/post-migration-v1
+# The artifact must have been trained on this capacity file (manifest.capacity_version).
+capacity_file: data/benchmarks/controller_capacity.json

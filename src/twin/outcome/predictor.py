@@ -210,13 +210,19 @@ class PostMigrationOutcomePredictor:
             pass  # malformed snapshot: not stored; predict() reports INVALID_SNAPSHOT
 
     def predict(
-        self, twin_state: Mapping[str, Any], action: MigrationAction
+        self, twin_state: Mapping[str, Any], action: MigrationAction, *, observe: bool = True
     ) -> PostMigrationOutcomePrediction:
-        """What-if outcome of ``action`` on the state. Only the in-memory history changes."""
-        try:
-            self.history.observe(twin_state)
-        except ValueError:
-            return self._not_ready(twin_state, action, INVALID_SNAPSHOT)
+        """What-if outcome of ``action`` on the state. Only the in-memory history changes.
+
+        ``observe=False`` leaves the history alone: the orchestrator feeds it from the
+        telemetry loop, and an older state read by a request must never be appended
+        after a newer one (that would clear the history).
+        """
+        if observe:
+            try:
+                self.history.observe(twin_state)
+            except ValueError:
+                return self._not_ready(twin_state, action, INVALID_SNAPSHOT)
         reason = self._first_problem(twin_state, action)
         if reason is not None:
             return self._not_ready(twin_state, action, reason)
