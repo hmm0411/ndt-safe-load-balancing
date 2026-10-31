@@ -17,6 +17,7 @@ from src.execution.rollback import RollbackExecutor
 from src.execution.verification import MigrationVerifier
 from src.orchestrator.current_state import CurrentStateStore
 from src.orchestrator.forecast_service import ForecastService
+from src.orchestrator.outcome_service import OutcomeService
 from src.orchestrator.ownership_manager import OwnershipManager
 from src.orchestrator.transaction_manager import TransactionConflict, TransactionManager
 from src.telemetry.collector import TelemetryCollector
@@ -44,6 +45,7 @@ controllers_cfg = load_yaml("NDT_CONTROLLERS_CONFIG", "configs/controllers.yaml"
 telemetry_cfg = load_yaml("NDT_TELEMETRY_CONFIG", "configs/telemetry.yaml")
 migration_cfg = load_yaml("NDT_MIGRATION_CONFIG", "configs/migration.yaml")
 forecast_cfg = load_yaml("NDT_FORECAST_CONFIG", "configs/forecasting/runtime.yaml")
+outcome_cfg = load_yaml("NDT_OUTCOME_CONFIG", "configs/outcome/runtime.yaml")
 quality_score_cfg = validate_config(load_yaml("NDT_QUALITY_CONFIG", "configs/quality.yaml"))
 
 CONTROLLERS = controllers_cfg["controllers"]
@@ -109,6 +111,7 @@ twin_state_builder = TwinStateBuilder(
 store = CurrentStateStore()
 writer = JsonlWriter()
 forecast_service = ForecastService.from_config(forecast_cfg, ROOT, store, writer)
+outcome_service = OutcomeService.from_config(outcome_cfg, ROOT, store)
 stop_event = threading.Event()
 
 
@@ -130,6 +133,12 @@ class MigrationRequest(BaseModel):
     switch_id: str
     target_controller: str
     simulate_failure: str = "none"
+
+
+class OutcomePredictRequest(BaseModel):
+    switch_id: str
+    source_controller: str
+    target_controller: str
 
 
 def collect_once(run_id: str):
@@ -190,6 +199,7 @@ def build_snapshot(run_id: str):
     # Outside the try above: a forecasting error must not count as a failed
     # snapshot (that would lower the twinning rate and the Quality Score).
     forecast_service.on_twin_state(twin_state.to_dict(), run_id)
+    outcome_service.on_twin_state(twin_state.to_dict())
 
 
 def telemetry_loop():
@@ -297,6 +307,18 @@ def twin_state():
 def twin_forecast():
     """Latest forecast per controller. Read-only: the planner decides migrations."""
     return forecast_service.payload()
+
+
+@app.post("/api/v1/twin/outcome/predict")
+def twin_outcome_predict(request: OutcomePredictRequest):
+    """What-if outcome of moving one switch. No side effects: no transaction, no
+    ownership change, no role request. NOT_READY carries a reason and no numbers."""
+    try:
+        return outcome_service.predict(
+            request.switch_id, request.source_controller, request.target_controller
+        )
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
 
 
 @app.post("/api/v1/init-roles")
