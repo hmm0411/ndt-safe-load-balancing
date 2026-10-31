@@ -1,0 +1,215 @@
+{
+  "created_at": "2026-10-31T16:18:03.270646+00:00",
+  "git": {
+    "commit": "ff9b7454a87b561a11dfec5c82d1c37ec7ca7173",
+    "tracked_changes": false
+  },
+  "dataset": "data/outcome/processed/migration-outcome-processed-v1",
+  "rows": {
+    "train": 180,
+    "validation": 60
+  },
+  "frozen_sha256": "4895a77d59349f62501a76ac8e5618a141f2988bf4918cacd1e595ad05b07385",
+  "frozen": {
+    "rule": "Best Direct / Best Hybrid = lowest validation S (selection weights without selection_exclude); ties keep the candidate order",
+    "selection_weights": {
+      "u_dst_post": 0.4666666666666666,
+      "u_src_post": 0.3333333333333333,
+      "i_post": 0.19999999999999998
+    },
+    "selection_exclude": [
+      "r95_post"
+    ],
+    "candidates": {
+      "direct": [
+        "direct_xgb",
+        "direct_rf"
+      ],
+      "hybrid": [
+        "hybrid_xgb",
+        "hybrid_rf"
+      ]
+    },
+    "validation_scores": {
+      "analytical": {
+        "S": 0.2300978033594175,
+        "S_plan": 0.4872250516046756
+      },
+      "direct_rf": {
+        "S": 0.13168228842294333,
+        "S_plan": 0.16946379535015735
+      },
+      "direct_xgb": {
+        "S": 0.11261716244519002,
+        "S_plan": 0.15505418962757417
+      },
+      "hybrid_rf": {
+        "S": 0.12182209345352361,
+        "S_plan": 0.17223323756575196
+      },
+      "hybrid_xgb": {
+        "S": 0.10516777389694906,
+        "S_plan": 0.14752170017949137
+      }
+    },
+    "best_direct": "direct_xgb",
+    "best_hybrid": "hybrid_xgb",
+    "parameters": {
+      "direct_xgb": {
+        "u_src_post": {
+          "objective": "reg:squarederror",
+          "tree_method": "hist",
+          "n_jobs": -1,
+          "random_state": 42,
+          "n_estimators": 200,
+          "max_depth": 2,
+          "learning_rate": 0.1,
+          "subsample": 1.0,
+          "colsample_bytree": 0.8
+        },
+        "u_dst_post": {
+          "objective": "reg:squarederror",
+          "tree_method": "hist",
+          "n_jobs": -1,
+          "random_state": 42,
+          "n_estimators": 200,
+          "max_depth": 2,
+          "learning_rate": 0.1,
+          "subsample": 1.0,
+          "colsample_bytree": 0.8
+        },
+        "r_src95_post": {
+          "objective": "reg:squarederror",
+          "tree_method": "hist",
+          "n_jobs": -1,
+          "random_state": 42,
+          "n_estimators": 100,
+          "max_depth": 2,
+          "learning_rate": 0.1,
+          "subsample": 1.0,
+          "colsample_bytree": 1.0
+        },
+        "r_dst95_post": {
+          "objective": "reg:squarederror",
+          "tree_method": "hist",
+          "n_jobs": -1,
+          "random_state": 42,
+          "n_estimators": 100,
+          "max_depth": 2,
+          "learning_rate": 0.1,
+          "subsample": 0.8,
+          "colsample_bytree": 1.0
+        }
+      },
+      "hybrid_xgb": {
+        "u_src_post": {
+          "objective": "reg:squarederror",
+          "tree_method": "hist",
+          "n_jobs": -1,
+          "random_state": 42,
+          "n_estimators": 200,
+          "max_depth": 2,
+          "learning_rate": 0.1,
+          "subsample": 1.0,
+          "colsample_bytree": 1.0
+        },
+        "u_dst_post": {
+          "objective": "reg:squarederror",
+          "tree_method": "hist",
+          "n_jobs": -1,
+          "random_state": 42,
+          "n_estimators": 200,
+          "max_depth": 4,
+          "learning_rate": 0.03,
+          "subsample": 0.8,
+          "colsample_bytree": 0.8
+        },
+        "r_src95_post": {
+          "objective": "reg:squarederror",
+          "tree_method": "hist",
+          "n_jobs": -1,
+          "random_state": 42,
+          "n_estimators": 200,
+          "max_depth": 2,
+          "learning_rate": 0.1,
+          "subsample": 0.8,
+          "colsample_bytree": 1.0
+        },
+        "r_dst95_post": {
+          "objective": "reg:squarederror",
+          "tree_method": "hist",
+          "n_jobs": -1,
+          "random_state": 42,
+          "n_estimators": 200,
+          "max_depth": 2,
+          "learning_rate": 0.1,
+          "subsample": 1.0,
+          "colsample_bytree": 1.0
+        }
+      }
+    },
+    "bootstrap": {
+      "resamples": 2000,
+      "seed": 20261031,
+      "confidence": 0.95
+    },
+    "ablation": {
+      "hybrid_no_temporal": {
+        "drop": [
+          "src_u_mean",
+          "src_u_std",
+          "src_u_slope",
+          "dst_u_mean",
+          "dst_u_std",
+          "dst_u_slope",
+          "switch_share_mean",
+          "switch_share_slope"
+        ],
+        "persistence_base": false
+      },
+      "hybrid_no_switch_features": {
+        "drop": [
+          "switch_control_load_share",
+          "switch_packet_in_rate",
+          "switch_share_mean",
+          "switch_share_slope"
+        ],
+        "persistence_base": false
+      },
+      "hybrid_no_switch": {
+        "drop": [
+          "switch_control_load_share",
+          "switch_packet_in_rate",
+          "switch_share_mean",
+          "switch_share_slope"
+        ],
+        "persistence_base": true
+      }
+    },
+    "sha256": {
+      "configs/dataset.yaml": "59a03ce5050103d880f0345f0dd2d39e498f1cdb76338eeac96e21193fd5dd58",
+      "configs/evaluation.yaml": "c559503df438875fd0acbfaadaa97faea7827a810b32b4debc9d8e12783961c2",
+      "configs/models.yaml": "2501af7ea1bc35c60774b94d4dd410cdf1a3a3314de365af9c868db388bf46d3",
+      "direct/hyperparameters.json": "15258beb5087dbdab3ba7ebf6a9ca9c7f92dd786c0acf45a8e39fad2d9d8ad33",
+      "feature_schema.json": "69f7350f64fdb98be573d4bf64bae8f2003cc357b6d05eef8816e07d0555e7b6",
+      "hybrid/hyperparameters.json": "aa8395a050cb3727ad2e96962849f5bd839f0514d4c9b37c926d61e7e7331e16",
+      "models/direct_rf_r_dst95_post.joblib": "47bb12dc63b5d89d66f26a85b990b67c1b5456302617d5c2ff379f383b690a17",
+      "models/direct_rf_r_src95_post.joblib": "742bc47c450e2eea41b64532cfd00444ea94ec7554213807bacb000b1d782107",
+      "models/direct_rf_u_dst_post.joblib": "848e6ec015f1a3f10f18b3c4e4467267e991d5938f473a49a0a96f9b1b3de873",
+      "models/direct_rf_u_src_post.joblib": "199b026bb731833e4b827fdc7a706ae89b6dee8320c47ae21fe9d5a362648cca",
+      "models/direct_xgb_r_dst95_post.json": "ca82c0f1c243d98c513c82b70ceabd3810cfb5d993f430a35d5f1f1a563fdebf",
+      "models/direct_xgb_r_src95_post.json": "6177c75382077875d210151dd170b67a6ee433f3a07e356b1ba0bbe6471e2908",
+      "models/direct_xgb_u_dst_post.json": "1b7e261af56c56cbb78cd9516e9e56acfdf8901a14c27d53a6b17d7f9d7b4aba",
+      "models/direct_xgb_u_src_post.json": "2767df4cf9ec5cab59a6b240ce86dc304ba6e9f0851fbd650cb2e5ef489e81ec",
+      "models/residual_rf_r_dst95_post.joblib": "24bf48d2815fb298b6d2454db509d59c8703f5e36477ee16f015161890916dad",
+      "models/residual_rf_r_src95_post.joblib": "a629a5454fc60be6c8e7372e660da6a6620f06e3bdbbdf97113eea8065aa4beb",
+      "models/residual_rf_u_dst_post.joblib": "204826b9114dd0c6677d8ca08915748b359ab75feb517fe1951e95f71179082f",
+      "models/residual_rf_u_src_post.joblib": "964365c206484421a883731e270f75cebbd57a41ea1cc12dce8d5c7a256d2d7c",
+      "models/residual_xgb_r_dst95_post.json": "2d91976b7700f96a15411f9baa4c2408251c6fb67bf5ccd16a9f19549e0d64ff",
+      "models/residual_xgb_r_src95_post.json": "0f82123c34fc847ce3366f86a78b5498bc2cdffaabbbf531afbc9f2c2b0a2f31",
+      "models/residual_xgb_u_dst_post.json": "9f8faf261fe91258ebd2cbb0c53b639d7db48fe2cdab52601db7b1927998acd5",
+      "models/residual_xgb_u_src_post.json": "60ba335e85209b831174956d1de3036acbabe32ff20a5d9190c06a9f57e90fa5",
+      "outcome_dataset.csv": "51bf2d80d5adb47ad9b0f8beacb5f9b4298b3aca089f5062e8a31c429bb5b155"
+    }
+  }
+}
