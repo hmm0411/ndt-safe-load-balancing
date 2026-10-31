@@ -1,5 +1,5 @@
-# make ci + git diff --check, 2026-10-28T13:44:22.477901+00:00
-git_commit: 0c01fddc3ded36ecb1fe9e5f9b0850fba9f2e8e4
+# make ci + git diff --check, 2026-10-30T09:36:20.037782+00:00
+git_commit: d0148fefcd09f42ca97b29311bd1c0b95cc05660
 
 $ make ci
 python3 -m compileall -q src tests
@@ -250,7 +250,7 @@ test_hot_switch_share_must_be_finite (test_workload_profiles.WorkloadPointTests)
 test_serialization (test_workload_schema.WorkloadSchemaTests) ... ok
 
 ----------------------------------------------------------------------
-Ran 620 tests in 20.803s
+Ran 620 tests in 21.063s
 
 OK
 

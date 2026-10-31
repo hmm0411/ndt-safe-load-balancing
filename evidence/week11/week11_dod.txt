@@ -1,7 +1,7 @@
-# Week 11 Definition of Done, generated 2026-10-28T13:44:47.163003+00:00
+# Week 11 Definition of Done, generated 2026-10-30T09:36:45.274625+00:00
 # PASS = evidence found and criterion met; MISSING = not proven yet; FAIL = not met
 
-Nhánh dev có lại trên GitHub, đã bật bảo vệ                 MISSING  needs --confirm (not provable from files in the repo)
+Nhánh dev có lại trên GitHub, đã bật bảo vệ                 PASS     confirmed: dev and main protected on GitHub (API branches/<b>.protected = true, checked 2026-10-30)
 Tag forecast-v1 nằm trên main có đủ code Tuần 10            PASS     confirmed: forecast-v1 is an ancestor of origin/main and week10_evidence.py is on main (checked 2026-10-25)
 MLflow dựng lại, alias champion đã đặt                      PASS     confirmed: ndt-forecast-xgboost alias champion=1, 61 runs in mlflow.db (checked 2026-10-25)
 R2, R5 trên VM mới đã chạy; DoD Tuần 10 vẫn 36/36           PASS     confirmed: PR 70 w10/newvm-r2-r5 merged, evidence/week10/forecasting_dod.txt 36/36 PASS
@@ -37,6 +37,6 @@ Capacity đã kiểm trên VM mới                                PASS     conf
 Attempt dùng lỗi giả lập có failure_injected = true         PASS     smoke_rollback.json
 Dữ liệu thô đã sao lưu ngoài VM, có sha256                  PASS     confirmed: gs://kltn-ndt-backup-2026/week11/migration-outcome-raw-v1.tar.gz sha256 314c3f7124d0b02ec20fa8b20cfcea340b589b89afdfb3bcaf0560bd39739464, plus mlflow.db and data/forecasting
 Có nhóm đối chứng NO_OP                                     PASS     noop_vs_migrate.csv, no_op_count=40
-Tag migration-outcome-raw-v1 trên main, sau PR dev -> main  MISSING  PENDING (tag is set after the DoD and the dev -> main merge)
+Tag migration-outcome-raw-v1 trên main, sau PR dev -> main  PASS     tag migration-outcome-raw-v1 on main
 
-35/37 PASS
+37/37 PASS

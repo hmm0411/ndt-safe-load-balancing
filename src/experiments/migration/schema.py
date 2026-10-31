@@ -57,6 +57,7 @@ class ControllerStateView:
     flow_mod_rate: float
     process_cpu_percent: float
     managed_switch_count: int
+    process_memory_rss_mb: float | None = None
 
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> ControllerStateView:
@@ -81,6 +82,9 @@ class ControllerStateView:
                 _require(data, "process_cpu_percent", where), f"{where}.process_cpu_percent"
             ),
             managed_switch_count=int(_require(data, "managed_switch_count", where)),
+            process_memory_rss_mb=_optional_float(
+                data.get("process_memory_rss_mb"), f"{where}.process_memory_rss_mb"
+            ),
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -93,6 +97,11 @@ class ControllerStateView:
             "flow_mod_rate": self.flow_mod_rate,
             "process_cpu_percent": self.process_cpu_percent,
             "managed_switch_count": self.managed_switch_count,
+            **(
+                {"process_memory_rss_mb": self.process_memory_rss_mb}
+                if self.process_memory_rss_mb is not None
+                else {}
+            ),
         }
 
 
