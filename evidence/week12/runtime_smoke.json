@@ -1,0 +1,250 @@
+{
+  "schema_version": "1.0",
+  "purpose": "runtime smoke of POST /api/v1/twin/outcome/predict; not an accuracy result",
+  "generated_at": "2026-11-02T06:08:04.756952+00:00",
+  "root": "data/experiment_runs/migration-outcome-smoke-w12",
+  "margin_rule": "within_margin = |predicted - measured| <= margin; dst U uses m_U, R95 uses m_R; src U shown with m_U for reference only",
+  "summary": {
+    "attempts": 6,
+    "ready": 6,
+    "not_ready_or_failed": 0,
+    "dst_u_inside_margin": 4,
+    "dst_u_outside_margin": 2
+  },
+  "attempts": [
+    {
+      "attempt_id": "mig-burst-burst_1-dst45-c1-c2-r01",
+      "switch_id": "s9",
+      "source_controller": "c1",
+      "target_controller": "c2",
+      "cpu_p95_percent": {
+        "c1": 94.9,
+        "c2": 55.0
+      },
+      "http_status": 200,
+      "http_ms": 67.5,
+      "prediction_status": "READY",
+      "reason": null,
+      "inference_time_ms": 5.389343,
+      "dst_utilization": {
+        "predicted": 0.4853398020393387,
+        "measured": 0.5271626529719524,
+        "error": -0.04182285093261373,
+        "abs_error": 0.04182285093261373,
+        "margin": 0.036629233239997006,
+        "within_margin": false
+      },
+      "src_utilization": {
+        "predicted": 0.5784012541183011,
+        "measured": 0.9534624959939272,
+        "error": -0.37506124187562606,
+        "abs_error": 0.37506124187562606,
+        "margin": 0.036629233239997006,
+        "within_margin": false
+      },
+      "worst_response_p95_ms": {
+        "predicted": 0.7805252516028881,
+        "measured": 0.7963306,
+        "error": -0.015805348397111896,
+        "abs_error": 0.015805348397111896,
+        "margin": 0.009170841218852921,
+        "within_margin": false
+      }
+    },
+    {
+      "attempt_id": "mig-gradual-u60-dst75-c2-c1-r01",
+      "switch_id": "s16",
+      "source_controller": "c2",
+      "target_controller": "c1",
+      "cpu_p95_percent": {
+        "c2": 55.0,
+        "c1": 75.9
+      },
+      "http_status": 200,
+      "http_ms": 77.284,
+      "prediction_status": "READY",
+      "reason": null,
+      "inference_time_ms": 5.613439,
+      "dst_utilization": {
+        "predicted": 0.8195385609863279,
+        "measured": 0.8430231790077926,
+        "error": -0.02348461802146462,
+        "abs_error": 0.02348461802146462,
+        "margin": 0.036629233239997006,
+        "within_margin": true
+      },
+      "src_utilization": {
+        "predicted": 0.5699289169220341,
+        "measured": 0.5737025727569406,
+        "error": -0.0037736558349065197,
+        "abs_error": 0.0037736558349065197,
+        "margin": 0.036629233239997006,
+        "within_margin": true
+      },
+      "worst_response_p95_ms": {
+        "predicted": 0.7811549077655593,
+        "measured": 0.7759058,
+        "error": 0.005249107765559313,
+        "abs_error": 0.005249107765559313,
+        "margin": 0.009170841218852921,
+        "within_margin": true
+      }
+    },
+    {
+      "attempt_id": "mig-hot_switch-high-dst45-c1-c2-r01",
+      "switch_id": "s3",
+      "source_controller": "c1",
+      "target_controller": "c2",
+      "cpu_p95_percent": {
+        "c1": 86.9,
+        "c2": 63.9
+      },
+      "http_status": 200,
+      "http_ms": 67.965,
+      "prediction_status": "READY",
+      "reason": null,
+      "inference_time_ms": 7.26588,
+      "dst_utilization": {
+        "predicted": 0.48304918929266005,
+        "measured": 0.4887215290372726,
+        "error": -0.0056723397446125645,
+        "abs_error": 0.0056723397446125645,
+        "margin": 0.036629233239997006,
+        "within_margin": true
+      },
+      "src_utilization": {
+        "predicted": 0.7403508987453687,
+        "measured": 0.7248273686950417,
+        "error": 0.015523530050327028,
+        "abs_error": 0.015523530050327028,
+        "margin": 0.036629233239997006,
+        "within_margin": true
+      },
+      "worst_response_p95_ms": {
+        "predicted": 0.7806897386064529,
+        "measured": 0.7883182,
+        "error": -0.007628461393547115,
+        "abs_error": 0.007628461393547115,
+        "margin": 0.009170841218852921,
+        "within_margin": true
+      }
+    },
+    {
+      "attempt_id": "mig-hot_switch-peak-dst75-c2-c1-r01",
+      "switch_id": "s11",
+      "source_controller": "c2",
+      "target_controller": "c1",
+      "cpu_p95_percent": {
+        "c2": 87.9,
+        "c1": 97.7
+      },
+      "http_status": 200,
+      "http_ms": 66.123,
+      "prediction_status": "READY",
+      "reason": null,
+      "inference_time_ms": 5.443913,
+      "dst_utilization": {
+        "predicted": 1.1102206103908803,
+        "measured": 1.1564753903426905,
+        "error": -0.046254779951810265,
+        "abs_error": 0.046254779951810265,
+        "margin": 0.036629233239997006,
+        "within_margin": false
+      },
+      "src_utilization": {
+        "predicted": 0.3785920935584088,
+        "measured": 0.34979096442505975,
+        "error": 0.028801129133349035,
+        "abs_error": 0.028801129133349035,
+        "margin": 0.036629233239997006,
+        "within_margin": true
+      },
+      "worst_response_p95_ms": {
+        "predicted": 0.7900293536835313,
+        "measured": 0.8002132,
+        "error": -0.010183846316468625,
+        "abs_error": 0.010183846316468625,
+        "margin": 0.009170841218852921,
+        "within_margin": false
+      }
+    },
+    {
+      "attempt_id": "mig-stable-middle-dst45-c1-c2-r01",
+      "switch_id": "s10",
+      "source_controller": "c1",
+      "target_controller": "c2",
+      "cpu_p95_percent": {
+        "c1": 58.0,
+        "c2": 47.0
+      },
+      "http_status": 200,
+      "http_ms": 66.625,
+      "prediction_status": "READY",
+      "reason": null,
+      "inference_time_ms": 6.562284,
+      "dst_utilization": {
+        "predicted": 0.47230604619370875,
+        "measured": 0.4709128568246694,
+        "error": 0.0013931893690393715,
+        "abs_error": 0.0013931893690393715,
+        "margin": 0.036629233239997006,
+        "within_margin": true
+      },
+      "src_utilization": {
+        "predicted": 0.5191290747275484,
+        "measured": 0.5082707259448105,
+        "error": 0.010858348782737948,
+        "abs_error": 0.010858348782737948,
+        "margin": 0.036629233239997006,
+        "within_margin": true
+      },
+      "worst_response_p95_ms": {
+        "predicted": 0.7754255093883753,
+        "measured": 0.779772,
+        "error": -0.0043464906116247315,
+        "abs_error": 0.0043464906116247315,
+        "margin": 0.009170841218852921,
+        "within_margin": true
+      }
+    },
+    {
+      "attempt_id": "mig-stable-middle-dst75-c2-c1-r01",
+      "switch_id": "s16",
+      "source_controller": "c2",
+      "target_controller": "c1",
+      "cpu_p95_percent": {
+        "c2": 54.9,
+        "c1": 72.9
+      },
+      "http_status": 200,
+      "http_ms": 66.04,
+      "prediction_status": "READY",
+      "reason": null,
+      "inference_time_ms": 7.101718,
+      "dst_utilization": {
+        "predicted": 0.7696366177132302,
+        "measured": 0.7752163155939888,
+        "error": -0.005579697880758627,
+        "abs_error": 0.005579697880758627,
+        "margin": 0.036629233239997006,
+        "within_margin": true
+      },
+      "src_utilization": {
+        "predicted": 0.5332826144727526,
+        "measured": 0.5082122095515131,
+        "error": 0.025070404921239464,
+        "abs_error": 0.025070404921239464,
+        "margin": 0.036629233239997006,
+        "within_margin": true
+      },
+      "worst_response_p95_ms": {
+        "predicted": 0.7773216522579253,
+        "measured": 0.7818162,
+        "error": -0.004494547742074695,
+        "abs_error": 0.004494547742074695,
+        "margin": 0.009170841218852921,
+        "within_margin": true
+      }
+    }
+  ]
+}
