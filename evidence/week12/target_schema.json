@@ -1,0 +1,19 @@
+{
+  "target_schema": "outcome-targets-v1",
+  "base_targets": [
+    "u_src_post",
+    "u_dst_post",
+    "r_src95_post",
+    "r_dst95_post"
+  ],
+  "derived_targets": {
+    "r95_post": "max(r_src95_post, r_dst95_post)",
+    "i_post": "population std of (u_src_post, u_dst_post) = |u_src_post - u_dst_post| / 2"
+  },
+  "aggregation": "mean over the post window (Hard-Gate-valid snapshots after the action)",
+  "units": {
+    "u_*": "processed Packet-In rate / c_safe_pps (not clamped)",
+    "r_*": "controller response_p95_ms"
+  },
+  "note": "response_p95_ms is controller processing time; it does not rise with overload on this testbed (about 0.77 ms healthy, 0.59 ms saturated)"
+}
