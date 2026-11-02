@@ -1,0 +1,106 @@
+{
+  "created_at": "2026-11-02T10:10:06.083614+00:00",
+  "rule": "copies of gitignored outputs; byte-identical to their sources",
+  "files": {
+    "processed_dataset_report.json": {
+      "source": "data/outcome/processed/migration-outcome-processed-v1/dataset_quality_report.json",
+      "sha256": "f24f415f6e3761c6608f98eac5115c8ab312f5cd8f1930c1f6abebe3bb9a5abb"
+    },
+    "processed_dataset_manifest.json": {
+      "source": "data/outcome/processed/migration-outcome-processed-v1/dataset_manifest.json",
+      "sha256": "38748c2a90ef97a768011d973bb39da2cfb0a6a5be6203f4e3c90aaa7bb4f7e2"
+    },
+    "feature_schema.json": {
+      "source": "data/outcome/processed/migration-outcome-processed-v1/feature_schema.json",
+      "sha256": "69f7350f64fdb98be573d4bf64bae8f2003cc357b6d05eef8816e07d0555e7b6"
+    },
+    "target_schema.json": {
+      "source": "data/outcome/processed/migration-outcome-processed-v1/target_schema.json",
+      "sha256": "982b168a977e8f3f8b08b926c1263779aa0db4458544f3fb8cdf389881c69aff"
+    },
+    "processed_split_manifest.json": {
+      "source": "data/outcome/processed/migration-outcome-processed-v1/split_manifest.json",
+      "sha256": "29b3bfd0797bf6d57a71ceb91ae8a5d9a372c48fd03d53fec852c13e74100346"
+    },
+    "analytical_metrics.csv": {
+      "source": "data/outcome/reports/analytical_validation_metrics.csv",
+      "sha256": "00881c8efe90a7ad4bc02fedea8843a7c1870e08ee9e38cf7ea18879088fb8e3"
+    },
+    "direct_ml_metrics.csv": {
+      "source": "data/outcome/reports/direct/direct_ml_metrics.csv",
+      "sha256": "5469f0adc23a6e20390f3094c8bc94b0bb14d345506d17262712eacfa4dbaf30"
+    },
+    "direct_hyperparameters.json": {
+      "source": "data/outcome/reports/direct/hyperparameters.json",
+      "sha256": "15258beb5087dbdab3ba7ebf6a9ca9c7f92dd786c0acf45a8e39fad2d9d8ad33"
+    },
+    "direct_hyperparameter_search.csv": {
+      "source": "data/outcome/reports/direct/hyperparameter_search.csv",
+      "sha256": "5ed17ec1cdbee13017f198029988a5d6c36e61fe47ce4eea8b10243b2727eb18"
+    },
+    "hybrid_metrics.csv": {
+      "source": "data/outcome/reports/hybrid/hybrid_metrics.csv",
+      "sha256": "10f9dbedbd8890336d935489ce050310cb9aecc2273aca7470b89fd8e863299b"
+    },
+    "hybrid_hyperparameters.json": {
+      "source": "data/outcome/reports/hybrid/hyperparameters.json",
+      "sha256": "aa8395a050cb3727ad2e96962849f5bd839f0514d4c9b37c926d61e7e7331e16"
+    },
+    "hybrid_hyperparameter_search.csv": {
+      "source": "data/outcome/reports/hybrid/hyperparameter_search.csv",
+      "sha256": "6b435a4032e52cf160f94aac81b093a15ed3a0f943edb22b34f470d3d18bfc20"
+    },
+    "residual_analysis.csv": {
+      "source": "data/outcome/reports/hybrid/residual_analysis.csv",
+      "sha256": "357ab84bec43911e2c4cb54453398c0c36313dc2f002b39e6c23ec714e5ccf4d"
+    },
+    "model_selection.json": {
+      "source": "data/outcome/reports/final/model_selection.json",
+      "sha256": "049ae94ce3770557fb9bedad76faeaee50767848b4408162f8830070d40d98d7"
+    },
+    "test_lock.json": {
+      "source": "data/outcome/reports/final/test_lock.json",
+      "sha256": "52486834e8b663e76d40706d797004d7ee0aab5406ae8a1ec63dea3c7dd59b8f"
+    },
+    "validation_metrics.csv": {
+      "source": "data/outcome/reports/final/validation_metrics.csv",
+      "sha256": "7e4b2401cf0225d1902b46137a288876d5b1a4e16ecab83999de651ade26a51a"
+    },
+    "test_metrics.csv": {
+      "source": "data/outcome/reports/final/test_metrics.csv",
+      "sha256": "684f9917ee5336c46bb61a0f2b9660017dd2402bd4e3d1c44ddfe19d58031d5d"
+    },
+    "per_workload_metrics.csv": {
+      "source": "data/outcome/reports/final/per_workload_metrics.csv",
+      "sha256": "0df2d4b939bde051d77f9fac7c71ba0a96b8d490cd50d5760615c3eddbb27d19"
+    },
+    "model_comparison.csv": {
+      "source": "data/outcome/reports/final/model_comparison.csv",
+      "sha256": "764f09108025d299792f6eed266f5ed18ddb0026b1980ea84af336c4a97bdde6"
+    },
+    "bootstrap_ci.csv": {
+      "source": "data/outcome/reports/final/bootstrap_ci.csv",
+      "sha256": "f279d073ee92ca46bad3528578c050e6d765746d5b464b3cd94c0290c72a9468"
+    },
+    "saturation_sensitivity.csv": {
+      "source": "data/outcome/reports/final/saturation_sensitivity.csv",
+      "sha256": "a39ec72c67383cc9199f4636c8e64945e157405df2be84d241543bf7fb0d8cd2"
+    },
+    "overload_cases.csv": {
+      "source": "data/outcome/reports/final/overload_cases.csv",
+      "sha256": "bc0f4c28c1fa08bb7e0ea43c7f8e5d28b58b482607ca11731dce2ce263da7955"
+    },
+    "ablation.csv": {
+      "source": "data/outcome/reports/final/ablation.csv",
+      "sha256": "d033beb6b7a03105b789c4cb0ea253fc8689f7cf9e8521f6a05ef8f18058e95e"
+    },
+    "uncertainty_margin.json": {
+      "source": "data/outcome/reports/final/uncertainty_margin.json",
+      "sha256": "7b2de8dd106d2c719e402468d5a189355c1e8e8322c4602cb229d0e8adb547c9"
+    },
+    "coverage_metrics.json": {
+      "source": "data/outcome/reports/final/coverage_metrics.json",
+      "sha256": "876d013994d0a5ab56709f048ac0c8a8e9013f06c3c549a57458570db4564dc4"
+    }
+  }
+}

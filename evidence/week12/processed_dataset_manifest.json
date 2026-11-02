@@ -1,0 +1,29 @@
+{
+  "dataset_version": "migration-outcome-processed-v1",
+  "source_dataset": "migration-outcome-raw-v2",
+  "created_at": "2026-10-30T15:25:17.279455+00:00",
+  "required_window": 5,
+  "feature_schema": "outcome-features-v1",
+  "target_schema": "outcome-targets-v1",
+  "rows": 300,
+  "rows_by_split": {
+    "train": 180,
+    "validation": 60,
+    "test": 60
+  },
+  "noop_reference_rows": 40,
+  "files": {
+    "outcome_dataset.csv": "51bf2d80d5adb47ad9b0f8beacb5f9b4298b3aca089f5062e8a31c429bb5b155",
+    "noop_reference.csv": "b957a2c107ccf33ea2c9c397dbc4f96da87587169d327496adc989fd0500e8e9"
+  },
+  "raw_root": "/home/tntvy112_gmail_com/w12-cap4/data/experiment_runs/migration-outcome-v2",
+  "split_source": "evidence/week12/split_manifest.json",
+  "capacity_version": "controller_capacity.json@sha256:952c64644b99",
+  "capacity_sha256": "952c64644b9948d2ae58e06ebda7d6d5e3710ac340986a568aa7e9c134becb0d",
+  "c_safe_pps": {
+    "c1": 932.9349510958949,
+    "c2": 933.1315549145669
+  },
+  "saturation_rule": "CPU p95 >= 95 % in the window (src/experiments/migration/saturation.py)",
+  "git_commit": "511eb46c249ec81026024ab289bd7126ec90a099"
+}
