@@ -4,6 +4,8 @@ v1 = week-9 baselines on the 4-vCPU testbed (controller log bug present,
      run ids forecast-<workload>-2c20s-rNN).
 v2 = data collected on e2-standard-8 after the controller fix
      (capacity-v3, forecast-raw-v2, run ids <workload>-rNN-sSEED).
+v3 = re-collection on the current VM with capacity-v4 (c_safe 933 pps,
+     forecast-raw-v3); same plan, seeds and run-level split as v2.
 """
 from __future__ import annotations
 
