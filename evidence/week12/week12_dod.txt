@@ -1,4 +1,4 @@
-# Week 12 Definition of Done, generated 2026-11-02T12:25:40.511499+00:00
+# Week 12 Definition of Done, generated 2026-11-04T11:04:56.443785+00:00
 # PASS = evidence found and criterion met; MISSING = not proven yet; FAIL = not met
 
 Raw frozen                                                   PASS     tag migration-outcome-raw-v2 on main=True; processed_dataset_manifest.source_dataset=True
@@ -19,6 +19,6 @@ make ci                                                      PASS     ci.txt (ru
 Tag capacity-v4; capacity_version khớp file đang chạy        PASS     tag capacity-v4 exists=True; artifact controller_capacity.json@sha256:952c64644b99 vs running controller_capacity.json@sha256:952c64644b99
 Cờ bão hòa sinh từ script trong repo                         PASS     scripts/analysis/migration_saturation.py, attempt_saturation.csv
 forecast_scale_check.md có kết quả và kết luận               PASS     forecast_scale_check.md (sections Result and Reading)
-Tag post-migration-outcome-v1 trên main, sau PR dev -> main  MISSING  PENDING (set after the DoD and the dev -> main merge)
+Tag post-migration-outcome-v1 trên main, sau PR dev -> main  PASS     tag post-migration-outcome-v1 on main
 
-18/19 PASS
+19/19 PASS
