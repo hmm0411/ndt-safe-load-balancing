@@ -53,12 +53,12 @@ forecast-only, NDT không có feedback. Cấu hình: 2 controller × 20 switch v
 | Telemetry, snapshot builder/validator | `src/telemetry/` | Có |
 | TwinState + quality / twinning rate | `src/twin/state/` | Có |
 | Safe capacity model | `src/twin/capacity/`, `data/benchmarks/controller_capacity.json` | Có (capacity-v4: c_safe 933 pps trên VM hiện tại, tag `capacity-v4`; capacity-v3 1433 pps của VM cũ ở tag `capacity-v3`) |
-| Forecasting (features, splitter, baselines, LR/RF/XGB, MLflow) | `src/twin/forecasting/`, `scripts/experiments/train_forecast_baselines.py` | Có, `forecast-models-v2` |
+| Forecasting (features, splitter, baselines, LR/RF/XGB, MLflow) | `src/twin/forecasting/`, `scripts/experiments/train_forecast_baselines.py` | Có, `forecast-models-v2`; phải huấn luyện lại trên VM hiện tại (forecast-v1 kém persistence, #93) |
 | Overload detector (`upper_bound = pred + margin ≥ 1`) | `src/twin/decision/overload_detector.py` | Có |
 | Migration / verification / rollback | `src/execution/` | Có |
 | Candidate Generator | — | **Chưa có** |
 | State–Action–Outcome dataset | `src/experiments/migration/`, `evidence/week11/` (raw-v1), `evidence/week12/` (raw-v2) | Có: dùng raw-v2 (tag `migration-outcome-raw-v2`) |
-| Post-Migration Outcome Model | `src/twin/outcome/` (Tuần 12) | **Đang làm** |
+| Post-Migration Outcome Model | `src/twin/outcome/`, `data/models/outcome/post-migration-v1/`, endpoint `POST /api/v1/twin/outcome/predict` | Có: Hybrid-XGB, m_U 0.037, m_R 0.009 ms (Tuần 12, tag `post-migration-outcome-v1`) |
 | Safety Gate, Ranking & Selection | — | **Chưa có** |
 | Feedback & Calibration (cập nhật biên) | — | **Chưa có** |
 | Baselines vòng kín, ablation, kịch bản lỗi | — | **Chưa có** |
