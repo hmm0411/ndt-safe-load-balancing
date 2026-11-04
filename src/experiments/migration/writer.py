@@ -166,6 +166,7 @@ def write_attempt(
     outcome: PostMigrationOutcome,
     quality: QualitySummary,
     required_window: int = 5,
+    prediction: Mapping[str, Any] | None = None,
 ) -> WrittenAttempt:
     """Write, validate, checksum and lock one attempt directory."""
     from src.experiments.migration.validator import validate_attempt
@@ -191,6 +192,8 @@ def write_attempt(
             {"schema_version": SCHEMA_VERSION, "outcome": outcome.to_dict(),
              "quality": quality.to_dict()},
         )
+        if prediction is not None:  # Week 12 smoke only; the raw collection never has this file
+            _write_json(tmp / "prediction.json", dict(prediction))
         validation = validate_attempt(tmp, required_window=required_window,
                                       check_checksums=False)
         _write_json(tmp / VALIDATION_FILE, validation)

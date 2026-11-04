@@ -1,0 +1,40 @@
+# Week 12 Day 4: model selection on validation, then the ONE evaluation of the test split
+# (scripts/experiments/train_outcome_models.py --stage select-and-test).
+# Everything here is fixed BEFORE the test split is opened. Editing it after test_lock.json
+# exists does not reopen the test: the lock refuses a second evaluation.
+# Owner: My (writes), Vy (reviews).
+
+# Best Direct / Best Hybrid: lowest validation S (dataset.yaml: selection weights without
+# selection_exclude). Ties keep this order.
+candidates:
+  direct: [direct_xgb, direct_rf]
+  hybrid: [hybrid_xgb, hybrid_rf]
+
+# Breakdown of the error (plan section 32); switch_share_group bins are in dataset.yaml.
+group_keys: [workload, destination_load_level, direction, switch_share_group,
+             saturated_before, saturated_after]
+
+# Paired bootstrap over test attempts (one attempt = one row), percentile interval.
+bootstrap:
+  resamples: 2000
+  seed: 20261031
+  confidence: 0.95
+
+# Ablation of the Best Hybrid (plan section 44). Each variant refits the residual learner on
+# TRAIN with the Best Hybrid's per-target parameters (no new search) and is scored on
+# validation and test. drop: model features removed from the residual learner.
+# persistence_base: the base prediction is U_post = mean U of the pre window (no lambda_s),
+# instead of the Analytical one, so no information about the moved switch is left anywhere.
+ablation:
+  hybrid_no_temporal:
+    drop: [src_u_mean, src_u_std, src_u_slope, dst_u_mean, dst_u_std, dst_u_slope,
+           switch_share_mean, switch_share_slope]
+    persistence_base: false
+  hybrid_no_switch_features:
+    drop: [switch_control_load_share, switch_packet_in_rate, switch_share_mean,
+           switch_share_slope]
+    persistence_base: false
+  hybrid_no_switch:
+    drop: [switch_control_load_share, switch_packet_in_rate, switch_share_mean,
+           switch_share_slope]
+    persistence_base: true

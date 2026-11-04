@@ -11,6 +11,7 @@ import argparse
 import os
 import sys
 from pathlib import Path
+from urllib.parse import urlparse
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
@@ -37,6 +38,18 @@ def cfg(config, *names):
         if hasattr(config, name):
             return getattr(config, name)
     raise SystemExit(f"OutcomeConfig has none of {names}: adjust cfg() calls in this script")
+
+
+def predict_url_problem(url: str, output_root: str | None, raw_root: str) -> str | None:
+    """Why --predict-url cannot be used, or None. The smoke never writes into the raw collection."""
+    parsed = urlparse(url)
+    if parsed.scheme != "http" or not parsed.netloc or not parsed.path.endswith("/twin/outcome/predict"):
+        return f"--predict-url must be http://HOST:PORT/api/v1/twin/outcome/predict, got {url!r}"
+    if not output_root:
+        return "--predict-url needs an explicit --output-root (for example data/experiment_runs/migration-outcome-smoke-w12)"
+    if Path(output_root).name == Path(raw_root).name or "raw" in Path(output_root).name.lower():
+        return f"--predict-url must not write into the raw collection ({output_root}); use a smoke directory"
+    return None
 
 
 def parse_only(spec: str):
@@ -71,6 +84,10 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--dry-run", action="store_true")
     p.add_argument("--keep-going", action="store_true", help="continue after a failed attempt")
     p.add_argument("--orchestrator-url", default="http://127.0.0.1:9000")
+    p.add_argument("--predict-url", default=None, metavar="URL",
+                   help="POST /api/v1/twin/outcome/predict URL: before each MIGRATE the runner asks the "
+                        "predictor and writes prediction.json next to the attempt (Week 12 smoke). "
+                        "Needs --output-root; never the raw collection root.")
     p.add_argument("--capacity-json", default="data/benchmarks/controller_capacity.json")
     p.add_argument("--capacity-runs", default="data/benchmarks/capacity_runs.csv")
     return p
@@ -104,6 +121,11 @@ def main(argv=None) -> int:
         return 2
 
     output_root = Path(args.output_root or cfg(config, "output_root"))
+    if args.predict_url is not None:
+        problem = predict_url_problem(args.predict_url, args.output_root, str(cfg(config, "output_root")))
+        if problem:
+            print(problem, file=sys.stderr)
+            return 2
     settings = RunnerSettings(
         repo_root=REPO_ROOT,
         output_root=output_root if output_root.is_absolute() else REPO_ROOT / output_root,
@@ -116,6 +138,7 @@ def main(argv=None) -> int:
         orchestrator_url=args.orchestrator_url,
         required_window=int(cfg(config, "pre_window_valid_snapshots", "pre_window")),
         post_window_timeout_s=float(cfg(config, "post_window_timeout_s")),
+        predict_url=args.predict_url,
     )
 
     print(f"{len(plans)} attempt(s) -> {settings.output_root}")

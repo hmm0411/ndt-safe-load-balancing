@@ -1,0 +1,863 @@
+{
+  "level": 0.95,
+  "by_model": {
+    "analytical": {
+      "m_U": {
+        "margin": 0.06283419456228956,
+        "target": "u_dst_post",
+        "validation": {
+          "n": 60,
+          "covered": 58,
+          "coverage": 0.9666666666666667
+        },
+        "test": [
+          {
+            "group": "all",
+            "value": "all",
+            "n": 60,
+            "covered": 55,
+            "coverage": 0.9166666666666666
+          },
+          {
+            "group": "workload",
+            "value": "burst",
+            "n": 12,
+            "covered": 11,
+            "coverage": 0.9166666666666666
+          },
+          {
+            "group": "workload",
+            "value": "gradual",
+            "n": 12,
+            "covered": 8,
+            "coverage": 0.6666666666666666
+          },
+          {
+            "group": "workload",
+            "value": "hot_switch",
+            "n": 12,
+            "covered": 12,
+            "coverage": 1.0
+          },
+          {
+            "group": "workload",
+            "value": "oscillating",
+            "n": 12,
+            "covered": 12,
+            "coverage": 1.0
+          },
+          {
+            "group": "workload",
+            "value": "stable",
+            "n": 12,
+            "covered": 12,
+            "coverage": 1.0
+          },
+          {
+            "group": "destination_load_level",
+            "value": "0.45",
+            "n": 30,
+            "covered": 29,
+            "coverage": 0.9666666666666667
+          },
+          {
+            "group": "destination_load_level",
+            "value": "0.75",
+            "n": 30,
+            "covered": 26,
+            "coverage": 0.8666666666666667
+          },
+          {
+            "group": "direction",
+            "value": "c1->c2",
+            "n": 30,
+            "covered": 28,
+            "coverage": 0.9333333333333333
+          },
+          {
+            "group": "direction",
+            "value": "c2->c1",
+            "n": 30,
+            "covered": 27,
+            "coverage": 0.9
+          },
+          {
+            "group": "switch_share_group",
+            "value": "high",
+            "n": 3,
+            "covered": 3,
+            "coverage": 1.0
+          },
+          {
+            "group": "switch_share_group",
+            "value": "low",
+            "n": 26,
+            "covered": 24,
+            "coverage": 0.9230769230769231
+          },
+          {
+            "group": "switch_share_group",
+            "value": "medium",
+            "n": 31,
+            "covered": 28,
+            "coverage": 0.9032258064516129
+          },
+          {
+            "group": "saturated",
+            "value": "False",
+            "n": 57,
+            "covered": 52,
+            "coverage": 0.9122807017543859
+          },
+          {
+            "group": "saturated",
+            "value": "True",
+            "n": 3,
+            "covered": 3,
+            "coverage": 1.0
+          },
+          {
+            "group": "overload_after",
+            "value": "False",
+            "n": 59,
+            "covered": 54,
+            "coverage": 0.9152542372881356
+          },
+          {
+            "group": "overload_after",
+            "value": "True",
+            "n": 1,
+            "covered": 1,
+            "coverage": 1.0
+          }
+        ]
+      },
+      "m_R": {
+        "margin": 0.0684806,
+        "target": "r95_post",
+        "validation": {
+          "n": 60,
+          "covered": 58,
+          "coverage": 0.9666666666666667
+        },
+        "test": [
+          {
+            "group": "all",
+            "value": "all",
+            "n": 60,
+            "covered": 54,
+            "coverage": 0.9
+          },
+          {
+            "group": "workload",
+            "value": "burst",
+            "n": 12,
+            "covered": 11,
+            "coverage": 0.9166666666666666
+          },
+          {
+            "group": "workload",
+            "value": "gradual",
+            "n": 12,
+            "covered": 10,
+            "coverage": 0.8333333333333334
+          },
+          {
+            "group": "workload",
+            "value": "hot_switch",
+            "n": 12,
+            "covered": 12,
+            "coverage": 1.0
+          },
+          {
+            "group": "workload",
+            "value": "oscillating",
+            "n": 12,
+            "covered": 10,
+            "coverage": 0.8333333333333334
+          },
+          {
+            "group": "workload",
+            "value": "stable",
+            "n": 12,
+            "covered": 11,
+            "coverage": 0.9166666666666666
+          },
+          {
+            "group": "destination_load_level",
+            "value": "0.45",
+            "n": 30,
+            "covered": 25,
+            "coverage": 0.8333333333333334
+          },
+          {
+            "group": "destination_load_level",
+            "value": "0.75",
+            "n": 30,
+            "covered": 29,
+            "coverage": 0.9666666666666667
+          },
+          {
+            "group": "direction",
+            "value": "c1->c2",
+            "n": 30,
+            "covered": 28,
+            "coverage": 0.9333333333333333
+          },
+          {
+            "group": "direction",
+            "value": "c2->c1",
+            "n": 30,
+            "covered": 26,
+            "coverage": 0.8666666666666667
+          },
+          {
+            "group": "switch_share_group",
+            "value": "high",
+            "n": 3,
+            "covered": 3,
+            "coverage": 1.0
+          },
+          {
+            "group": "switch_share_group",
+            "value": "low",
+            "n": 26,
+            "covered": 24,
+            "coverage": 0.9230769230769231
+          },
+          {
+            "group": "switch_share_group",
+            "value": "medium",
+            "n": 31,
+            "covered": 27,
+            "coverage": 0.8709677419354839
+          },
+          {
+            "group": "saturated",
+            "value": "False",
+            "n": 57,
+            "covered": 51,
+            "coverage": 0.8947368421052632
+          },
+          {
+            "group": "saturated",
+            "value": "True",
+            "n": 3,
+            "covered": 3,
+            "coverage": 1.0
+          },
+          {
+            "group": "overload_after",
+            "value": "False",
+            "n": 59,
+            "covered": 53,
+            "coverage": 0.8983050847457628
+          },
+          {
+            "group": "overload_after",
+            "value": "True",
+            "n": 1,
+            "covered": 1,
+            "coverage": 1.0
+          }
+        ]
+      },
+      "gate_u_dst": {
+        "validation": {
+          "threshold": 1.0,
+          "overload": 3,
+          "flagged": 6,
+          "true_positive": 3,
+          "false_alarm": 3,
+          "missed_overload": 0,
+          "true_negative": 54,
+          "false_alarm_rate": 0.05263157894736842,
+          "miss_rate": 0.0
+        },
+        "test": {
+          "threshold": 1.0,
+          "overload": 1,
+          "flagged": 3,
+          "true_positive": 1,
+          "false_alarm": 2,
+          "missed_overload": 0,
+          "true_negative": 57,
+          "false_alarm_rate": 0.03389830508474576,
+          "miss_rate": 0.0
+        }
+      }
+    },
+    "direct_xgb": {
+      "m_U": {
+        "margin": 0.04347425734060162,
+        "target": "u_dst_post",
+        "validation": {
+          "n": 60,
+          "covered": 58,
+          "coverage": 0.9666666666666667
+        },
+        "test": [
+          {
+            "group": "all",
+            "value": "all",
+            "n": 60,
+            "covered": 58,
+            "coverage": 0.9666666666666667
+          },
+          {
+            "group": "workload",
+            "value": "burst",
+            "n": 12,
+            "covered": 12,
+            "coverage": 1.0
+          },
+          {
+            "group": "workload",
+            "value": "gradual",
+            "n": 12,
+            "covered": 11,
+            "coverage": 0.9166666666666666
+          },
+          {
+            "group": "workload",
+            "value": "hot_switch",
+            "n": 12,
+            "covered": 11,
+            "coverage": 0.9166666666666666
+          },
+          {
+            "group": "workload",
+            "value": "oscillating",
+            "n": 12,
+            "covered": 12,
+            "coverage": 1.0
+          },
+          {
+            "group": "workload",
+            "value": "stable",
+            "n": 12,
+            "covered": 12,
+            "coverage": 1.0
+          },
+          {
+            "group": "destination_load_level",
+            "value": "0.45",
+            "n": 30,
+            "covered": 29,
+            "coverage": 0.9666666666666667
+          },
+          {
+            "group": "destination_load_level",
+            "value": "0.75",
+            "n": 30,
+            "covered": 29,
+            "coverage": 0.9666666666666667
+          },
+          {
+            "group": "direction",
+            "value": "c1->c2",
+            "n": 30,
+            "covered": 28,
+            "coverage": 0.9333333333333333
+          },
+          {
+            "group": "direction",
+            "value": "c2->c1",
+            "n": 30,
+            "covered": 30,
+            "coverage": 1.0
+          },
+          {
+            "group": "switch_share_group",
+            "value": "high",
+            "n": 3,
+            "covered": 2,
+            "coverage": 0.6666666666666666
+          },
+          {
+            "group": "switch_share_group",
+            "value": "low",
+            "n": 26,
+            "covered": 25,
+            "coverage": 0.9615384615384616
+          },
+          {
+            "group": "switch_share_group",
+            "value": "medium",
+            "n": 31,
+            "covered": 31,
+            "coverage": 1.0
+          },
+          {
+            "group": "saturated",
+            "value": "False",
+            "n": 57,
+            "covered": 55,
+            "coverage": 0.9649122807017544
+          },
+          {
+            "group": "saturated",
+            "value": "True",
+            "n": 3,
+            "covered": 3,
+            "coverage": 1.0
+          },
+          {
+            "group": "overload_after",
+            "value": "False",
+            "n": 59,
+            "covered": 57,
+            "coverage": 0.9661016949152542
+          },
+          {
+            "group": "overload_after",
+            "value": "True",
+            "n": 1,
+            "covered": 1,
+            "coverage": 1.0
+          }
+        ]
+      },
+      "m_R": {
+        "margin": 0.011012431784057641,
+        "target": "r95_post",
+        "validation": {
+          "n": 60,
+          "covered": 58,
+          "coverage": 0.9666666666666667
+        },
+        "test": [
+          {
+            "group": "all",
+            "value": "all",
+            "n": 60,
+            "covered": 60,
+            "coverage": 1.0
+          },
+          {
+            "group": "workload",
+            "value": "burst",
+            "n": 12,
+            "covered": 12,
+            "coverage": 1.0
+          },
+          {
+            "group": "workload",
+            "value": "gradual",
+            "n": 12,
+            "covered": 12,
+            "coverage": 1.0
+          },
+          {
+            "group": "workload",
+            "value": "hot_switch",
+            "n": 12,
+            "covered": 12,
+            "coverage": 1.0
+          },
+          {
+            "group": "workload",
+            "value": "oscillating",
+            "n": 12,
+            "covered": 12,
+            "coverage": 1.0
+          },
+          {
+            "group": "workload",
+            "value": "stable",
+            "n": 12,
+            "covered": 12,
+            "coverage": 1.0
+          },
+          {
+            "group": "destination_load_level",
+            "value": "0.45",
+            "n": 30,
+            "covered": 30,
+            "coverage": 1.0
+          },
+          {
+            "group": "destination_load_level",
+            "value": "0.75",
+            "n": 30,
+            "covered": 30,
+            "coverage": 1.0
+          },
+          {
+            "group": "direction",
+            "value": "c1->c2",
+            "n": 30,
+            "covered": 30,
+            "coverage": 1.0
+          },
+          {
+            "group": "direction",
+            "value": "c2->c1",
+            "n": 30,
+            "covered": 30,
+            "coverage": 1.0
+          },
+          {
+            "group": "switch_share_group",
+            "value": "high",
+            "n": 3,
+            "covered": 3,
+            "coverage": 1.0
+          },
+          {
+            "group": "switch_share_group",
+            "value": "low",
+            "n": 26,
+            "covered": 26,
+            "coverage": 1.0
+          },
+          {
+            "group": "switch_share_group",
+            "value": "medium",
+            "n": 31,
+            "covered": 31,
+            "coverage": 1.0
+          },
+          {
+            "group": "saturated",
+            "value": "False",
+            "n": 57,
+            "covered": 57,
+            "coverage": 1.0
+          },
+          {
+            "group": "saturated",
+            "value": "True",
+            "n": 3,
+            "covered": 3,
+            "coverage": 1.0
+          },
+          {
+            "group": "overload_after",
+            "value": "False",
+            "n": 59,
+            "covered": 59,
+            "coverage": 1.0
+          },
+          {
+            "group": "overload_after",
+            "value": "True",
+            "n": 1,
+            "covered": 1,
+            "coverage": 1.0
+          }
+        ]
+      },
+      "gate_u_dst": {
+        "validation": {
+          "threshold": 1.0,
+          "overload": 3,
+          "flagged": 3,
+          "true_positive": 3,
+          "false_alarm": 0,
+          "missed_overload": 0,
+          "true_negative": 57,
+          "false_alarm_rate": 0.0,
+          "miss_rate": 0.0
+        },
+        "test": {
+          "threshold": 1.0,
+          "overload": 1,
+          "flagged": 1,
+          "true_positive": 1,
+          "false_alarm": 0,
+          "missed_overload": 0,
+          "true_negative": 59,
+          "false_alarm_rate": 0.0,
+          "miss_rate": 0.0
+        }
+      }
+    },
+    "hybrid_xgb": {
+      "m_U": {
+        "margin": 0.036629233239997006,
+        "target": "u_dst_post",
+        "validation": {
+          "n": 60,
+          "covered": 58,
+          "coverage": 0.9666666666666667
+        },
+        "test": [
+          {
+            "group": "all",
+            "value": "all",
+            "n": 60,
+            "covered": 55,
+            "coverage": 0.9166666666666666
+          },
+          {
+            "group": "workload",
+            "value": "burst",
+            "n": 12,
+            "covered": 11,
+            "coverage": 0.9166666666666666
+          },
+          {
+            "group": "workload",
+            "value": "gradual",
+            "n": 12,
+            "covered": 9,
+            "coverage": 0.75
+          },
+          {
+            "group": "workload",
+            "value": "hot_switch",
+            "n": 12,
+            "covered": 11,
+            "coverage": 0.9166666666666666
+          },
+          {
+            "group": "workload",
+            "value": "oscillating",
+            "n": 12,
+            "covered": 12,
+            "coverage": 1.0
+          },
+          {
+            "group": "workload",
+            "value": "stable",
+            "n": 12,
+            "covered": 12,
+            "coverage": 1.0
+          },
+          {
+            "group": "destination_load_level",
+            "value": "0.45",
+            "n": 30,
+            "covered": 28,
+            "coverage": 0.9333333333333333
+          },
+          {
+            "group": "destination_load_level",
+            "value": "0.75",
+            "n": 30,
+            "covered": 27,
+            "coverage": 0.9
+          },
+          {
+            "group": "direction",
+            "value": "c1->c2",
+            "n": 30,
+            "covered": 27,
+            "coverage": 0.9
+          },
+          {
+            "group": "direction",
+            "value": "c2->c1",
+            "n": 30,
+            "covered": 28,
+            "coverage": 0.9333333333333333
+          },
+          {
+            "group": "switch_share_group",
+            "value": "high",
+            "n": 3,
+            "covered": 3,
+            "coverage": 1.0
+          },
+          {
+            "group": "switch_share_group",
+            "value": "low",
+            "n": 26,
+            "covered": 25,
+            "coverage": 0.9615384615384616
+          },
+          {
+            "group": "switch_share_group",
+            "value": "medium",
+            "n": 31,
+            "covered": 27,
+            "coverage": 0.8709677419354839
+          },
+          {
+            "group": "saturated",
+            "value": "False",
+            "n": 57,
+            "covered": 52,
+            "coverage": 0.9122807017543859
+          },
+          {
+            "group": "saturated",
+            "value": "True",
+            "n": 3,
+            "covered": 3,
+            "coverage": 1.0
+          },
+          {
+            "group": "overload_after",
+            "value": "False",
+            "n": 59,
+            "covered": 54,
+            "coverage": 0.9152542372881356
+          },
+          {
+            "group": "overload_after",
+            "value": "True",
+            "n": 1,
+            "covered": 1,
+            "coverage": 1.0
+          }
+        ]
+      },
+      "m_R": {
+        "margin": 0.009170841218852921,
+        "target": "r95_post",
+        "validation": {
+          "n": 60,
+          "covered": 58,
+          "coverage": 0.9666666666666667
+        },
+        "test": [
+          {
+            "group": "all",
+            "value": "all",
+            "n": 60,
+            "covered": 59,
+            "coverage": 0.9833333333333333
+          },
+          {
+            "group": "workload",
+            "value": "burst",
+            "n": 12,
+            "covered": 11,
+            "coverage": 0.9166666666666666
+          },
+          {
+            "group": "workload",
+            "value": "gradual",
+            "n": 12,
+            "covered": 12,
+            "coverage": 1.0
+          },
+          {
+            "group": "workload",
+            "value": "hot_switch",
+            "n": 12,
+            "covered": 12,
+            "coverage": 1.0
+          },
+          {
+            "group": "workload",
+            "value": "oscillating",
+            "n": 12,
+            "covered": 12,
+            "coverage": 1.0
+          },
+          {
+            "group": "workload",
+            "value": "stable",
+            "n": 12,
+            "covered": 12,
+            "coverage": 1.0
+          },
+          {
+            "group": "destination_load_level",
+            "value": "0.45",
+            "n": 30,
+            "covered": 29,
+            "coverage": 0.9666666666666667
+          },
+          {
+            "group": "destination_load_level",
+            "value": "0.75",
+            "n": 30,
+            "covered": 30,
+            "coverage": 1.0
+          },
+          {
+            "group": "direction",
+            "value": "c1->c2",
+            "n": 30,
+            "covered": 30,
+            "coverage": 1.0
+          },
+          {
+            "group": "direction",
+            "value": "c2->c1",
+            "n": 30,
+            "covered": 29,
+            "coverage": 0.9666666666666667
+          },
+          {
+            "group": "switch_share_group",
+            "value": "high",
+            "n": 3,
+            "covered": 3,
+            "coverage": 1.0
+          },
+          {
+            "group": "switch_share_group",
+            "value": "low",
+            "n": 26,
+            "covered": 26,
+            "coverage": 1.0
+          },
+          {
+            "group": "switch_share_group",
+            "value": "medium",
+            "n": 31,
+            "covered": 30,
+            "coverage": 0.967741935483871
+          },
+          {
+            "group": "saturated",
+            "value": "False",
+            "n": 57,
+            "covered": 56,
+            "coverage": 0.9824561403508771
+          },
+          {
+            "group": "saturated",
+            "value": "True",
+            "n": 3,
+            "covered": 3,
+            "coverage": 1.0
+          },
+          {
+            "group": "overload_after",
+            "value": "False",
+            "n": 59,
+            "covered": 58,
+            "coverage": 0.9830508474576272
+          },
+          {
+            "group": "overload_after",
+            "value": "True",
+            "n": 1,
+            "covered": 1,
+            "coverage": 1.0
+          }
+        ]
+      },
+      "gate_u_dst": {
+        "validation": {
+          "threshold": 1.0,
+          "overload": 3,
+          "flagged": 4,
+          "true_positive": 3,
+          "false_alarm": 1,
+          "missed_overload": 0,
+          "true_negative": 56,
+          "false_alarm_rate": 0.017543859649122806,
+          "miss_rate": 0.0
+        },
+        "test": {
+          "threshold": 1.0,
+          "overload": 1,
+          "flagged": 1,
+          "true_positive": 1,
+          "false_alarm": 0,
+          "missed_overload": 0,
+          "true_negative": 59,
+          "false_alarm_rate": 0.0,
+          "miss_rate": 0.0
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "model_name": "post-migration-outcome",
+  "model_version": "post-migration-v1",
+  "purpose": "predict the controller state after one switch migration (what-if)",
+  "supported_action": "single switch ownership migration between two controllers",
+  "hybrid_family": "xgboost",
+  "deployed_model": "hybrid_xgb",
+  "outputs": [
+    "u_src_post",
+    "u_dst_post",
+    "r_src95_post",
+    "r_dst95_post",
+    "r95_post",
+    "i_post",
+    "m_U",
+    "m_R"
+  ],
+  "selection": {
+    "rule": "Best Direct / Best Hybrid by lowest validation S; deployed = lowest validation S among Analytical, Best Direct, Best Hybrid",
+    "validation_S": {
+      "analytical": 0.2300978033594175,
+      "direct_xgb": 0.11261716244519002,
+      "hybrid_xgb": 0.10516777389694906
+    },
+    "test_S": {
+      "analytical": 0.22694475470450404,
+      "direct_xgb": 0.19384327403049642,
+      "hybrid_xgb": 0.16188914191378395
+    }
+  },
+  "test_rmse": {
+    "analytical": {
+      "u_src_post": 0.15315466807369485,
+      "u_dst_post": 0.06642570812030679,
+      "r_src95_post": 0.0587539656970546,
+      "r_dst95_post": 0.03357905476113544,
+      "r95_post": 0.05911124525701238,
+      "i_post": 0.053727376923783626
+    },
+    "direct_xgb": {
+      "u_src_post": 0.15371644097675888,
+      "u_dst_post": 0.030787168146676647,
+      "r_src95_post": 0.0057491498423543255,
+      "r_dst95_post": 0.005423987832760165,
+      "r95_post": 0.004976907538091429,
+      "i_post": 0.06468099162564647
+    },
+    "hybrid_xgb": {
+      "u_src_post": 0.1273385404713563,
+      "u_dst_post": 0.026961002129300568,
+      "r_src95_post": 0.027024174252265082,
+      "r_dst95_post": 0.007052405233538723,
+      "r95_post": 0.026957113869953434,
+      "i_post": 0.053072658090047464
+    }
+  },
+  "margins": {
+    "m_U": 0.036629233239997006,
+    "m_R": 0.009170841218852921,
+    "level": 0.95
+  },
+  "limitations": [
+    "trained on the 2-controller topology (2C20S) only",
+    "requires a valid TwinState and 5 consecutive valid snapshots",
+    "does not authorize migration: no safe field, the Safety Gate decides (Week 13)",
+    "trained on COMMITTED migrations only; rollback and NO_OP are not regression targets",
+    "response_p95_ms is controller processing time and does not rise with overload on this testbed",
+    "U is a lower bound of the offered load when a controller saturates (14 saturated attempts kept in the data)",
+    "few overload examples (10 in total, 1 in test): coverage near U = 1 is weakly supported",
+    "valid only for capacity controller_capacity.json@sha256:952c64644b99"
+  ]
+}

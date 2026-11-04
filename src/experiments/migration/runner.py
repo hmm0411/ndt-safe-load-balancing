@@ -96,6 +96,8 @@ class RunnerSettings:
     python: str = "python3"  # same interpreter as the Day-1 workload runs under sudo
     required_window: int = 5
     post_window_timeout_s: float = 60.0
+    # Week 12 smoke: URL of POST /api/v1/twin/outcome/predict. None = no prediction (raw collection).
+    predict_url: str | None = None
 
 
 @dataclass
@@ -390,6 +392,27 @@ def send_migration(
     return transaction_from_raw(raw), raw
 
 
+PREDICT_REQUEST_TIMEOUT_S = 5.0
+
+
+def request_prediction(
+    predict_url: str, switch_id: str, source: str, target: str,
+    timeout: float = PREDICT_REQUEST_TIMEOUT_S,
+) -> dict[str, Any]:
+    """POST the what-if request. Never raises: a failed request is recorded, not hidden, and
+    it must not stop the attempt (the migration itself does not depend on the prediction)."""
+    body = {"switch_id": switch_id, "source_controller": source, "target_controller": target}
+    record: dict[str, Any] = {"requested_at": now_iso(), "url": predict_url, "request": body}
+    started = time.perf_counter()
+    try:
+        status, response = http_post_json(predict_url, body, timeout=timeout)
+        record.update({"http_status": status, "response": response})
+    except Exception as exc:  # noqa: BLE001 - recorded in prediction.json
+        record["error"] = repr(exc)
+    record["http_ms"] = round((time.perf_counter() - started) * 1000.0, 3)
+    return record
+
+
 # --------------------------------------------------------------------------
 # one attempt: the window protocol (no processes, testable with fakes)
 # --------------------------------------------------------------------------
@@ -405,6 +428,8 @@ class Context:
     capacity_exists: bool
     sleep: Callable[[float], None] = time.sleep
     clock: Callable[[], float] = time.monotonic
+    # (switch, source, target) -> record for prediction.json; None = do not ask the predictor
+    predict: Callable[[str, str, str], dict[str, Any]] | None = None
 
 
 @dataclass
@@ -417,6 +442,7 @@ class Collected:
     after: list[Sample]
     post_complete: bool
     skip_reasons: list[str] = field(default_factory=list)
+    prediction: dict[str, Any] | None = None
 
 
 def collect_attempt(
@@ -481,6 +507,7 @@ def collect_attempt(
 
     send_index = len(ctx.samples)
     transaction: Any | None = None
+    prediction: dict[str, Any] | None = None
     transaction_raw: Any = raw_transaction()
     if is_migrate:
         if skip:
@@ -488,6 +515,8 @@ def collect_attempt(
             transaction_raw = raw_transaction(skip_reason=reason)
             transaction = transaction_from_raw(transaction_raw)
         else:
+            if ctx.predict is not None:  # what-if BEFORE the action; it changes nothing
+                prediction = ctx.predict(switch_id, plan.source_controller, plan.target_controller)
             transaction, transaction_raw = ctx.send(switch_id, plan.target_controller, failure)
     done_index = len(ctx.samples)
 
@@ -516,7 +545,8 @@ def collect_attempt(
         after = [s for s in ctx.samples[done_index:] if s.valid and accept(s.view)][-window:]
     cut = after[0].index if complete else len(ctx.samples)
     transition = [s for s in ctx.samples if send_index <= s.index < cut]
-    return Collected(action, transaction, transaction_raw, before, transition, after, complete, skip)
+    return Collected(action, transaction, transaction_raw, before, transition, after, complete, skip,
+                     prediction)
 
 
 # --------------------------------------------------------------------------
@@ -768,6 +798,8 @@ def run_attempt(
             send=lambda switch, target, fail: send_migration(url, switch, target, fail),
             workload_alive=workload.alive,
             capacity_exists=settings.capacity_json.is_file(),
+            predict=(None if settings.predict_url is None else
+                     lambda switch, src, dst: request_prediction(settings.predict_url or "", switch, src, dst)),
         )
         collected = collect_attempt(plan, ctx, failure=failure, duration=duration,
                                     window=window, post_timeout=settings.post_window_timeout_s)
@@ -794,7 +826,7 @@ def run_attempt(
             [_raw(s) for s in collected.before], [_raw(s) for s in collected.transition],
             [_raw(s) for s in collected.after], poller.forecasts,
             collected.action, collected.transaction_raw, outcome, quality,
-            required_window=window)
+            required_window=window, prediction=collected.prediction)
         return AttemptResult(
             name, "written", written.path,
             None if collected.transaction is None else collected.transaction.status,

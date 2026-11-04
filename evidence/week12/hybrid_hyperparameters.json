@@ -1,0 +1,236 @@
+{
+  "stage": "hybrid",
+  "created_at": "2026-10-31T07:14:38.153599+00:00",
+  "dataset": "data/outcome/processed/migration-outcome-processed-v1",
+  "feature_schema": "outcome-features-v1",
+  "model_features": [
+    "src_utilization",
+    "src_packet_in_rate",
+    "src_flow_mod_rate",
+    "src_cpu_percent",
+    "src_memory_rss_mb",
+    "src_response_p95_ms",
+    "dst_utilization",
+    "dst_packet_in_rate",
+    "dst_flow_mod_rate",
+    "dst_cpu_percent",
+    "dst_memory_rss_mb",
+    "dst_response_p95_ms",
+    "switch_control_load_share",
+    "switch_packet_in_rate",
+    "src_u_mean",
+    "src_u_std",
+    "src_u_slope",
+    "dst_u_mean",
+    "dst_u_std",
+    "dst_u_slope",
+    "switch_share_mean",
+    "switch_share_slope",
+    "imbalance_before",
+    "max_u_before"
+  ],
+  "hybrid_features": [
+    "src_utilization",
+    "src_packet_in_rate",
+    "src_flow_mod_rate",
+    "src_cpu_percent",
+    "src_memory_rss_mb",
+    "src_response_p95_ms",
+    "dst_utilization",
+    "dst_packet_in_rate",
+    "dst_flow_mod_rate",
+    "dst_cpu_percent",
+    "dst_memory_rss_mb",
+    "dst_response_p95_ms",
+    "switch_control_load_share",
+    "switch_packet_in_rate",
+    "src_u_mean",
+    "src_u_std",
+    "src_u_slope",
+    "dst_u_mean",
+    "dst_u_std",
+    "dst_u_slope",
+    "switch_share_mean",
+    "switch_share_slope",
+    "imbalance_before",
+    "max_u_before",
+    "analytical_u_src_post",
+    "analytical_u_dst_post",
+    "analytical_r_src95_post",
+    "analytical_r_dst95_post"
+  ],
+  "residual_target": "r = y - analytical_y for each base target; y_H = max(0, y_A + r_hat)",
+  "selection": "lowest validation RMSE of the residual of the target; train only for fitting; test unused",
+  "selection_score": {
+    "weights": {
+      "u_dst_post": 0.4666666666666666,
+      "u_src_post": 0.3333333333333333,
+      "i_post": 0.19999999999999998
+    },
+    "excluded": [
+      "r95_post"
+    ],
+    "plan_weights": {
+      "u_dst_post": 0.35,
+      "u_src_post": 0.25,
+      "r95_post": 0.25,
+      "i_post": 0.15
+    }
+  },
+  "direct_reference": {
+    "dir": "data/outcome/reports/direct",
+    "created_at": "2026-10-30T16:51:12.607491+00:00"
+  },
+  "rows": {
+    "train": 180,
+    "validation": 60,
+    "test_dropped": 60
+  },
+  "candidates_per_target": {
+    "random_forest": 24,
+    "xgboost": 32
+  },
+  "selected": {
+    "random_forest/r_dst95_post": {
+      "params": {
+        "n_jobs": -1,
+        "random_state": 42,
+        "n_estimators": 100,
+        "max_depth": null,
+        "min_samples_leaf": 2,
+        "max_features": 0.8
+      },
+      "validation_residual_rmse": 0.007485334801480249
+    },
+    "random_forest/r_src95_post": {
+      "params": {
+        "n_jobs": -1,
+        "random_state": 42,
+        "n_estimators": 100,
+        "max_depth": 8,
+        "min_samples_leaf": 2,
+        "max_features": 0.8
+      },
+      "validation_residual_rmse": 0.007216609997837673
+    },
+    "random_forest/u_dst_post": {
+      "params": {
+        "n_jobs": -1,
+        "random_state": 42,
+        "n_estimators": 200,
+        "max_depth": 8,
+        "min_samples_leaf": 2,
+        "max_features": 0.8
+      },
+      "validation_residual_rmse": 0.023575377397219485
+    },
+    "random_forest/u_src_post": {
+      "params": {
+        "n_jobs": -1,
+        "random_state": 42,
+        "n_estimators": 100,
+        "max_depth": 8,
+        "min_samples_leaf": 2,
+        "max_features": "sqrt"
+      },
+      "validation_residual_rmse": 0.10343822407664968
+    },
+    "xgboost/r_dst95_post": {
+      "params": {
+        "objective": "reg:squarederror",
+        "tree_method": "hist",
+        "n_jobs": -1,
+        "random_state": 42,
+        "n_estimators": 200,
+        "max_depth": 2,
+        "learning_rate": 0.1,
+        "subsample": 1.0,
+        "colsample_bytree": 1.0
+      },
+      "validation_residual_rmse": 0.007102876255319918
+    },
+    "xgboost/r_src95_post": {
+      "params": {
+        "objective": "reg:squarederror",
+        "tree_method": "hist",
+        "n_jobs": -1,
+        "random_state": 42,
+        "n_estimators": 200,
+        "max_depth": 2,
+        "learning_rate": 0.1,
+        "subsample": 0.8,
+        "colsample_bytree": 1.0
+      },
+      "validation_residual_rmse": 0.006422044662052018
+    },
+    "xgboost/u_dst_post": {
+      "params": {
+        "objective": "reg:squarederror",
+        "tree_method": "hist",
+        "n_jobs": -1,
+        "random_state": 42,
+        "n_estimators": 200,
+        "max_depth": 4,
+        "learning_rate": 0.03,
+        "subsample": 0.8,
+        "colsample_bytree": 0.8
+      },
+      "validation_residual_rmse": 0.024037288611304736
+    },
+    "xgboost/u_src_post": {
+      "params": {
+        "objective": "reg:squarederror",
+        "tree_method": "hist",
+        "n_jobs": -1,
+        "random_state": 42,
+        "n_estimators": 200,
+        "max_depth": 2,
+        "learning_rate": 0.1,
+        "subsample": 1.0,
+        "colsample_bytree": 1.0
+      },
+      "validation_residual_rmse": 0.08073902245602711
+    }
+  },
+  "floored_at_zero": {
+    "hybrid_rf": {
+      "train": {
+        "u_src_post": 0,
+        "u_dst_post": 0,
+        "r_src95_post": 0,
+        "r_dst95_post": 0
+      },
+      "validation": {
+        "u_src_post": 0,
+        "u_dst_post": 0,
+        "r_src95_post": 0,
+        "r_dst95_post": 0
+      }
+    },
+    "hybrid_xgb": {
+      "train": {
+        "u_src_post": 0,
+        "u_dst_post": 0,
+        "r_src95_post": 0,
+        "r_dst95_post": 0
+      },
+      "validation": {
+        "u_src_post": 0,
+        "u_dst_post": 0,
+        "r_src95_post": 0,
+        "r_dst95_post": 0
+      }
+    }
+  },
+  "files": {
+    "random_forest/r_dst95_post": "residual_rf_r_dst95_post.joblib",
+    "random_forest/r_src95_post": "residual_rf_r_src95_post.joblib",
+    "random_forest/u_dst_post": "residual_rf_u_dst_post.joblib",
+    "random_forest/u_src_post": "residual_rf_u_src_post.joblib",
+    "xgboost/r_dst95_post": "residual_xgb_r_dst95_post.json",
+    "xgboost/r_src95_post": "residual_xgb_r_src95_post.json",
+    "xgboost/u_dst_post": "residual_xgb_u_dst_post.json",
+    "xgboost/u_src_post": "residual_xgb_u_src_post.json"
+  },
+  "save_load_identical": true
+}

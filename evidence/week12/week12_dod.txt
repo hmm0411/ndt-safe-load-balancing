@@ -1,0 +1,24 @@
+# Week 12 Definition of Done, generated 2026-11-02T12:25:40.511499+00:00
+# PASS = evidence found and criterion met; MISSING = not proven yet; FAIL = not met
+
+Raw frozen                                                   PASS     tag migration-outcome-raw-v2 on main=True; processed_dataset_manifest.source_dataset=True
+Processed dataset, một attempt = một dòng                    PASS     rows=300, one_row_per_attempt=True
+No post leakage                                              PASS     test_outcome_no_leakage.py; feature_schema.json (24 model features, none forbidden)
+Run-level split                                              PASS     split_manifest.json (unassigned/duplicated empty=True); train=180 validation=60 test=60, overlap=0
+Target schema, feature schema có version                     PASS     feature_schema.json, target_schema.json
+Analytical baseline                                          PASS     analytical_metrics.csv, test_analytical_outcome.py
+Direct, Residual, Hybrid                                     PASS     direct_ml_metrics.csv, hybrid_metrics.csv, models in the artifact
+Chọn trên validation, test một lần                           PASS     model_selection.json frozen_sha256 set; test_lock.json status=completed
+Metric theo workload, 4 target                               PASS     per_workload_metrics.csv, model_comparison.csv (existence; contents are reviewed by hand)
+m_U, m_R một phía, test coverage                             PASS     uncertainty_margin.json (split=validation), coverage_metrics.json
+Inference benchmark                                          PASS     inference_latency.json (1 and 10 candidates, >= 1000 repeats, mean and P95)
+Artifact, model card đủ §46                                  PASS     data/models/outcome/post-migration-v1 artifact_problem=None; model_card.json=True
+Runtime what-if predictor                                    PASS     test_outcome_predictor.py, runtime_smoke.json summary={'attempts': 6, 'ready': 6, 'not_ready_or_failed': 0, 'dst_u_inside_margin': 4, 'dst_u_outside_margin': 2}
+Không tự migrate                                             PASS     test_outcome_service.py (no transaction); PostMigrationOutcomePrediction has no field 'safe'
+make ci                                                      PASS     ci.txt (run with --ci)
+Tag capacity-v4; capacity_version khớp file đang chạy        PASS     tag capacity-v4 exists=True; artifact controller_capacity.json@sha256:952c64644b99 vs running controller_capacity.json@sha256:952c64644b99
+Cờ bão hòa sinh từ script trong repo                         PASS     scripts/analysis/migration_saturation.py, attempt_saturation.csv
+forecast_scale_check.md có kết quả và kết luận               PASS     forecast_scale_check.md (sections Result and Reading)
+Tag post-migration-outcome-v1 trên main, sau PR dev -> main  MISSING  PENDING (set after the DoD and the dev -> main merge)
+
+18/19 PASS

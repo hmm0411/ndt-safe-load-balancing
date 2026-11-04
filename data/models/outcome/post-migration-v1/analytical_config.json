@@ -1,0 +1,13 @@
+{
+  "model": "analytical-load-conservation",
+  "u_src_post": "max(0, lambda_src - lambda_s) / C_src",
+  "u_dst_post": "(lambda_dst + lambda_s) / C_dst (not clamped)",
+  "response": "persistence: mean response_p95_ms of the pre window",
+  "inputs": "processed Packet-In rates averaged over the 5-snapshot pre window; lambda_s = moved switch's rate reported by the source",
+  "capacity_version": "controller_capacity.json@sha256:952c64644b99",
+  "c_safe_pps": {
+    "c1": 932.9349510958949,
+    "c2": 933.1315549145669
+  },
+  "code": "src/twin/outcome/analytical.py"
+}
