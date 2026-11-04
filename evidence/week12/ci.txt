@@ -1,0 +1,265 @@
+# make ci + git diff --check, 2026-11-02T12:24:18.715509+00:00
+git_commit: 10cfa33985bf19d1c0411d600fe16c2f8f51fadf
+
+$ make ci
+python3 -m compileall -q src tests
+python3 -m ruff check src scripts tests
+All checks passed!
+python3 -m mypy --ignore-missing-imports src tests/unit
+Success: no issues found in 238 source files
+python3 -m unittest discover -s tests/unit -v
+  1 candidate(s): mean=2.4148 ms  p50=2.4364 ms  p95=2.5076 ms  p99=2.5138 ms  (2.4148 ms per candidate)
+ 10 candidate(s): mean=24.4359 ms  p50=24.4149 ms  p95=24.7493 ms  p99=24.7970 ms  (2.4436 ms per candidate)
+Wrote /tmp/tmpw7mafgna/out/latency.json
+[forecast] error=twin_state needs created_at and snapshot_id
+[forecast] load error=missing model_card.json; missing feature_schema.json; missing error_margin.json
+
+_dataset_builder.DatasetBuilderTest) ... ok
+test_rows (test_outcome_dataset_builder.DatasetBuilderTest) ... ok
+test_write_and_read_back (test_outcome_dataset_builder.DatasetBuilderTest) ... ok
+test_config_is_checked (test_outcome_evaluation.EvaluationConfigTest) ... ok
+test_repo_config (test_outcome_evaluation.EvaluationConfigTest) ... ok
+test_bootstrap_is_paired_and_reproducible (test_outcome_evaluation.EvaluationTest) ... ok
+test_bootstrap_same_model_has_zero_improvement (test_outcome_evaluation.EvaluationTest) ... ok
+test_choose_lowest_and_ties_keep_order (test_outcome_evaluation.EvaluationTest) ... ok
+test_group_metrics (test_outcome_evaluation.EvaluationTest) ... ok
+test_improvement (test_outcome_evaluation.EvaluationTest) ... ok
+test_overload_cases (test_outcome_evaluation.EvaluationTest) ... ok
+test_persistence_base (test_outcome_evaluation.EvaluationTest) ... ok
+test_saturation_subsets (test_outcome_evaluation.EvaluationTest) ... ok
+test_fail_closed (test_outcome_features.FeaturesTest) ... ok
+test_model_features_from_train (test_outcome_features.FeaturesTest) ... ok
+test_order_and_count (test_outcome_features.FeaturesTest) ... ok
+test_slope (test_outcome_features.FeaturesTest) ... ok
+test_optional_memory (test_outcome_features.StateViewMemoryTest) ... ok
+test_backwards_timestamp_clears_the_history (test_outcome_history.OutcomeHistoryTest) ... ok
+test_clear (test_outcome_history.OutcomeHistoryTest) ... ok
+test_duplicate_is_rejected (test_outcome_history.OutcomeHistoryTest) ... ok
+test_gap_clears_the_history (test_outcome_history.OutcomeHistoryTest) ... ok
+test_invalid_snapshot_is_not_stored (test_outcome_history.OutcomeHistoryTest) ... ok
+test_keeps_only_the_latest_five_in_order (test_outcome_history.OutcomeHistoryTest) ... ok
+test_missing_ids_raise (test_outcome_history.OutcomeHistoryTest) ... ok
+test_not_ready_state_payload_is_ignored (test_outcome_history.OutcomeHistoryTest) ... ok
+test_ready_after_five_consecutive_snapshots (test_outcome_history.OutcomeHistoryTest) ... ok
+test_window_before_ready_raises (test_outcome_history.OutcomeHistoryTest) ... ok
+test_window_is_five (test_outcome_history.OutcomeHistoryTest) ... ok
+test_analytical_imbalance_follows_its_utilizations (test_outcome_imbalance.ImbalanceTest) ... ok
+test_balanced_is_zero (test_outcome_imbalance.ImbalanceTest) ... ok
+test_two_controllers (test_outcome_imbalance.ImbalanceTest) ... ok
+test_config_is_checked (test_outcome_margins.ArtifactConfigTest) ... ok
+test_repo_config_matches_the_predictor (test_outcome_margins.ArtifactConfigTest) ... ok
+test_coverage_and_groups (test_outcome_margins.MarginTest) ... ok
+test_gate_confusion (test_outcome_margins.MarginTest) ... ok
+test_margin_uses_the_split_conformal_rank (test_outcome_margins.MarginTest) ... ok
+test_under_errors_are_one_sided (test_outcome_margins.MarginTest) ... ok
+test_bad_inputs (test_outcome_metrics.MetricsTest) ... ok
+test_constant_truth_has_no_r2 (test_outcome_metrics.MetricsTest) ... ok
+test_quantile_linear (test_outcome_metrics.MetricsTest) ... ok
+test_regression_metrics (test_outcome_metrics.MetricsTest) ... ok
+test_selection_score (test_outcome_metrics.MetricsTest) ... ok
+test_candidates_are_allowed (test_outcome_no_leakage.NoLeakageTest) ... ok
+test_features_do_not_depend_on_the_post_window (test_outcome_no_leakage.NoLeakageTest) ... ok
+test_written_schema_has_no_forbidden_model_feature (test_outcome_no_leakage.NoLeakageTest) ... ok
+test_artifact_entry_missing (test_outcome_predictor.NotReadyReasonTest) ... ok
+test_artifact_schema_name_differs (test_outcome_predictor.NotReadyReasonTest) ... ok
+test_broken_residual_model_is_schema_mismatch (test_outcome_predictor.NotReadyReasonTest) ... ok
+test_capacity_version_differs_from_running_file (test_outcome_predictor.NotReadyReasonTest) ... ok
+test_gap_in_history_is_insufficient (test_outcome_predictor.NotReadyReasonTest) ... ok
+test_history_shorter_than_five (test_outcome_predictor.NotReadyReasonTest) ... ok
+test_invalid_snapshot (test_outcome_predictor.NotReadyReasonTest) ... ok
+test_malformed_snapshot_is_invalid (test_outcome_predictor.NotReadyReasonTest) ... ok
+test_missing_safe_capacity (test_outcome_predictor.NotReadyReasonTest) ... ok
+test_missing_switch_telemetry (test_outcome_predictor.NotReadyReasonTest) ... ok
+test_model_feature_not_built_by_build_features (test_outcome_predictor.NotReadyReasonTest) ... ok
+test_negative_margin_is_schema_mismatch (test_outcome_predictor.NotReadyReasonTest) ... ok
+test_no_artifact (test_outcome_predictor.NotReadyReasonTest) ... ok
+test_no_op_is_not_a_what_if (test_outcome_predictor.NotReadyReasonTest) ... ok
+test_numbers_are_none_not_zero (test_outcome_predictor.NotReadyReasonTest) ... ok
+test_predict_does_not_modify_inputs (test_outcome_predictor.NotReadyReasonTest) ... ok
+test_prediction_carries_ids_and_quality (test_outcome_predictor.NotReadyReasonTest) ... ok
+test_switch_not_owned_by_source (test_outcome_predictor.NotReadyReasonTest) ... ok
+test_unknown_running_capacity_version_is_closed (test_outcome_predictor.NotReadyReasonTest) ... ok
+test_fail_closed_after_artifact_is_fine_but_state_breaks (test_outcome_predictor.NumericPathTest) ... ok
+test_features_come_from_the_five_snapshot_window (test_outcome_predictor.NumericPathTest) ... ok
+test_load_moves_from_source_to_destination (test_outcome_predictor.NumericPathTest) ... ok
+test_other_family_name_is_rejected (test_outcome_predictor.NumericPathTest) ... ok
+test_predict_is_repeatable_and_has_no_side_effect (test_outcome_predictor.NumericPathTest) ... ok
+test_residual_is_added_and_floored_at_zero (test_outcome_predictor.NumericPathTest) ... ok
+test_zero_residual_equals_analytical (test_outcome_predictor.NumericPathTest) ... ok
+test_fields_follow_plan_section_50_and_have_no_safe (test_outcome_predictor.OutcomePredictionContractTest) ... ok
+test_prediction_is_frozen (test_outcome_predictor.OutcomePredictionContractTest) ... ok
+test_changed_validation_scores_are_refused (test_outcome_selection.SelectAndTestCliTest) ... ok
+test_select_and_test_once (test_outcome_selection.SelectAndTestCliTest) ... ok
+test_selection_does_not_depend_on_test_rows (test_outcome_selection.SelectAndTestCliTest) ... ok
+test_canonical_hash_ignores_key_order (test_outcome_selection.TestLockTest) ... ok
+test_complete_needs_an_opened_lock (test_outcome_selection.TestLockTest) ... ok
+test_crashed_run_may_retry_only_the_same_selection (test_outcome_selection.TestLockTest) ... ok
+test_open_once (test_outcome_selection.TestLockTest) ... ok
+test_exclusion_is_checked (test_outcome_selection_config.SelectionConfigTest) ... ok
+test_repo_decision (test_outcome_selection_config.SelectionConfigTest) ... ok
+test_format_matches_dataset_and_manifest (test_outcome_service.CapacityVersionTest) ... ok
+test_feed_is_wired_into_build_snapshot (test_outcome_service.OutcomeRouteTest) ... ok
+test_malformed_action_is_http_400 (test_outcome_service.OutcomeRouteTest) ... ok
+test_route_has_no_side_effects (test_outcome_service.OutcomeRouteTest) ... ok
+test_route_is_registered_as_post (test_outcome_service.OutcomeRouteTest) ... ok
+test_bad_snapshot_in_history_feed_is_contained (test_outcome_service.OutcomeServiceTest) ... ok
+test_from_config_without_files_stays_closed (test_outcome_service.OutcomeServiceTest) ... ok
+test_history_comes_from_the_telemetry_loop_not_from_the_request (test_outcome_service.OutcomeServiceTest) ... ok
+test_malformed_action_raises (test_outcome_service.OutcomeServiceTest) ... ok
+test_missing_artifact_is_not_ready (test_outcome_service.OutcomeServiceTest) ... ok
+test_no_twin_state_is_not_ready_without_numbers (test_outcome_service.OutcomeServiceTest) ... ok
+test_older_state_in_a_request_does_not_clear_the_history (test_outcome_service.OutcomeServiceTest) ... ok
+test_ready_prediction_has_all_plan_fields (test_outcome_service.OutcomeServiceTest) ... ok
+test_switch_owned_by_other_controller (test_outcome_service.OutcomeServiceTest) ... ok
+test_attempt_in_two_splits_is_an_error (test_outcome_split.SplitTest) ... ok
+test_attempt_without_split_is_an_error (test_outcome_split.SplitTest) ... ok
+test_split_is_taken_unchanged (test_outcome_split.SplitTest) ... ok
+test_derived_targets (test_outcome_targets.TargetsTest) ... ok
+test_invalid_values (test_outcome_targets.TargetsTest) ... ok
+test_post_window_mean (test_outcome_targets.TargetsTest) ... ok
+test_schema (test_outcome_targets.TargetsTest) ... ok
+test_utilization_above_one_is_kept (test_outcome_targets.TargetsTest) ... ok
+test_assess_many_missing_margin_raises (test_overload_detector.OverloadDetectorTest) ... ok
+test_assess_many_with_per_controller_margin (test_overload_detector.OverloadDetectorTest) ... ok
+test_assess_many_with_shared_margin (test_overload_detector.OverloadDetectorTest) ... ok
+test_boundary_equal_to_one_is_risk (test_overload_detector.OverloadDetectorTest) ... ok
+test_detector_carries_controller_id_and_threshold (test_overload_detector.OverloadDetectorTest) ... ok
+test_invalid_inputs (test_overload_detector.OverloadDetectorTest) ... ok
+test_just_below_boundary_is_not_risk (test_overload_detector.OverloadDetectorTest) ... ok
+test_prediction_above_one_is_not_clamped (test_overload_detector.OverloadDetectorTest) ... ok
+test_safe_prediction (test_overload_detector.OverloadDetectorTest) ... ok
+test_upper_bound_crosses_one (test_overload_detector.OverloadDetectorTest) ... ok
+test_commit (test_ownership.OwnershipTests) ... ok
+test_none_and_empty_give_empty (test_profile_spec.ParseProfileSpecsTests) ... ok
+test_parses_pairs (test_profile_spec.ParseProfileSpecsTests) ... ok
+test_rejects_malformed_and_duplicate (test_profile_spec.ParseProfileSpecsTests) ... ok
+test_no_profiles_keeps_old_behaviour (test_profile_spec.StableUtilizationsTests) ... ok
+test_rejects_unknown_controller_and_profile (test_profile_spec.StableUtilizationsTests) ... ok
+test_source_stable_destination_constant (test_profile_spec.StableUtilizationsTests) ... ok
+test_valid_config (test_qos_probe.QosProbeTests) ... ok
+test_zero_rate_rejected (test_qos_probe.QosProbeTests) ... ok
+test_rate (test_rate_calculator.RateCalculatorTests) ... ok
+test_reset (test_rate_calculator.RateCalculatorTests) ... ok
+test_analytical_features_do_not_depend_on_the_post_window (test_residual_targets.ResidualTargetTest) ... ok
+test_hybrid_has_28_features (test_residual_targets.ResidualTargetTest) ... ok
+test_no_post_action_column (test_residual_targets.ResidualTargetTest) ... ok
+test_only_base_targets_and_finite (test_residual_targets.ResidualTargetTest) ... ok
+test_residual_is_actual_minus_analytical (test_residual_targets.ResidualTargetTest) ... ok
+test_no_op_is_never_predicted (test_runner_predict.CollectWithPredictionTest) ... ok
+test_prediction_is_asked_once_before_the_migration (test_runner_predict.CollectWithPredictionTest) ... ok
+test_skipped_migration_is_not_predicted (test_runner_predict.CollectWithPredictionTest) ... ok
+test_without_predict_nothing_changes (test_runner_predict.CollectWithPredictionTest) ... ok
+test_good_smoke_setup (test_runner_predict.PredictUrlGuardTest) ... ok
+test_main_refuses_before_doing_anything (test_runner_predict.PredictUrlGuardTest) ... ok
+test_needs_explicit_output_root (test_runner_predict.PredictUrlGuardTest) ... ok
+test_never_the_raw_collection (test_runner_predict.PredictUrlGuardTest) ... ok
+test_url_must_be_the_predict_endpoint (test_runner_predict.PredictUrlGuardTest) ... ok
+test_failure_is_recorded_not_raised (test_runner_predict.RequestPredictionTest) ... ok
+test_http_error_status_is_recorded (test_runner_predict.RequestPredictionTest) ... ok
+test_success_is_recorded (test_runner_predict.RequestPredictionTest) ... ok
+test_no_prediction_means_no_file (test_runner_predict.WriteAttemptPredictionTest) ... ok
+test_prediction_file_is_written_checksummed_and_valid (test_runner_predict.WriteAttemptPredictionTest) ... ok
+test_cpu_p95_and_summary (test_runtime_smoke.RuntimeSmokeTest) ... ok
+test_failed_request_and_missing_file (test_runtime_smoke.RuntimeSmokeTest) ... ok
+test_inside_and_outside_margin (test_runtime_smoke.RuntimeSmokeTest) ... ok
+test_main_writes_file_and_refuses_empty_root (test_runtime_smoke.RuntimeSmokeTest) ... ok
+test_not_ready_has_no_numbers (test_runtime_smoke.RuntimeSmokeTest) ... ok
+test_valid_quiet_state (test_snapshot.SnapshotTests) ... ok
+test_build_valid_snapshot (test_snapshot_builder.SnapshotBuilderTests) ... ok
+test_all_pairs_consistent (test_snapshot_consistency_score.ConsistencyScoreTest) ... ok
+test_disconnected_pair_is_not_consistent (test_snapshot_consistency_score.ConsistencyScoreTest) ... ok
+test_missing_role_state (test_snapshot_consistency_score.ConsistencyScoreTest) ... ok
+test_one_wrong_role_gives_39_of_40_and_invalid (test_snapshot_consistency_score.ConsistencyScoreTest) ... ok
+test_switch_without_ownership_loses_both_pairs (test_snapshot_consistency_score.ConsistencyScoreTest) ... ok
+test_missing_controller_is_invalid (test_snapshot_validator.SnapshotValidatorTests) ... ok
+test_role_ownership_conflict_is_invalid (test_snapshot_validator.SnapshotValidatorTests) ... ok
+test_stale_controller_is_invalid (test_snapshot_validator.SnapshotValidatorTests) ... ok
+test_valid_quiet_state (test_snapshot_validator.SnapshotValidatorTests) ... ok
+test_controller_serialization_contains_processed_rate (test_telemetry_schema.TelemetrySchemaTests) ... ok
+test_switch_serialization_contains_processed_rate (test_telemetry_schema.TelemetrySchemaTests) ... ok
+test_complete_snapshot_has_completeness_one (test_twin_quality.TwinQualityAssessorTests) ... ok
+test_controller_timestamps_one_hundred_ms_apart_have_matching_jitter (test_twin_quality.TwinQualityAssessorTests) ... ok
+test_controllers_observed_at_same_time_have_zero_jitter (test_twin_quality.TwinQualityAssessorTests) ... ok
+test_missing_controller_has_incomplete_invalid_quality (test_twin_quality.TwinQualityAssessorTests) ... ok
+test_missing_switch_telemetry_has_incomplete_quality (test_twin_quality.TwinQualityAssessorTests) ... ok
+test_ownership_conflict_is_reported_as_inconsistent (test_twin_quality.TwinQualityAssessorTests) ... ok
+test_stale_controller_is_invalid (test_twin_quality.TwinQualityAssessorTests) ... ok
+test_twinning_rate_below_point_nine_five_is_invalid (test_twin_quality.TwinQualityAssessorTests) ... ok
+test_twinning_rate_one_is_valid_when_other_conditions_pass (test_twin_quality.TwinQualityAssessorTests) ... ok
+test_high_score_never_makes_an_invalid_snapshot_valid (test_twin_quality_score.AssessorTest) ... ok
+test_score_and_components_are_reported (test_twin_quality_score.AssessorTest) ... ok
+test_without_config_the_score_is_absent (test_twin_quality_score.AssessorTest) ... ok
+test_shape (test_twin_quality_score.PiecewiseTest) ... ok
+test_config_must_have_all_weights_summing_to_one (test_twin_quality_score.ScoreTest) ... ok
+test_one_wrong_role_costs_weight_times_share (test_twin_quality_score.ScoreTest) ... ok
+test_perfect_state_scores_one (test_twin_quality_score.ScoreTest) ... ok
+test_score_stays_in_unit_interval (test_twin_quality_score.ScoreTest) ... ok
+test_collection_latency_is_preserved_in_milliseconds (test_twin_state_builder.TwinStateBuilderTests) ... ok
+test_load_500_has_half_utilization (test_twin_state_builder.TwinStateBuilderTests) ... ok
+test_load_above_safe_capacity_has_utilization_above_one (test_twin_state_builder.TwinStateBuilderTests) ... ok
+test_load_at_safe_capacity_has_one_utilization (test_twin_state_builder.TwinStateBuilderTests) ... ok
+test_load_zero_has_zero_utilization (test_twin_state_builder.TwinStateBuilderTests) ... ok
+test_unknown_controller_fails (test_twin_state_builder.TwinStateBuilderTests) ... ok
+test_empty_tracker_has_zero_rate (test_twinning_rate.TwinningRateTrackerTests) ... ok
+test_new_measurement_after_reset_starts_fresh_window (test_twinning_rate.TwinningRateTrackerTests) ... ok
+test_nine_successes_and_one_failure_have_rate_point_nine (test_twinning_rate.TwinningRateTrackerTests) ... ok
+test_reset_clears_existing_measurements (test_twinning_rate.TwinningRateTrackerTests) ... ok
+test_ten_successes_have_rate_one (test_twinning_rate.TwinningRateTrackerTests) ... ok
+test_clean_dataset (test_validate_migration_outcome_cli.CliTest) ... ok
+test_invalid_dataset (test_validate_migration_outcome_cli.CliTest) ... ok
+test_hard_gate_does_not_depend_on_weights (test_week10_evidence.QualityReplayTest) ... ok
+test_histogram_counts_every_value (test_week10_evidence.QualityReplayTest) ... ok
+test_startup_snapshots_do_not_count_against_the_twinning_window (test_week10_evidence.QualityReplayTest) ... ok
+test_check_files_flags_crlf (test_week11_evidence.DodTest) ... ok
+test_empty_directory_has_no_pass_for_data_items (test_week11_evidence.DodTest) ... ok
+test_manual_items_missing_until_confirmed (test_week11_evidence.DodTest) ... ok
+test_split_by_repeat_rejects_overlap (test_week11_evidence.DodTest) ... ok
+test_tag_item_follows_tag_state (test_week11_evidence.DodTest) ... ok
+test_ci_needs_two_exit_zero (test_week12_evidence.Week12EvidenceTest) ... ok
+test_disjoint_runs_and_processed_rows (test_week12_evidence.Week12EvidenceTest) ... ok
+test_empty_evidence_is_missing_not_fail (test_week12_evidence.Week12EvidenceTest) ... ok
+test_inference_benchmark (test_week12_evidence.Week12EvidenceTest) ... ok
+test_margins_one_sided_from_validation (test_week12_evidence.Week12EvidenceTest) ... ok
+test_prediction_has_no_safe_field (test_week12_evidence.Week12EvidenceTest) ... ok
+test_runtime_smoke_needs_six_ready (test_week12_evidence.Week12EvidenceTest) ... ok
+test_selection_and_split (test_week12_evidence.Week12EvidenceTest) ... ok
+test_write_dod_and_file_check (test_week12_evidence.Week12EvidenceTest) ... ok
+test_deadline_sequence (test_workload_generator.TestDeadlinePacer) ... ok
+test_period_ms_matches_rate (test_workload_generator.TestDeadlinePacer) ... ok
+test_wait_until_sleeps_remaining_time (test_workload_generator.TestDeadlinePacer) ... ok
+test_invalid_sample_interval_rejected (test_workload_generator.TestGeneratorValidation) ... ok
+test_negative_rate_is_rejected (test_workload_generator.TestGeneratorValidation) ... ok
+test_rate_zero_is_rejected (test_workload_generator.TestGeneratorValidation) ... ok
+test_valid_smoke_config (test_workload_generator.TestGeneratorValidation) ... ok
+test_invalid_port_range_rejected (test_workload_generator.TestPortAllocator) ... ok
+test_port_allocator_increments_sequentially (test_workload_generator.TestPortAllocator) ... ok
+test_port_allocator_wraps_to_start (test_workload_generator.TestPortAllocator) ... ok
+test_safe_port_pool (test_workload_generator.TestPortReuseSafety) ... ok
+test_unsafe_port_pool_rejected (test_workload_generator.TestPortReuseSafety) ... ok
+test_workload_sample_serializes (test_workload_generator.TestWorkloadSample) ... ok
+test_burst_phases (test_workload_phases.ExistingPhaseMappingTests) ... ok
+test_gradual_phases (test_workload_phases.ExistingPhaseMappingTests) ... ok
+test_default_keeps_single_phase (test_workload_phases.OscillatingPhaseTests) ... ok
+test_phases_follow_the_wave (test_workload_phases.OscillatingPhaseTests) ... ok
+test_default_keeps_single_phase (test_workload_phases.StablePhaseTests) ... ok
+test_rejects_non_positive_duration (test_workload_phases.StablePhaseTests) ... ok
+test_three_phases_by_time (test_workload_phases.StablePhaseTests) ... ok
+test_hot_switch_fields_accept_valid_values (test_workload_profiles.WorkloadPointTests) ... ok
+test_hot_switch_fields_are_optional_together (test_workload_profiles.WorkloadPointTests) ... ok
+test_hot_switch_fields_must_be_provided_together (test_workload_profiles.WorkloadPointTests) ... ok
+test_hot_switch_id_must_not_be_empty (test_workload_profiles.WorkloadPointTests) ... ok
+test_hot_switch_share_must_be_between_zero_and_one (test_workload_profiles.WorkloadPointTests) ... ok
+test_hot_switch_share_must_be_finite (test_workload_profiles.WorkloadPointTests) ... ok
+test_serialization (test_workload_schema.WorkloadSchemaTests) ... ok
+
+----------------------------------------------------------------------
+Ran 802 tests in 75.717s
+
+OK
+
+exit_code: 0
+
+$ git diff --check
+
+
+exit_code: 0

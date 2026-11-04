@@ -1,0 +1,12 @@
+# 30 flows/s on the current VM (capacity-v4 VM), freeze code 47c1984, 5 repeats x c1/c2, measured 2026-10-30
+c1 @ 30 flows/s
+  processed_packet_in_rate_mean  old 333.2 (sd 0.277, n=5)            new 333.2 (sd 0.173, n=5)   change -0.0%
+  cpu_p95                        old 33.2 (sd 0.4, n=5)               new 35.8 (sd 0.4, n=5)   change +7.8%
+  flow_setup_latency_p95_ms      old 22.11 (sd 0.658, n=5)            new 24.3 (sd 1.11, n=5)   change +9.9%
+  qos_success_ratio              old 1 (sd 0, n=5)                    new 1 (sd 0, n=5)   change +0.0%
+--
+c2 @ 30 flows/s
+  processed_packet_in_rate_mean  old 333 (sd 0.146, n=5)              new 333.2 (sd 0.269, n=5)   change +0.0%
+  cpu_p95                        old 37.2 (sd 1.33, n=5)              new 35.36 (sd 0.484, n=5)   change -4.9%
+  flow_setup_latency_p95_ms      old 24.77 (sd 1.44, n=5)             new 22.99 (sd 0.831, n=5)   change -7.2%
+  qos_success_ratio              old 1 (sd 0, n=5)                    new 1 (sd 0, n=5)   change +0.0%

@@ -1,0 +1,50 @@
+{
+  "schema_version": "1.0",
+  "model_version": "post-migration-v1",
+  "capacity_version": "controller_capacity.json@sha256:952c64644b99",
+  "method": "predict_per_candidate_sequential_perf_counter_ns",
+  "model_preloaded": true,
+  "input": "synthetic TwinState, 2 controllers x 10 switches, 5-snapshot history",
+  "warmup": 50,
+  "repeats": 1000,
+  "candidates": {
+    "1": {
+      "repeats": 1000.0,
+      "warmup": 50.0,
+      "mean_ms": 2.521596,
+      "p50_ms": 2.35109,
+      "p95_ms": 2.693458,
+      "p99_ms": 5.303762,
+      "max_ms": 53.263849,
+      "ms_per_candidate_mean": 2.521596
+    },
+    "10": {
+      "repeats": 1000.0,
+      "warmup": 50.0,
+      "mean_ms": 24.753019,
+      "p50_ms": 23.643776,
+      "p95_ms": 26.512732,
+      "p99_ms": 49.563667,
+      "max_ms": 61.691762,
+      "ms_per_candidate_mean": 2.475302
+    }
+  },
+  "environment": {
+    "hostname": "kltn-sdn",
+    "python": "3.10.12",
+    "cpu_count": 8,
+    "load_average_before": [
+      0.0,
+      0.01,
+      0.08
+    ],
+    "load_average_after": [
+      3.3,
+      0.81,
+      0.34
+    ],
+    "git_commit": "1aa7dfd2662a6370b4969d2ed4569dcfd0cb46a5",
+    "git_tracked_changes": false,
+    "measured_at": "2026-10-31T16:55:30.835193+00:00"
+  }
+}
