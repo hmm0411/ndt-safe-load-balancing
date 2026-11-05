@@ -73,6 +73,28 @@ class BenchmarkOutcomeInferenceTest(unittest.TestCase):
         self.assertEqual(body["model_version"], "post-migration-v1")
         self.assertIn("p95_ms", body["candidates"]["10"])
 
+    def test_batch_measures_the_same_candidates(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            predictor, state = bench.build_predictor(self._artifact(tmp), CAPACITY)
+            stats = bench.measure_batch(predictor, state, 10, warmup=1, repeats=5)
+            with self.assertRaises(ValueError):
+                bench.measure_batch(predictor, state, 11, warmup=0, repeats=1)
+        self.assertEqual(stats["repeats"], 5.0)
+        self.assertAlmostEqual(stats["ms_per_candidate_mean"], stats["mean_ms"] / 10)
+
+    def test_main_with_batch_writes_speedup(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact = Path(tmp) / "artifact"
+            artifact.mkdir()
+            _write_artifact(artifact, capacity_version=capacity_version(CAPACITY))
+            out = Path(tmp) / "batch.json"
+            with mock.patch.object(bench, "MIN_REPEATS", 5):
+                bench.main(["--artifact-dir", str(artifact), "--output", str(out), "--batch",
+                            "--warmup", "1", "--repeats", "5", "--candidates", "1", "10"])
+            body = json.loads(out.read_text(encoding="utf-8"))
+        self.assertEqual(sorted(body["batch_candidates"]), ["1", "10"])
+        self.assertGreater(body["batch_candidates"]["10"]["speedup_mean"], 0.0)
+
     def test_minimum_is_1000(self) -> None:
         self.assertEqual(bench.MIN_REPEATS, 1000)
 

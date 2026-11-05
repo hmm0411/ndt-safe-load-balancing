@@ -9,6 +9,12 @@ evaluation of N candidates, one predict() call per candidate (N = 1 and 10):
 
     python3 scripts/experiments/benchmark_outcome_inference.py
 
+With --batch the same N candidates are also timed as ONE predict_batch() call (Week 13,
+Day 2), and the speed-up over the sequential calls is reported:
+
+    python3 scripts/experiments/benchmark_outcome_inference.py --batch \
+        --output evidence/week13/outcome_batch_latency.json
+
 Run it in a quiet testbed window (nobody training or running a workload). It refuses
 to write numbers unless every prediction is READY: a NOT_READY path is much faster and
 would make the latency look better than it is. The input is a synthetic TwinState of
@@ -48,6 +54,8 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--warmup", type=int, default=50)
     parser.add_argument("--repeats", type=int, default=1000)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
+    parser.add_argument("--batch", action="store_true",
+                        help="also time one predict_batch() call per N candidates")
     return parser.parse_args(argv)
 
 
@@ -126,6 +134,28 @@ def measure(
     return stats
 
 
+def measure_batch(
+    predictor: p.PostMigrationOutcomePredictor,
+    state: dict[str, Any],
+    candidates: int,
+    warmup: int,
+    repeats: int,
+) -> dict[str, float]:
+    """Same N candidates as measure(), evaluated by ONE predict_batch() call."""
+    if not 1 <= candidates <= MAX_CANDIDATES:
+        raise ValueError(f"candidates must be between 1 and {MAX_CANDIDATES}")
+    actions = _actions(candidates)
+
+    def evaluate_all() -> None:
+        for result in predictor.predict_batch(state, actions, observe=False):
+            if result.status != p.READY:
+                raise SystemExit(f"prediction became {result.status} / {result.reason}")
+
+    stats = measure_latency_ms(evaluate_all, warmup=warmup, repeats=repeats)
+    stats["ms_per_candidate_mean"] = stats["mean_ms"] / candidates
+    return stats
+
+
 def main(argv: Sequence[str] | None = None) -> None:
     args = parse_args(argv)
     if args.repeats < MIN_REPEATS:
@@ -140,6 +170,10 @@ def main(argv: Sequence[str] | None = None) -> None:
         str(n): measure(predictor, state, n, args.warmup, args.repeats)
         for n in args.candidates
     }
+    batch = {
+        str(n): measure_batch(predictor, state, n, args.warmup, args.repeats)
+        for n in args.candidates
+    } if args.batch else {}
     dirty = bool(_git("status", "--porcelain", "--untracked-files=no"))
     payload = {
         "schema_version": "1.0",
@@ -154,6 +188,12 @@ def main(argv: Sequence[str] | None = None) -> None:
             n: {key: round(value, 6) for key, value in stats.items()}
             for n, stats in results.items()
         },
+        **({"batch_method": "predict_batch_one_call_perf_counter_ns",
+            "batch_candidates": {
+                n: {**{key: round(value, 6) for key, value in stats.items()},
+                    "speedup_mean": round(results[n]["mean_ms"] / stats["mean_ms"], 3)}
+                for n, stats in batch.items()
+            }} if batch else {}),
         "environment": {
             "hostname": platform.node(),
             "python": platform.python_version(),
@@ -173,6 +213,12 @@ def main(argv: Sequence[str] | None = None) -> None:
             f"{n:>3} candidate(s): mean={stats['mean_ms']:.4f} ms  p50={stats['p50_ms']:.4f} ms  "
             f"p95={stats['p95_ms']:.4f} ms  p99={stats['p99_ms']:.4f} ms  "
             f"({stats['ms_per_candidate_mean']:.4f} ms per candidate)"
+        )
+    for n, stats in batch.items():
+        print(
+            f"{n:>3} candidate(s), batch: mean={stats['mean_ms']:.4f} ms  "
+            f"p95={stats['p95_ms']:.4f} ms  "
+            f"speed-up {results[n]['mean_ms'] / stats['mean_ms']:.2f}x"
         )
     print("Wrote", output)
 

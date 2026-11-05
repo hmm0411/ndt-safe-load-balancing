@@ -26,7 +26,7 @@ import math
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any, Mapping, Sequence
 
 from src.experiments.migration.schema import MigrationAction
 from src.twin.outcome import analytical, hybrid, residual, trainer
@@ -277,6 +277,79 @@ class PostMigrationOutcomePredictor:
             return None, ARTIFACT_SCHEMA_MISMATCH
         return self._runtime, None
 
+    def predict_batch(
+        self,
+        twin_state: Mapping[str, Any],
+        actions: Sequence[MigrationAction],
+        *,
+        observe: bool = True,
+    ) -> list[PostMigrationOutcomePrediction]:
+        """predict() for every action on one snapshot, with one model call per target.
+
+        Same values and the same NOT_READY reasons as predict(state, a, observe=False) for
+        each action after one observe. The inference_time_ms of a READY prediction is the
+        batch wall time divided by the number of READY rows (Week 13, Day 2).
+        """
+        if observe:
+            try:
+                self.history.observe(twin_state)
+            except ValueError:
+                return [self._not_ready(twin_state, a, INVALID_SNAPSHOT) for a in actions]
+        results: list[PostMigrationOutcomePrediction | None] = [None] * len(actions)
+        pending: list[int] = []
+        for i, action in enumerate(actions):
+            reason = self._first_problem(twin_state, action)
+            if reason is not None:
+                results[i] = self._not_ready(twin_state, action, reason)
+            else:
+                pending.append(i)
+        runtime, reason = self._runtime_or_reason() if pending else (None, None)
+        if pending and runtime is None:
+            for i in pending:
+                results[i] = self._not_ready(twin_state, actions[i], reason or ARTIFACT_MISSING)
+            pending = []
+        start = time.perf_counter_ns()
+        rows: list[dict[str, float]] = []
+        ready: list[int] = []
+        for i in pending:
+            action = actions[i]
+            assert action.switch_id is not None  # _first_problem rejected the other case
+            try:
+                rows.append(self._row(self.history.window(), action, action.switch_id))
+                ready.append(i)
+            except (ValueError, KeyError) as exc:
+                self.last_error = str(exc)
+                results[i] = self._not_ready(twin_state, action, MISSING_FEATURE)
+        if ready and runtime is not None:
+            try:
+                out = hybrid.predict(runtime.models, rows, list(runtime.hybrid_features))
+            except (ValueError, KeyError) as exc:
+                self.last_error = str(exc)
+                out = None
+            elapsed_ms = (time.perf_counter_ns() - start) / 1e6 / len(ready)
+            for k, i in enumerate(ready):
+                action = actions[i]
+                assert action.switch_id is not None
+                if out is None:
+                    results[i] = self._not_ready(twin_state, action, MISSING_FEATURE)
+                    continue
+                values = {name: float(series[k]) for name, series in out.items()}
+                results[i] = self._from_values(
+                    twin_state, action, action.switch_id, runtime, values, elapsed_ms
+                )
+        return [r for r in results if r is not None]
+
+    @staticmethod
+    def _row(window: Any, action: MigrationAction, switch_id: str) -> dict[str, float]:
+        """Model features plus the four Analytical predictions of one action."""
+        source, target = action.source_controller, action.target_controller
+        spec = ActionSpec(switch_id, source, target)
+        row: dict[str, float] = dict(build_features(window, spec))
+        base = analytical.predict(analytical.inputs_from_window(window, spec, source, target))
+        for name in BASE_TARGETS:
+            row[f"{residual.ANALYTICAL_PREFIX}{name}"] = float(getattr(base, name))
+        return row
+
     def _predict(
         self,
         twin_state: Mapping[str, Any],
@@ -284,31 +357,35 @@ class PostMigrationOutcomePredictor:
         switch_id: str,
         runtime: _Runtime,
     ) -> PostMigrationOutcomePrediction:
-        source, target = action.source_controller, action.target_controller
         start = time.perf_counter_ns()
         try:
-            window = self.history.window()
-            spec = ActionSpec(switch_id, source, target)
-            features = build_features(window, spec)
-            base = analytical.predict(analytical.inputs_from_window(window, spec, source, target))
-            row: dict[str, float] = dict(features)
-            for name in BASE_TARGETS:
-                row[f"{residual.ANALYTICAL_PREFIX}{name}"] = float(getattr(base, name))
+            row = self._row(self.history.window(), action, switch_id)
             out = hybrid.predict(runtime.models, [row], list(runtime.hybrid_features))
             values = {name: float(series[0]) for name, series in out.items()}
         except (ValueError, KeyError) as exc:
             self.last_error = str(exc)
             return self._not_ready(twin_state, action, MISSING_FEATURE)
+        elapsed_ms = (time.perf_counter_ns() - start) / 1e6
+        return self._from_values(twin_state, action, switch_id, runtime, values, elapsed_ms)
+
+    def _from_values(
+        self,
+        twin_state: Mapping[str, Any],
+        action: MigrationAction,
+        switch_id: str,
+        runtime: _Runtime,
+        values: Mapping[str, float],
+        elapsed_ms: float,
+    ) -> PostMigrationOutcomePrediction:
         if not all(math.isfinite(v) for v in values.values()):
             self.last_error = "non-finite prediction"
             return self._not_ready(twin_state, action, MISSING_FEATURE)
-        elapsed_ms = (time.perf_counter_ns() - start) / 1e6
         quality = twin_state.get("quality") or {}
         return PostMigrationOutcomePrediction(
             snapshot_id=str(twin_state.get("snapshot_id", "")),
             switch_id=switch_id,
-            source_controller=source,
-            target_controller=target,
+            source_controller=action.source_controller,
+            target_controller=action.target_controller,
             model_name=MODEL_NAME,
             model_version=MODEL_VERSION,
             predicted_src_utilization=values["u_src_post"],
