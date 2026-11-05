@@ -1,0 +1,32 @@
+# Safety stress set v1 (Week 13): migrations with the destination near safe capacity.
+# Owner: My (writes), Vy (reviews, runs). EVALUATION ONLY: never used to train, select
+# or calibrate the outcome model, its margins or the Safety Policy; it only scores the
+# Gate (UAR, FRR, SAP), because the raw-v2 test split holds a single overload case.
+# Levels (raw-v2, evidence/week12/attempt_summary.csv): dst U after - before has a
+# median of 0.03-0.11 per workload, up to 0.41 for hot_switch. With m_U = 0.037:
+#   0.88 -> post about 0.91-0.99, upper bound around 1: the false-rejection side;
+#   0.95 -> post about 0.98-1.06, mostly over 1: the unsafe-acceptance side.
+# Saturation starts near U = 1433 / 933 = 1.54 (capacity-v4), so both stay measurable.
+schema_version: migration-outcome-v1
+topology: 2C20S
+controllers_config: configs/controllers_2c20s.yaml
+output_root: data/experiment_runs/safety-stress-v1
+
+pre_window_valid_snapshots: 5
+post_window_valid_snapshots: 5
+post_window_timeout_s: 60
+
+workloads:
+  stable: [early, middle, late]
+  gradual: [u40, u60, u95]
+  burst: [baseline_1, burst_1, recovery]
+  oscillating: [rising, peak, falling]
+  hot_switch: [moderate, high, peak]
+
+destination_load_levels: [0.88, 0.95]
+directions: [[c1, c2], [c2, c1]]
+
+# One new seed: not 101-105 (forecast) nor 9201-9205 (raw-v2).
+repeats: {r01: 9301}
+split: {stress: [r01]}
+no_op_controls: 0
