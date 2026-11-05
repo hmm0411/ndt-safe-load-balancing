@@ -1,0 +1,34 @@
+# Safety policy v1 (Week 13). Every threshold is either a fixed convention,
+# derived from a frozen artifact, or null with a documented reason.
+# null means "not configured": the matching check is reported as
+# NOT_CONFIGURED and never silently replaced by an invented number.
+version: safety-policy-v1
+
+state:
+  require_valid_snapshot: true
+  # null: no quality threshold has a data-backed source yet.
+  minimum_quality_score: null
+
+destination:
+  require_connected: true
+  reject_if_forecast_risk: true
+  # Convention: U = 1 equals safe capacity (capacity-v4). Check is <= 1.
+  utilization_safe_limit: 1.0
+  # null: response_p95 does not rise under overload on this testbed,
+  # so R95_max has no source. Pending decision from the supervisor.
+  response_p95_max_ms: null
+
+uncertainty:
+  # One-sided split-conformal margins m_U, m_R from validation (n=60).
+  utilization_margin_source: post-migration-v1
+  response_margin_source: post-migration-v1
+
+migration:
+  require_transaction_slot: true
+  # null: lower bound = P95(T_migration) + T_post_observation from raw-v2.
+  cooldown_seconds: null
+
+improvement:
+  require_positive_source_relief: true
+  # null: proposed from validation raw-v2 in Week 13 Day 1 (My).
+  minimum_source_relief: null
