@@ -1,0 +1,39 @@
+{
+  "cooldown": {
+    "level": 0.95,
+    "max_s": 37.9576,
+    "n": 300,
+    "settle_p95_s": 34.9329,
+    "source": "evidence/week12/attempt_summary.csv",
+    "transaction_p95_s": 2.08008,
+    "transaction_plus_settle_p95_s": 36.94176,
+    "value_s": 37
+  },
+  "margins": {
+    "file": "data/models/outcome/post-migration-v1/uncertainty_margin.json",
+    "m_R": 0.009170841218852921,
+    "m_U": 0.036629233239997006
+  },
+  "policy_version": "safety-policy-v1",
+  "response": {
+    "c_response_pps": {
+      "c1": null,
+      "c2": null
+    },
+    "response_limits_capacity": false
+  },
+  "source_relief": {
+    "min_switch_share": 0.0530947,
+    "n_committed": 300,
+    "source_rose_after": 57,
+    "validation_n": 60,
+    "validation_source_rose_after": 9
+  },
+  "utilization": {
+    "c_safe_pps": {
+      "c1": 932.9349510958949,
+      "c2": 933.1315549145669
+    },
+    "capacity_file": "data/benchmarks/controller_capacity.json"
+  }
+}

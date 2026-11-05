@@ -1,0 +1,54 @@
+# Safety Policy v1 (Week 13). Read by src/twin/decision/safety_policy.py.
+# Owners: Vy (writes), My (reviews). Every limit is a number with its source, or null
+# with its reason; a null limit makes its gate check SKIPPED, never PASSED.
+# Frozen before the Safety test split and safety-stress-v1 are read; change -> v2.
+version: safety-policy-v1
+boundary: inclusive   # value + margin <= limit passes (CLAUDE.md section 1)
+
+state:
+  require_valid_snapshot: true   # Hard Gate; the Quality Score never replaces it
+  minimum_quality_score:
+    value: null
+    reason: >-
+      quality-score-v1 (configs/quality.yaml) has no calibrated minimum; the score is
+      logged with every decision and studied in the ablation
+
+destination:
+  require_connected: true
+  reject_if_forecast_risk: true  # needs the retrained forecaster; offline -> NOT_AVAILABLE
+  utilization_safe_limit:
+    value: 1.0
+    source: >-
+      U = processed Packet-In rate / c_safe (capacity-v4,
+      data/benchmarks/controller_capacity.json): U = 1 is the safe capacity
+  response_p95_max_ms:
+    value: null
+    reason: >-
+      capacity-v4 has c_response_pps = null for c1 and c2 (response never limited
+      capacity) and response_p95_ms does not rise with overload on this testbed
+      (configs/outcome/dataset.yaml); metric choice is an open advisor question
+
+uncertainty:
+  outcome_model_version: post-migration-v1
+  margins_file: data/models/outcome/post-migration-v1/uncertainty_margin.json
+
+migration:
+  max_concurrent_transactions: 1  # one migration per cycle (CLAUDE.md section 1)
+  cooldown_scope: global          # the Hard Gate blocks the whole twin after a migration
+  cooldown_seconds:
+    value: 37
+    source: >-
+      ceil of the finite-sample P95 of transaction_s + settle_s over the 300 committed
+      raw-v2 migrations (36.94 s; evidence/week13/safety_policy_inputs.json); a lower
+      bound, calibrated again with the oscillating runs
+
+improvement:
+  # Relief = load the action moves off the source (switch share x U_src). Not
+  # U_src_before - predicted U_src_after: that difference carries the workload, and the
+  # source rose after 57/300 committed raw-v2 migrations (gradual u40/u60, burst).
+  require_positive_source_relief: true
+  minimum_source_relief:
+    value: null
+    reason: >-
+      no validation label separates useful from useless migrations and every raw-v2
+      switch carried at least 5.3 % of its controller's load; Ranking uses relief instead
