@@ -1,0 +1,8 @@
+{
+  "source": "evidence/week12/attempt_summary.csv",
+  "n_attempts": 300,
+  "percentile": "P95 nearest-rank",
+  "t_migration_p95_s": 2.071,
+  "t_post_observation_p95_s": 34.922,
+  "cooldown_lower_bound_s": 36.993
+}
