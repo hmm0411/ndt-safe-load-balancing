@@ -1,0 +1,79 @@
+{
+  "policy_version": "safety-policy-v1",
+  "policy_file": "configs/decision/safety_policy_v1.yaml",
+  "policy_sha256": "d5eca5b902e25a131762d373acec91201e3dd2428ff69251bf943b5478845051",
+  "git_commit": "973429f1c7dd393526358a48786f05809dffd9eb",
+  "capacity_version": "capacity-v4",
+  "c_safe_pps": {
+    "c1": 932.9349510958949,
+    "c2": 933.1315549145669
+  },
+  "outcome_model": {
+    "version": "post-migration-v1",
+    "deployed": "hybrid_xgb"
+  },
+  "quality_score": "quality-score-v1",
+  "forecast_model": {
+    "version": null,
+    "status": "PENDING",
+    "reason": "forecast-models-v3 not trained yet"
+  },
+  "thresholds": {
+    "utilization_safe_limit": {
+      "value": 1.0,
+      "status": "CONVENTION",
+      "source": "U = processed_packet_in_rate / c_safe_pps; U = 1 is safe capacity",
+      "comparison": "U_hat + m_U <= limit"
+    },
+    "m_U": {
+      "value": 0.036629233239997006,
+      "status": "DERIVED",
+      "source": "evidence/week12/uncertainty_margin.json",
+      "method": "split conformal, one-sided: element ceil((n + 1) * level) of the sorted max(0, actual - predicted) on validation",
+      "n": 60,
+      "rank": 58,
+      "level": 0.95
+    },
+    "m_R": {
+      "value": 0.009170841218852921,
+      "status": "DERIVED",
+      "source": "evidence/week12/uncertainty_margin.json",
+      "method": "split conformal, one-sided: element ceil((n + 1) * level) of the sorted max(0, actual - predicted) on validation",
+      "n": 60,
+      "rank": 58,
+      "level": 0.95
+    },
+    "response_p95_max_ms": {
+      "value": null,
+      "status": "NOT_CONFIGURED",
+      "reason": "capacity-v4 never found response limiting capacity (c_response_pps is {'c1': None, 'c2': None}); no frozen operational response requirement exists",
+      "pending": "supervisor chooses one of three options in the Week 13-14 plan"
+    },
+    "minimum_quality_score": {
+      "value": null,
+      "status": "NOT_CONFIGURED",
+      "reason": "quality-score-v1 defines per-component good/hard thresholds only; no calibrated minimum score exists. The Hard Gate (valid) stays mandatory.",
+      "pending": "needs a calibrated threshold"
+    },
+    "cooldown_seconds": {
+      "value": null,
+      "status": "NOT_CONFIGURED",
+      "reason": "only a lower bound exists; the policy value is not chosen yet",
+      "pending": "confirm the policy value",
+      "lower_bound_s": 36.993,
+      "lower_bound_source": "evidence/week13/cooldown_lower_bound.json"
+    },
+    "minimum_source_relief": {
+      "value": null,
+      "status": "NOT_CONFIGURED",
+      "reason": "must be chosen on validation raw-v2, not set by hand",
+      "pending": "proposal from validation (My, Day 1)"
+    }
+  },
+  "not_configured": [
+    "minimum_quality_score",
+    "response_p95_max_ms",
+    "cooldown_seconds",
+    "minimum_source_relief"
+  ]
+}
