@@ -63,6 +63,13 @@ def _num(value: Any, name: str, *, nullable: bool) -> float | None:
     return float(value)
 
 
+def _required(value: Any, name: str) -> float:
+    number = _num(value, name, nullable=False)
+    if number is None:
+        raise PolicyError(f"{name} must not be null")
+    return number
+
+
 def _flag(value: Any, name: str) -> bool:
     if not isinstance(value, bool):
         raise PolicyError(f"{name} must be true or false, got {value!r}")
@@ -103,9 +110,7 @@ def parse_policy(raw: Any) -> SafetyPolicy:
         minimum_quality_score=opt(s, "minimum_quality_score"),
         require_connected=flag(d, "require_connected"),
         reject_if_forecast_risk=flag(d, "reject_if_forecast_risk"),
-        utilization_safe_limit=_num(
-            d["utilization_safe_limit"], "utilization_safe_limit", nullable=False
-        ),
+        utilization_safe_limit=_required(d["utilization_safe_limit"], "utilization_safe_limit"),
         response_p95_max_ms=opt(d, "response_p95_max_ms"),
         utilization_margin_source=_text(
             u["utilization_margin_source"], "utilization_margin_source"
