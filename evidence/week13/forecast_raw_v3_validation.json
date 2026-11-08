@@ -1,0 +1,360 @@
+{
+  "valid": true,
+  "expected_runs": 25,
+  "found_runs": 25,
+  "expected_samples": 9000,
+  "total_samples": 9000,
+  "runs": [
+    {
+      "valid": true,
+      "run_id": "stable-r01-s101",
+      "total_samples": 360,
+      "samples_per_controller": {
+        "c1": 180,
+        "c2": 180
+      },
+      "coverage_per_controller": {
+        "c1": 1.0,
+        "c2": 1.0
+      },
+      "issues": []
+    },
+    {
+      "valid": true,
+      "run_id": "stable-r02-s102",
+      "total_samples": 360,
+      "samples_per_controller": {
+        "c1": 180,
+        "c2": 180
+      },
+      "coverage_per_controller": {
+        "c1": 1.0,
+        "c2": 1.0
+      },
+      "issues": []
+    },
+    {
+      "valid": true,
+      "run_id": "stable-r03-s103",
+      "total_samples": 360,
+      "samples_per_controller": {
+        "c1": 180,
+        "c2": 180
+      },
+      "coverage_per_controller": {
+        "c1": 1.0,
+        "c2": 1.0
+      },
+      "issues": []
+    },
+    {
+      "valid": true,
+      "run_id": "stable-r04-s104",
+      "total_samples": 360,
+      "samples_per_controller": {
+        "c1": 180,
+        "c2": 180
+      },
+      "coverage_per_controller": {
+        "c1": 1.0,
+        "c2": 1.0
+      },
+      "issues": []
+    },
+    {
+      "valid": true,
+      "run_id": "stable-r05-s105",
+      "total_samples": 360,
+      "samples_per_controller": {
+        "c1": 180,
+        "c2": 180
+      },
+      "coverage_per_controller": {
+        "c1": 1.0,
+        "c2": 1.0
+      },
+      "issues": []
+    },
+    {
+      "valid": true,
+      "run_id": "gradual-r01-s101",
+      "total_samples": 360,
+      "samples_per_controller": {
+        "c1": 180,
+        "c2": 180
+      },
+      "coverage_per_controller": {
+        "c1": 1.0,
+        "c2": 1.0
+      },
+      "issues": []
+    },
+    {
+      "valid": true,
+      "run_id": "gradual-r02-s102",
+      "total_samples": 360,
+      "samples_per_controller": {
+        "c1": 180,
+        "c2": 180
+      },
+      "coverage_per_controller": {
+        "c1": 1.0,
+        "c2": 1.0
+      },
+      "issues": []
+    },
+    {
+      "valid": true,
+      "run_id": "gradual-r03-s103",
+      "total_samples": 360,
+      "samples_per_controller": {
+        "c1": 180,
+        "c2": 180
+      },
+      "coverage_per_controller": {
+        "c1": 1.0,
+        "c2": 1.0
+      },
+      "issues": []
+    },
+    {
+      "valid": true,
+      "run_id": "gradual-r04-s104",
+      "total_samples": 360,
+      "samples_per_controller": {
+        "c1": 180,
+        "c2": 180
+      },
+      "coverage_per_controller": {
+        "c1": 1.0,
+        "c2": 1.0
+      },
+      "issues": []
+    },
+    {
+      "valid": true,
+      "run_id": "gradual-r05-s105",
+      "total_samples": 360,
+      "samples_per_controller": {
+        "c1": 180,
+        "c2": 180
+      },
+      "coverage_per_controller": {
+        "c1": 1.0,
+        "c2": 1.0
+      },
+      "issues": []
+    },
+    {
+      "valid": true,
+      "run_id": "burst-r01-s101",
+      "total_samples": 360,
+      "samples_per_controller": {
+        "c1": 180,
+        "c2": 180
+      },
+      "coverage_per_controller": {
+        "c1": 1.0,
+        "c2": 1.0
+      },
+      "issues": []
+    },
+    {
+      "valid": true,
+      "run_id": "burst-r02-s102",
+      "total_samples": 360,
+      "samples_per_controller": {
+        "c1": 180,
+        "c2": 180
+      },
+      "coverage_per_controller": {
+        "c1": 1.0,
+        "c2": 1.0
+      },
+      "issues": []
+    },
+    {
+      "valid": true,
+      "run_id": "burst-r03-s103",
+      "total_samples": 360,
+      "samples_per_controller": {
+        "c1": 180,
+        "c2": 180
+      },
+      "coverage_per_controller": {
+        "c1": 1.0,
+        "c2": 1.0
+      },
+      "issues": []
+    },
+    {
+      "valid": true,
+      "run_id": "burst-r04-s104",
+      "total_samples": 360,
+      "samples_per_controller": {
+        "c1": 180,
+        "c2": 180
+      },
+      "coverage_per_controller": {
+        "c1": 1.0,
+        "c2": 1.0
+      },
+      "issues": []
+    },
+    {
+      "valid": true,
+      "run_id": "burst-r05-s105",
+      "total_samples": 360,
+      "samples_per_controller": {
+        "c1": 180,
+        "c2": 180
+      },
+      "coverage_per_controller": {
+        "c1": 1.0,
+        "c2": 1.0
+      },
+      "issues": []
+    },
+    {
+      "valid": true,
+      "run_id": "oscillating-r01-s101",
+      "total_samples": 360,
+      "samples_per_controller": {
+        "c1": 180,
+        "c2": 180
+      },
+      "coverage_per_controller": {
+        "c1": 1.0,
+        "c2": 1.0
+      },
+      "issues": []
+    },
+    {
+      "valid": true,
+      "run_id": "oscillating-r02-s102",
+      "total_samples": 360,
+      "samples_per_controller": {
+        "c1": 180,
+        "c2": 180
+      },
+      "coverage_per_controller": {
+        "c1": 1.0,
+        "c2": 1.0
+      },
+      "issues": []
+    },
+    {
+      "valid": true,
+      "run_id": "oscillating-r03-s103",
+      "total_samples": 360,
+      "samples_per_controller": {
+        "c1": 180,
+        "c2": 180
+      },
+      "coverage_per_controller": {
+        "c1": 1.0,
+        "c2": 1.0
+      },
+      "issues": []
+    },
+    {
+      "valid": true,
+      "run_id": "oscillating-r04-s104",
+      "total_samples": 360,
+      "samples_per_controller": {
+        "c1": 180,
+        "c2": 180
+      },
+      "coverage_per_controller": {
+        "c1": 1.0,
+        "c2": 1.0
+      },
+      "issues": []
+    },
+    {
+      "valid": true,
+      "run_id": "oscillating-r05-s105",
+      "total_samples": 360,
+      "samples_per_controller": {
+        "c1": 180,
+        "c2": 180
+      },
+      "coverage_per_controller": {
+        "c1": 1.0,
+        "c2": 1.0
+      },
+      "issues": []
+    },
+    {
+      "valid": true,
+      "run_id": "hot-switch-r01-s101",
+      "total_samples": 360,
+      "samples_per_controller": {
+        "c1": 180,
+        "c2": 180
+      },
+      "coverage_per_controller": {
+        "c1": 1.0,
+        "c2": 1.0
+      },
+      "issues": []
+    },
+    {
+      "valid": true,
+      "run_id": "hot-switch-r02-s102",
+      "total_samples": 360,
+      "samples_per_controller": {
+        "c1": 180,
+        "c2": 180
+      },
+      "coverage_per_controller": {
+        "c1": 1.0,
+        "c2": 1.0
+      },
+      "issues": []
+    },
+    {
+      "valid": true,
+      "run_id": "hot-switch-r03-s103",
+      "total_samples": 360,
+      "samples_per_controller": {
+        "c1": 180,
+        "c2": 180
+      },
+      "coverage_per_controller": {
+        "c1": 1.0,
+        "c2": 1.0
+      },
+      "issues": []
+    },
+    {
+      "valid": true,
+      "run_id": "hot-switch-r04-s104",
+      "total_samples": 360,
+      "samples_per_controller": {
+        "c1": 180,
+        "c2": 180
+      },
+      "coverage_per_controller": {
+        "c1": 1.0,
+        "c2": 1.0
+      },
+      "issues": []
+    },
+    {
+      "valid": true,
+      "run_id": "hot-switch-r05-s105",
+      "total_samples": 360,
+      "samples_per_controller": {
+        "c1": 180,
+        "c2": 180
+      },
+      "coverage_per_controller": {
+        "c1": 1.0,
+        "c2": 1.0
+      },
+      "issues": []
+    }
+  ],
+  "issues": []
+}
