@@ -26,7 +26,9 @@ destination:
     reason: >-
       capacity-v4 has c_response_pps = null for c1 and c2 (response never limited
       capacity) and response_p95_ms does not rise with overload on this testbed
-      (configs/outcome/dataset.yaml); metric choice is an open advisor question
+      (configs/outcome/dataset.yaml). Kept null in v1 (documented limitation): flow-setup
+      latency (reference P95 44.23 ms, c2 49.55 ms) is not predicted by
+      post-migration-v1; a v2 policy sets the limit once the predictor covers it
 
 uncertainty:
   outcome_model_version: post-migration-v1
@@ -48,7 +50,9 @@ improvement:
   # source rose after 57/300 committed raw-v2 migrations (gradual u40/u60, burst).
   require_positive_source_relief: true
   minimum_source_relief:
-    value: null
-    reason: >-
-      no validation label separates useful from useless migrations and every raw-v2
-      switch carried at least 5.3 % of its controller's load; Ranking uses relief instead
+    value: 0.036629233
+    source: >-
+      m_U of post-migration-v1 (uncertainty_margin.json): a predicted relief below the
+      model noise floor cannot be told from zero. A principled floor, not tuned: on the
+      60 validation rows it rejected 1 safe migration and no extra unsafe one
+      (evidence/week13/safety_replay_validation.json)

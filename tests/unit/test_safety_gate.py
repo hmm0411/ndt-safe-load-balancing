@@ -12,7 +12,12 @@ from src.twin.decision.safety_gate import GateContext, SafetyGate
 from src.twin.outcome.predictor import PostMigrationOutcomePrediction
 
 NOW = datetime(2026, 11, 6, tzinfo=timezone.utc)
-POLICY = sp.load_safety_policy()
+# baseline: the minimum_source_relief limit is unset, so these tests do not depend on the
+# value frozen in configs/decision/safety_policy_v1.yaml
+POLICY = dataclasses.replace(
+    sp.load_safety_policy(),
+    minimum_source_relief=sp.Limit(None, reason="test baseline: limit not configured"),
+)
 ALL_CHECKS = set(d.GATE_CHECKS)
 
 

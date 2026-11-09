@@ -6,7 +6,8 @@ from typing import Any
 from src.twin.decision.safety_policy import load_safety_policy
 from src.twin.decision.safety_replay import candidate_from_row, run_gate, with_minimum_relief
 
-POLICY = load_safety_policy()
+# baseline: minimum_source_relief unset, independent of the frozen policy file
+POLICY = with_minimum_relief(load_safety_policy(), None, "test baseline: not configured")
 M_U, M_R = 0.036629233, 0.009170841
 
 
