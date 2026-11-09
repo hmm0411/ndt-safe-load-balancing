@@ -1,0 +1,69 @@
+{
+  "gate": {
+    "consecutive_steps": 3,
+    "method": "train_min_max",
+    "monitor_only_features": [
+      "managed_switch_count",
+      "max_switch_control_load_share"
+    ],
+    "tolerance_fraction": 0.1
+  },
+  "model_name": "xgboost",
+  "model_version": "forecast-models-v3",
+  "ood_to_id_rmse_ratio": 1.1849582909020069,
+  "splits": {
+    "test": {
+      "d_ood": 0.0,
+      "d_ood_by_workload": {
+        "burst": 0.0,
+        "gradual": 0.0,
+        "oscillating": 0.0,
+        "stable": 0.0
+      },
+      "out_of_range_by_feature": {
+        "max_switch_control_load_share": 0.0007485029940119761,
+        "response_mean_5": 0.0007485029940119761
+      },
+      "out_of_range_rate": 0.0014970059880239522,
+      "rmse_persistence": 0.10175160404579901,
+      "rmse_with_gate": 0.04619943400179864,
+      "rmse_without_gate": 0.04619943400179864,
+      "samples": 1336
+    },
+    "unseen": {
+      "d_ood": 0.9880239520958084,
+      "d_ood_by_workload": {
+        "hot-switch": 0.9880239520958084
+      },
+      "out_of_range_by_feature": {
+        "max_switch_control_load_share": 1.0,
+        "process_memory_rss_mb": 1.0,
+        "utilization_lag_7": 0.0005988023952095808,
+        "utilization_lag_8": 0.0005988023952095808
+      },
+      "out_of_range_rate": 1.0,
+      "rmse_persistence": 0.04550707550154245,
+      "rmse_with_gate": 0.04365791293457943,
+      "rmse_without_gate": 0.05474440235541138,
+      "samples": 1670
+    },
+    "validation": {
+      "d_ood": 0.002245508982035928,
+      "d_ood_by_workload": {
+        "burst": 0.008982035928143712,
+        "gradual": 0.0,
+        "oscillating": 0.0,
+        "stable": 0.0
+      },
+      "out_of_range_by_feature": {
+        "response_mean_5": 0.0037425149700598802,
+        "response_p95_ms": 0.0007485029940119761
+      },
+      "out_of_range_rate": 0.0037425149700598802,
+      "rmse_persistence": 0.10394598982090626,
+      "rmse_with_gate": 0.04512957044651301,
+      "rmse_without_gate": 0.04513401460805106,
+      "samples": 1336
+    }
+  }
+}
