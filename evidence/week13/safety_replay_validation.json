@@ -1,0 +1,250 @@
+{
+  "split": "validation",
+  "rows": 60,
+  "inputs": {
+    "dataset_sha12": "51bf2d80d5ad",
+    "policy_sha12": "de04b95f246b",
+    "policy_version": "safety-policy-v1",
+    "m_U": 0.036629233239997006,
+    "m_R": 0.009170841218852921,
+    "minimum_source_relief_proposal": 0.036629233239997006
+  },
+  "limits": {
+    "u_limit": 1.0,
+    "r95_max": null
+  },
+  "notes": [
+    "validation rows only; test and safety-stress-v1 not read",
+    "rows are executed migrations: rejected candidates have no observed outcome"
+  ],
+  "results": {
+    "gate_a": {
+      "metrics": {
+        "records": 60,
+        "accepted": 57,
+        "unsafe": 3,
+        "unsafe_rejected": 3,
+        "unsafe_accepted": 0,
+        "safe_rejected": 0,
+        "safe_accepted": 57,
+        "ucrr": {
+          "numerator": 3,
+          "denominator": 3,
+          "value": 1.0,
+          "low": 0.4385029682449546,
+          "high": 1.0
+        },
+        "uar": {
+          "numerator": 0,
+          "denominator": 3,
+          "value": 0.0,
+          "low": 5.551115123125783e-17,
+          "high": 0.5614970317550454
+        },
+        "frr": {
+          "numerator": 0,
+          "denominator": 57,
+          "value": 0.0,
+          "low": 0.0,
+          "high": 0.06313883485297894
+        },
+        "sap": {
+          "numerator": 57,
+          "denominator": 57,
+          "value": 1.0,
+          "low": 0.9368611651470209,
+          "high": 0.9999999999999998
+        },
+        "doar": {
+          "numerator": 0,
+          "denominator": 57,
+          "value": 0.0,
+          "low": 0.0,
+          "high": 0.06313883485297894
+        },
+        "rvr": null,
+        "rvr_status": "NOT_CONFIGURED"
+      },
+      "failed_reasons": {
+        "DST_UTILIZATION_UNSAFE": 3
+      },
+      "skipped_checks": {
+        "quality_policy:NOT_CONFIGURED": 60,
+        "destination_not_at_risk:NOT_AVAILABLE": 60,
+        "dst_response:NOT_CONFIGURED": 60,
+        "minimum_improvement:NOT_CONFIGURED": 60
+      }
+    },
+    "gate_b": {
+      "metrics": {
+        "records": 60,
+        "accepted": 56,
+        "unsafe": 3,
+        "unsafe_rejected": 3,
+        "unsafe_accepted": 0,
+        "safe_rejected": 1,
+        "safe_accepted": 56,
+        "ucrr": {
+          "numerator": 3,
+          "denominator": 3,
+          "value": 1.0,
+          "low": 0.4385029682449546,
+          "high": 1.0
+        },
+        "uar": {
+          "numerator": 0,
+          "denominator": 3,
+          "value": 0.0,
+          "low": 5.551115123125783e-17,
+          "high": 0.5614970317550454
+        },
+        "frr": {
+          "numerator": 1,
+          "denominator": 57,
+          "value": 0.017543859649122806,
+          "low": 0.003103664651408093,
+          "high": 0.09290749178567684
+        },
+        "sap": {
+          "numerator": 56,
+          "denominator": 56,
+          "value": 1.0,
+          "low": 0.9358060632812366,
+          "high": 1.0
+        },
+        "doar": {
+          "numerator": 0,
+          "denominator": 56,
+          "value": 0.0,
+          "low": 6.938893903907228e-18,
+          "high": 0.06419393671876342
+        },
+        "rvr": null,
+        "rvr_status": "NOT_CONFIGURED"
+      },
+      "failed_reasons": {
+        "DST_UTILIZATION_UNSAFE": 4
+      },
+      "skipped_checks": {
+        "quality_policy:NOT_CONFIGURED": 60,
+        "destination_not_at_risk:NOT_AVAILABLE": 60,
+        "dst_response:NOT_CONFIGURED": 60,
+        "minimum_improvement:NOT_CONFIGURED": 60
+      }
+    },
+    "gate_a_relief": {
+      "metrics": {
+        "records": 60,
+        "accepted": 56,
+        "unsafe": 3,
+        "unsafe_rejected": 3,
+        "unsafe_accepted": 0,
+        "safe_rejected": 1,
+        "safe_accepted": 56,
+        "ucrr": {
+          "numerator": 3,
+          "denominator": 3,
+          "value": 1.0,
+          "low": 0.4385029682449546,
+          "high": 1.0
+        },
+        "uar": {
+          "numerator": 0,
+          "denominator": 3,
+          "value": 0.0,
+          "low": 5.551115123125783e-17,
+          "high": 0.5614970317550454
+        },
+        "frr": {
+          "numerator": 1,
+          "denominator": 57,
+          "value": 0.017543859649122806,
+          "low": 0.003103664651408093,
+          "high": 0.09290749178567684
+        },
+        "sap": {
+          "numerator": 56,
+          "denominator": 56,
+          "value": 1.0,
+          "low": 0.9358060632812366,
+          "high": 1.0
+        },
+        "doar": {
+          "numerator": 0,
+          "denominator": 56,
+          "value": 0.0,
+          "low": 6.938893903907228e-18,
+          "high": 0.06419393671876342
+        },
+        "rvr": null,
+        "rvr_status": "NOT_CONFIGURED"
+      },
+      "failed_reasons": {
+        "INSUFFICIENT_IMPROVEMENT": 1,
+        "DST_UTILIZATION_UNSAFE": 3
+      },
+      "skipped_checks": {
+        "quality_policy:NOT_CONFIGURED": 60,
+        "destination_not_at_risk:NOT_AVAILABLE": 60,
+        "dst_response:NOT_CONFIGURED": 60
+      }
+    },
+    "gate_b_relief": {
+      "metrics": {
+        "records": 60,
+        "accepted": 55,
+        "unsafe": 3,
+        "unsafe_rejected": 3,
+        "unsafe_accepted": 0,
+        "safe_rejected": 2,
+        "safe_accepted": 55,
+        "ucrr": {
+          "numerator": 3,
+          "denominator": 3,
+          "value": 1.0,
+          "low": 0.4385029682449546,
+          "high": 1.0
+        },
+        "uar": {
+          "numerator": 0,
+          "denominator": 3,
+          "value": 0.0,
+          "low": 5.551115123125783e-17,
+          "high": 0.5614970317550454
+        },
+        "frr": {
+          "numerator": 2,
+          "denominator": 57,
+          "value": 0.03508771929824561,
+          "low": 0.009675664344932881,
+          "high": 0.11920781367625805
+        },
+        "sap": {
+          "numerator": 55,
+          "denominator": 55,
+          "value": 1.0,
+          "low": 0.9347150988829137,
+          "high": 1.0
+        },
+        "doar": {
+          "numerator": 0,
+          "denominator": 55,
+          "value": 0.0,
+          "low": 0.0,
+          "high": 0.06528490111708637
+        },
+        "rvr": null,
+        "rvr_status": "NOT_CONFIGURED"
+      },
+      "failed_reasons": {
+        "INSUFFICIENT_IMPROVEMENT": 1,
+        "DST_UTILIZATION_UNSAFE": 4
+      },
+      "skipped_checks": {
+        "quality_policy:NOT_CONFIGURED": 60,
+        "destination_not_at_risk:NOT_AVAILABLE": 60,
+        "dst_response:NOT_CONFIGURED": 60
+      }
+    }
+  }
+}
