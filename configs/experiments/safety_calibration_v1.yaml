@@ -1,0 +1,28 @@
+# Safety calibration set v1 (Week 13): migrations with the destination at 0.80-0.98 of capacity.
+# Owner: Vy (runs). Used ONLY to diagnose and fix the outcome model's under-prediction near
+# U = 1 (safety-policy-v2); it never scores the final Gate. safety-stress-v1 showed
+# under-prediction in 11 of 11 unsafe attempts; those attempts are not reused here.
+# Levels differ from safety-stress-v1 (0.88, 0.95) and from safety-stress-v2.
+schema_version: migration-outcome-v1
+topology: 2C20S
+controllers_config: configs/controllers_2c20s.yaml
+output_root: data/experiment_runs/safety-calibration-v1
+
+pre_window_valid_snapshots: 5
+post_window_valid_snapshots: 5
+post_window_timeout_s: 60
+
+workloads:
+  stable: [early, middle, late]
+  gradual: [u40, u60, u95]
+  burst: [baseline_1, burst_1, recovery]
+  oscillating: [rising, peak, falling]
+  hot_switch: [moderate, high, peak]
+
+destination_load_levels: [0.80, 0.84, 0.92, 0.98]
+directions: [[c1, c2], [c2, c1]]
+
+# New seed: not 101-105 (forecast), 9201-9205 (raw-v2) nor 9301 (stress-v1).
+repeats: {r01: 9401}
+split: {calibration: [r01]}
+no_op_controls: 0
