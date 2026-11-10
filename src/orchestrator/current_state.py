@@ -61,6 +61,11 @@ class CurrentStateStore:
         with self._lock:
             return self._twin_state.to_dict() if self._twin_state else None
 
+    def twin_state(self):
+        """The latest TwinState object (frozen dataclass), or None before the first snapshot."""
+        with self._lock:
+            return self._twin_state
+
     def set_forecast(self, value: dict[str, Any]) -> None:
         with self._lock:
             self._forecast = value
