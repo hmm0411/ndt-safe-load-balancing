@@ -1,0 +1,54 @@
+{
+  "schema_version": "migration-outcome-v1",
+  "root": "data/experiment_runs/safety-stress-v1",
+  "attempts": 60,
+  "valid": 60,
+  "invalid": 0,
+  "training_eligible": 60,
+  "duplicate_transactions": {},
+  "counts": {
+    "workload": {
+      "burst": 12,
+      "gradual": 12,
+      "hot_switch": 12,
+      "oscillating": 12,
+      "stable": 12
+    },
+    "phase": {
+      "burst:baseline_1": 4,
+      "burst:burst_1": 4,
+      "burst:recovery": 4,
+      "gradual:u40": 4,
+      "gradual:u60": 4,
+      "gradual:u95": 4,
+      "hot_switch:high": 4,
+      "hot_switch:moderate": 4,
+      "hot_switch:peak": 4,
+      "oscillating:falling": 4,
+      "oscillating:peak": 4,
+      "oscillating:rising": 4,
+      "stable:early": 4,
+      "stable:late": 4,
+      "stable:middle": 4
+    },
+    "direction": {
+      "c1->c2": 30,
+      "c2->c1": 30
+    },
+    "destination_level": {
+      "dst88": 30,
+      "dst95": 30
+    },
+    "action_type": {
+      "MIGRATE": 60
+    },
+    "transaction_status": {
+      "COMMITTED": 60
+    }
+  },
+  "invalid_attempts": {},
+  "quarantined": [],
+  "planned": 60,
+  "missing": [],
+  "unplanned": []
+}
