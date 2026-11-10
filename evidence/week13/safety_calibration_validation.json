@@ -1,0 +1,56 @@
+{
+  "schema_version": "migration-outcome-v1",
+  "root": "data/experiment_runs/safety-calibration-v1",
+  "attempts": 120,
+  "valid": 120,
+  "invalid": 0,
+  "training_eligible": 120,
+  "duplicate_transactions": {},
+  "counts": {
+    "workload": {
+      "burst": 24,
+      "gradual": 24,
+      "hot_switch": 24,
+      "oscillating": 24,
+      "stable": 24
+    },
+    "phase": {
+      "burst:baseline_1": 8,
+      "burst:burst_1": 8,
+      "burst:recovery": 8,
+      "gradual:u40": 8,
+      "gradual:u60": 8,
+      "gradual:u95": 8,
+      "hot_switch:high": 8,
+      "hot_switch:moderate": 8,
+      "hot_switch:peak": 8,
+      "oscillating:falling": 8,
+      "oscillating:peak": 8,
+      "oscillating:rising": 8,
+      "stable:early": 8,
+      "stable:late": 8,
+      "stable:middle": 8
+    },
+    "direction": {
+      "c1->c2": 60,
+      "c2->c1": 60
+    },
+    "destination_level": {
+      "dst80": 30,
+      "dst84": 30,
+      "dst92": 30,
+      "dst98": 30
+    },
+    "action_type": {
+      "MIGRATE": 120
+    },
+    "transaction_status": {
+      "COMMITTED": 120
+    }
+  },
+  "invalid_attempts": {},
+  "quarantined": [],
+  "planned": 120,
+  "missing": [],
+  "unplanned": []
+}
