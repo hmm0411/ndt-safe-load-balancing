@@ -50,3 +50,16 @@ false rejections <= v1B's. Among the qualifying ones take the fewest unsafe acce
 fewest false rejections, then the simplest (b1, b2, a). If none qualifies, v2 keeps v1 and
 this is reported as a limitation.
 Folds, bands, quantile and rule are fixed here and are not changed after results are seen.
+
+## Addendum 2: how candidate a is computed (written before it is run)
+Same five outer folds as Addendum 1. For each held-out fold, the calibration attempts outside it
+are split by group: groups sorted alphabetically, group number j goes to the conformal part when
+j mod 4 = 0, otherwise to the fit part.
+The deployed model (hybrid_xgb: Analytical base plus an XGBoost residual learner) is refitted on
+raw-v2 train plus the fit part, with the hyperparameters of post-migration-v1
+(hyperparameters.json, no new search).
+The margin is the one-sided 95% conformal quantile of the u_dst_post residuals on raw-v2
+validation plus the conformal part. The held-out fold is then scored as in Addendum 1.
+raw-v2 test and safety-stress-v1 are not read.
+If the rule picks a, post-migration-v2 is fitted the same way on the whole calibration set and
+saved as a new artifact (v1 is never overwritten); otherwise v2 keeps v1.
