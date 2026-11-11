@@ -1,0 +1,7 @@
+split,gate,records,unsafe_rejected,unsafe_accepted,safe_rejected,safe_accepted
+validation,gate_a,60,3,0,1,56
+validation,gate_b,60,3,0,2,55
+test,gate_a,60,1,0,0,59
+test,gate_b,60,1,0,0,59
+stress,gate_a,60,8,3,2,47
+stress,gate_b,60,9,2,10,39

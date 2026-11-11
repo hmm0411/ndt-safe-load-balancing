@@ -1,0 +1,191 @@
+{
+  "input": "synthetic TwinState, fixed forecast payload, real outcome model and gate",
+  "iterations": 300,
+  "warmup": 30,
+  "python": "3.10.12",
+  "capacity_version": "controller_capacity.json@sha256:952c64644b99",
+  "scenarios": {
+    "2c_3_candidates": {
+      "funnel": {
+        "raw": 3,
+        "eligible": 3,
+        "safe": 3,
+        "dropped": 0
+      },
+      "rejections": {
+        "precheck": {},
+        "safety": {}
+      },
+      "t_candidate": {
+        "mean_ms": 0.154,
+        "p50_ms": 0.1509,
+        "p95_ms": 0.1702,
+        "max_ms": 0.3112
+      },
+      "t_outcome": {
+        "mean_ms": 4.3682,
+        "p50_ms": 4.0016,
+        "p95_ms": 4.5854,
+        "max_ms": 67.5737
+      },
+      "t_safety": {
+        "mean_ms": 0.2986,
+        "p50_ms": 0.2923,
+        "p95_ms": 0.3231,
+        "max_ms": 0.5259
+      },
+      "total": {
+        "mean_ms": 4.8209,
+        "p50_ms": 4.4571,
+        "p95_ms": 5.0444,
+        "max_ms": 68.0536
+      }
+    },
+    "2c_5_candidates": {
+      "funnel": {
+        "raw": 5,
+        "eligible": 5,
+        "safe": 5,
+        "dropped": 0
+      },
+      "rejections": {
+        "precheck": {},
+        "safety": {}
+      },
+      "t_candidate": {
+        "mean_ms": 0.1974,
+        "p50_ms": 0.1956,
+        "p95_ms": 0.2119,
+        "max_ms": 0.2479
+      },
+      "t_outcome": {
+        "mean_ms": 5.0697,
+        "p50_ms": 4.92,
+        "p95_ms": 5.4022,
+        "max_ms": 10.7652
+      },
+      "t_safety": {
+        "mean_ms": 0.4039,
+        "p50_ms": 0.4,
+        "p95_ms": 0.4334,
+        "max_ms": 0.6649
+      },
+      "total": {
+        "mean_ms": 5.671,
+        "p50_ms": 5.5221,
+        "p95_ms": 6.0074,
+        "max_ms": 11.4363
+      }
+    },
+    "2c_10_candidates": {
+      "funnel": {
+        "raw": 10,
+        "eligible": 10,
+        "safe": 10,
+        "dropped": 0
+      },
+      "rejections": {
+        "precheck": {},
+        "safety": {}
+      },
+      "t_candidate": {
+        "mean_ms": 0.3264,
+        "p50_ms": 0.3237,
+        "p95_ms": 0.3503,
+        "max_ms": 0.3785
+      },
+      "t_outcome": {
+        "mean_ms": 7.5724,
+        "p50_ms": 7.0288,
+        "p95_ms": 7.5038,
+        "max_ms": 52.4748
+      },
+      "t_safety": {
+        "mean_ms": 0.6967,
+        "p50_ms": 0.6923,
+        "p95_ms": 0.7225,
+        "max_ms": 1.4894
+      },
+      "total": {
+        "mean_ms": 8.5955,
+        "p50_ms": 8.0493,
+        "p95_ms": 8.5739,
+        "max_ms": 53.5081
+      }
+    },
+    "2c_15_candidates": {
+      "funnel": {
+        "raw": 15,
+        "eligible": 15,
+        "safe": 15,
+        "dropped": 0
+      },
+      "rejections": {
+        "precheck": {},
+        "safety": {}
+      },
+      "t_candidate": {
+        "mean_ms": 0.451,
+        "p50_ms": 0.4501,
+        "p95_ms": 0.4859,
+        "max_ms": 0.5265
+      },
+      "t_outcome": {
+        "mean_ms": 9.1865,
+        "p50_ms": 8.6527,
+        "p95_ms": 9.1599,
+        "max_ms": 56.4389
+      },
+      "t_safety": {
+        "mean_ms": 0.9821,
+        "p50_ms": 0.9697,
+        "p95_ms": 1.0425,
+        "max_ms": 1.1394
+      },
+      "total": {
+        "mean_ms": 10.6197,
+        "p50_ms": 10.0771,
+        "p95_ms": 10.6733,
+        "max_ms": 57.8492
+      }
+    },
+    "2c_20_candidates_both_sources": {
+      "funnel": {
+        "raw": 20,
+        "eligible": 20,
+        "safe": 0,
+        "dropped": 0
+      },
+      "rejections": {
+        "precheck": {},
+        "safety": {
+          "DESTINATION_ALREADY_AT_RISK": 20
+        }
+      },
+      "t_candidate": {
+        "mean_ms": 0.5293,
+        "p50_ms": 0.5264,
+        "p95_ms": 0.5597,
+        "max_ms": 0.8051
+      },
+      "t_outcome": {
+        "mean_ms": 9.6025,
+        "p50_ms": 9.0576,
+        "p95_ms": 9.381,
+        "max_ms": 46.1469
+      },
+      "t_safety": {
+        "mean_ms": 1.2339,
+        "p50_ms": 1.2261,
+        "p95_ms": 1.2936,
+        "max_ms": 1.5361
+      },
+      "total": {
+        "mean_ms": 11.3657,
+        "p50_ms": 10.8114,
+        "p95_ms": 11.2243,
+        "max_ms": 47.8877
+      }
+    }
+  }
+}
