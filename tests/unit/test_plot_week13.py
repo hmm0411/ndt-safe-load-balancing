@@ -6,8 +6,15 @@ import unittest
 from pathlib import Path
 
 from scripts.analysis import plot_week13 as pw
-from tests.unit.test_analyze_closed_loop import ALL_PASS
 from scripts.decision import analyze_closed_loop as acl
+
+
+TIMINGS = {"forecast": 1.0, "candidate": 0.5, "outcome": 3.0, "safety": 0.4, "ranking": 0.2}
+RECORDS = [
+    {"decision_id": f"d{i}", "scenario": "gradual", "mode": "execute", "status": "SELECTED",
+     "timings_ms": TIMINGS, "collection_latency_ms": 12.0, "funnel": {}, "reasons": {}}
+    for i in range(3)
+]
 
 
 class PlotWeek13Test(unittest.TestCase):
@@ -23,7 +30,7 @@ class PlotWeek13Test(unittest.TestCase):
             (root / "evidence/week13/ranking_sensitivity.json").write_text(json.dumps(sens))
             (root / "evidence/week14").mkdir(parents=True)
             (root / "evidence/week14/closed_loop_2c_analysis.json").write_text(
-                json.dumps(acl.analyze(ALL_PASS)))
+                json.dumps(acl.analyze(RECORDS)))
             self.assertEqual(pw.main(["--root", str(root)]), 0)
             self.assertTrue((root / "evidence/week13/fig_w13_ranking_top1.png").exists())
             self.assertTrue((root / "evidence/week14/fig_w14_decision_latency.png").exists())
