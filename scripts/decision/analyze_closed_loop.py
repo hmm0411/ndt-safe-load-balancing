@@ -85,7 +85,7 @@ def load_records(root: Path) -> list[dict[str, Any]]:
     return records
 
 
-def stats(values: Sequence[float]) -> dict[str, Any]:
+def stats(values: Sequence[Any]) -> dict[str, Any]:
     clean = sorted(v for v in values if isinstance(v, (int, float)) and math.isfinite(v))
     if not clean:
         return {"n": 0}
