@@ -1,0 +1,78 @@
+{
+  "base_status": {
+    "NO_BENEFICIAL_ACTION": 28,
+    "NO_SAFE_ACTION": 10,
+    "SELECTED": 142
+  },
+  "candidates_per_epoch_mean": 10.0,
+  "n_epochs": 180,
+  "n_epochs_ranked": 170,
+  "n_epochs_two_or_more_safe": 170,
+  "note": "stability only: one observed outcome per attempt, so no regret is computed",
+  "outcome_artifact": "data/models/outcome/post-migration-v1",
+  "policies": {
+    "balance_heavy": {
+      "effective_weights": {
+        "destination_headroom": 0.23529411764705885,
+        "global_improvement": 0.17647058823529413,
+        "imbalance": 0.35294117647058826,
+        "source_relief": 0.23529411764705885
+      },
+      "epochs_compared": 170,
+      "kendall_tau_mean": 0.8767320261437901,
+      "kendall_tau_min": 0.05555555555555555,
+      "top1_agreement": 0.9117647058823529,
+      "top1_same_as_base": 155
+    },
+    "base": {
+      "effective_weights": {
+        "destination_headroom": 0.25,
+        "global_improvement": 0.18749999999999997,
+        "imbalance": 0.25,
+        "source_relief": 0.3125
+      },
+      "epochs_compared": 170,
+      "kendall_tau_mean": 1.0,
+      "kendall_tau_min": 1.0,
+      "top1_agreement": 1.0,
+      "top1_same_as_base": 170
+    },
+    "qos_heavy": {
+      "effective_weights": {
+        "destination_headroom": 0.2857142857142857,
+        "global_improvement": 0.21428571428571425,
+        "imbalance": 0.21428571428571425,
+        "source_relief": 0.2857142857142857
+      },
+      "epochs_compared": 170,
+      "kendall_tau_mean": 0.9884967320261432,
+      "kendall_tau_min": 0.8222222222222222,
+      "top1_agreement": 0.9882352941176471,
+      "top1_same_as_base": 168
+    },
+    "relief_heavy": {
+      "effective_weights": {
+        "destination_headroom": 0.25,
+        "global_improvement": 0.18749999999999997,
+        "imbalance": 0.18749999999999997,
+        "source_relief": 0.37499999999999994
+      },
+      "epochs_compared": 170,
+      "kendall_tau_mean": 0.9259477124183001,
+      "kendall_tau_min": 0.1111111111111111,
+      "top1_agreement": 0.9470588235294117,
+      "top1_same_as_base": 161
+    }
+  },
+  "ranking_policy": "ranking-policy-v1",
+  "runs": [
+    "/home/tntvy112_gmail_com/w13-day2/data/experiment_runs/safety-stress-v1",
+    "/home/tntvy112_gmail_com/w13-day2/data/experiment_runs/safety-calibration-v1"
+  ],
+  "safe_per_epoch_mean": 9.416666666666666,
+  "safety_policy": "safety-policy-v1",
+  "skipped": {
+    "no_before_samples": 0,
+    "short_history": 0
+  }
+}
