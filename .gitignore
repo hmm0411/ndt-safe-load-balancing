@@ -72,3 +72,6 @@ mlruns/
 basic_auth.db
 mlartifacts/
 .mlflow_flask_secret
+
+# Closed-loop decision records (one directory per decision)
+data/decision_runs/

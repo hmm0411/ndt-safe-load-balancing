@@ -116,6 +116,8 @@ outcome_service = OutcomeService.from_config(outcome_cfg, ROOT, store)
 decision_service = DecisionService(
     store, forecast_service.payload, outcome_service.predictor, transaction_manager
 )
+# Decision records of plan/execute: one directory per decision (gitignored data).
+decision_service.record_root = ROOT / decision_service.loop_config.record_dir
 stop_event = threading.Event()
 
 
@@ -137,6 +139,15 @@ class MigrationRequest(BaseModel):
     switch_id: str
     target_controller: str
     simulate_failure: str = "none"
+
+
+class DecisionRequest(BaseModel):
+    scenario: str = "unlabelled"
+    simulate_failure: str = "none"
+
+
+class KillSwitchRequest(BaseModel):
+    enabled: bool
 
 
 class OutcomePredictRequest(BaseModel):
@@ -204,6 +215,7 @@ def build_snapshot(run_id: str):
     # snapshot (that would lower the twinning rate and the Quality Score).
     forecast_service.on_twin_state(twin_state.to_dict(), run_id)
     outcome_service.on_twin_state(twin_state.to_dict())
+    decision_service.on_twin_state(twin_state.to_dict())
 
 
 def telemetry_loop():
@@ -330,6 +342,29 @@ def twin_decision_evaluate():
     """Dry run of candidates, pre-check, outcome and Safety Gate on the current snapshot.
     No side effects: no transaction, no ownership change, no role request."""
     return decision_service.evaluate()
+
+
+@app.post("/api/v1/twin/decision/plan")
+def twin_decision_plan(request: DecisionRequest):
+    """Dry run of the whole decision: evaluate, rank, select. Nothing is executed; one
+    decision record is written. The same snapshot gives the same decision_id."""
+    return decision_service.plan(request.scenario)
+
+
+@app.post("/api/v1/twin/decision/execute")
+def twin_decision_execute(request: DecisionRequest):
+    """Plan, revalidate on the latest state, then run the selected migration through
+    the normal executor (role request, barrier, verification, rollback)."""
+    failure_mode = request.simulate_failure.strip().lower()
+    if failure_mode not in {"none", "flow_mod"}:
+        raise HTTPException(400, "simulate_failure must be 'none' or 'flow_mod'")
+    return decision_service.execute(request.scenario, failure_mode)
+
+
+@app.post("/api/v1/twin/decision/kill-switch")
+def twin_decision_kill_switch(request: KillSwitchRequest):
+    """enabled=false stops every plan/execute before any work (status KILL_SWITCH)."""
+    return decision_service.set_enabled(request.enabled)
 
 
 @app.post("/api/v1/init-roles")
@@ -526,3 +561,16 @@ def migrate(request: MigrationRequest):
                     "transaction": tx.to_dict(),
                 },
             ) from rollback_error
+
+def _execute_migration(switch_id: str, target_controller: str, simulate_failure: str):
+    """The closed loop executes through the same code path as POST /api/v1/migrations."""
+    return migrate(
+        MigrationRequest(
+            switch_id=switch_id,
+            target_controller=target_controller,
+            simulate_failure=simulate_failure,
+        )
+    )
+
+
+decision_service.executor = _execute_migration

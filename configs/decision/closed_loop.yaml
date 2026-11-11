@@ -1,0 +1,21 @@
+# Closed loop 2C v1 (Week 13, Day 5). One decision per snapshot, at most one migration
+# at a time (safety-policy-v1: max_concurrent_transactions = 1).
+version: closed-loop-2c-v1
+
+# Kill switch: false = every plan/execute returns KILL_SWITCH and nothing is executed.
+# POST /api/v1/twin/decision/kill-switch changes it at runtime.
+enabled: true
+
+# One directory per decision: <record_dir>/<decision_id>/record.json (gitignored data).
+record_dir: data/decision_runs
+
+# Observed outcome of a COMMITTED migration = mean over the first N Hard-Gate-valid
+# snapshots created at least post_settle_seconds after the transaction finished.
+# 35 s = settle P95 of the 300 committed raw-v2 migrations (34.93 s,
+# evidence/week13/safety_policy_inputs.json); 5 = post_window_valid_snapshots of
+# configs/experiments/migration_outcome_v2.yaml.
+post_settle_seconds: 35
+post_window_valid_snapshots: 5
+
+# Decisions kept in memory for idempotent replay of the same decision_id.
+max_cached_decisions: 512
