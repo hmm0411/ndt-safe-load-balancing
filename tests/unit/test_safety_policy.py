@@ -23,9 +23,11 @@ class RepoPolicyTest(unittest.TestCase):
         self.assertEqual(p.version, "safety-policy-v1")
         self.assertEqual(p.utilization_safe_limit.value, 1.0)
         self.assertTrue(p.utilization_safe_limit.source)
-        for limit in (p.response_p95_max_ms, p.minimum_quality_score, p.minimum_source_relief):
+        for limit in (p.response_p95_max_ms, p.minimum_quality_score):
             self.assertFalse(limit.configured)
             self.assertTrue(limit.reason)
+        self.assertTrue(p.minimum_source_relief.configured)
+        self.assertTrue(p.minimum_source_relief.source)
 
     def test_margins_come_from_the_artifact(self) -> None:
         p = sp.load_safety_policy()

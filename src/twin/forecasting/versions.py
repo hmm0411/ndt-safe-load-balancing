@@ -14,8 +14,8 @@ from pathlib import Path
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 FORECAST_CONFIG = _REPO_ROOT / "configs" / "forecasting" / "forecast.yaml"
 
-DATASET_GENERATION = "v2"
-MODEL_VERSION = "forecast-models-v2"
+DATASET_GENERATION = "v3"
+MODEL_VERSION = "forecast-models-v3"
 
 
 def provisional_horizon(config_path: Path = FORECAST_CONFIG) -> tuple[int, float]:

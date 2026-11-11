@@ -1,0 +1,24 @@
+{
+  "dataset_sha256": "bf21749951c7a530097c8af3fb3435c92a0ae3cc29c3c271e9a19531bd96403d",
+  "dataset_version": "forecast-dataset-v3-h3-provisional",
+  "git_commit": "59d7eca52851b3abf5c9335549a15f66d4fd2dfa",
+  "horizon_seconds": 3.0,
+  "horizon_steps": 3,
+  "limitations": [
+    "not authorized to trigger migration directly",
+    "trained on 2 controllers x 20 switches with fixed ownership; migration and hot-switch were never in the training data",
+    "hot-switch is unseen in training; tree models were worse than persistence there in forecast-models-v2, so the OOD gate (feature_ranges.json) falls back to persistence",
+    "horizon of 3 s is provisional until decision latency is measured (horizon_v1.json)"
+  ],
+  "mlflow_run_id": "a58c51a10e5f41098656ae3b97918097",
+  "model_file": "xgboost.json",
+  "model_name": "xgboost",
+  "model_version": "forecast-models-v3",
+  "output": "delta",
+  "purpose": "Forecast controller utilization U(t+h) from TwinState history; U_hat + m_f >= 1 marks an overload risk for the planner.",
+  "registered_model": "ndt-forecast-xgboost",
+  "registered_version": "2",
+  "sampling_interval_seconds": 1.0,
+  "scaler_file": null,
+  "selection_score": 0.3378021409336662
+}
