@@ -1,0 +1,54 @@
+# Ranking Policy v1 (Week 13, Day 5). Ranking runs ONLY on candidates the Safety Gate
+# marked safe: safety decides feasibility, ranking decides preference.
+# Weights are the domain-informed design of the Week 14 plan, fixed before any result;
+# never tuned on test. A disabled component keeps its weight here for traceability and
+# the enabled weights are renormalized to sum to 1 (same rule as the selection score S).
+version: ranking-policy-v1
+safety_policy_version: safety-policy-v1
+
+# Min-max over the safe candidates of one decision epoch; equal values give 0.5.
+normalization: minmax_per_epoch
+# Deterministic order: total score desc, then dst upper bound asc, then candidate_id.
+tie_break: [total_score_desc, dst_upper_bound_asc, candidate_id_asc]
+
+components:
+  source_relief:          # U_src before - predicted U_src after
+    weight: 0.25
+    enabled: true
+  destination_headroom:   # utilization limit - (predicted U_dst + m_U)
+    weight: 0.20
+    enabled: true
+  imbalance:              # |U_src - U_dst| / 2 before - predicted i_post
+    weight: 0.20
+    enabled: true
+  response:               # R_max - (predicted response + margin)
+    weight: 0.15
+    enabled: false
+    reason: >-
+      safety-policy-v1 has no response limit (response_p95_max_ms null). Turned on in
+      ranking-policy-v2 with the flow-setup latency limit of safety-policy-v2 (Huong 3).
+  global_improvement:     # max_c U_c before - predicted max_c U_c after
+    weight: 0.15
+    enabled: true
+  migration_cost:         # 1 - Norm(predicted migration time)
+    weight: 0.05
+    enabled: false
+    reason: >-
+      No migration-cost model yet; on 2C every action is one switch between the same
+      two controllers, so a historical cost per action class would be a constant.
+
+# NO_MIGRATION is always in the action set. It is chosen when no candidate is safe
+# (NO_SAFE_ACTION) or when no safe candidate predicts a strictly positive value of every
+# raw metric listed here (NO_BENEFICIAL_ACTION): a migration that does not lower the
+# predicted max utilization cannot remove the overload the Risk Detector flagged.
+no_migration:
+  require_positive: [global_improvement]
+
+# Weight sets for the sensitivity analysis (Week 14 plan, section 23). Order:
+# source_relief, destination_headroom, imbalance, response, global_improvement,
+# migration_cost. Disabled components stay disabled in every set.
+sensitivity:
+  base:          [0.25, 0.20, 0.20, 0.15, 0.15, 0.05]
+  relief_heavy:  [0.30, 0.20, 0.15, 0.15, 0.15, 0.05]
+  balance_heavy: [0.20, 0.20, 0.30, 0.10, 0.15, 0.05]
+  qos_heavy:     [0.20, 0.20, 0.15, 0.25, 0.15, 0.05]
