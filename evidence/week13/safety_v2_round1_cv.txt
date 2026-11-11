@@ -1,0 +1,19 @@
+# round 1: candidates v1B, b1, b2 (margin only)
+rows=120 folds=5 m_u=0.0366 band sizes=[44, 48, 28]
+cand | unsafe_accepted | unsafe_rejected | false_rejections | safe_accepted | qualifies
+v1B | 6 | 30 | 6 | 78 | True
+b1 | 4 | 32 | 29 | 55 | False
+b2 | 1 | 35 | 28 | 56 | False
+fold margins b1: [0.0917, 0.0871, 0.0827, 0.1011, 0.1011]
+fold sizes: [24, 24, 24, 24, 24]
+
+# round 1: candidate a (retrained)
+refit on train only vs v1 on calibration, max abs diff: 0.0
+fold 0: fit 72 conformal 24 margin 0.0431
+fold 1: fit 72 conformal 24 margin 0.0351
+fold 2: fit 72 conformal 24 margin 0.0404
+fold 3: fit 72 conformal 24 margin 0.0388
+fold 4: fit 72 conformal 24 margin 0.0362
+cand | unsafe_accepted | unsafe_rejected | false_rejections | safe_accepted | qualifies
+v1B | 6 | - | 6 | - | True
+a | 4 | 32 | 13 | 71 | False

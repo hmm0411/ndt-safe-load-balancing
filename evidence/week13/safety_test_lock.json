@@ -1,0 +1,14 @@
+{
+  "status": "completed",
+  "attempt": 1,
+  "opened_at": "2026-11-10T08:53:56.257991+00:00",
+  "policy_sha12": "8c548830861b",
+  "rule": "test and safety-stress-v1 scored once with the frozen policy; nothing selected on them",
+  "completed_at": "2026-11-10T08:53:56.289288+00:00",
+  "outputs_sha256": {
+    "safety_confusion_table.csv": "ce326b628077fd9554e71cd48a2394a8e0e64a57c5fc86082f61f28d53318468",
+    "safety_margin_ablation.csv": "f3a08876993ebb927cc2382c2b1ec92d06edf957105b580814f9c3579498a970",
+    "safety_reason_distribution.csv": "4be90520c182ab2abb04231fe89b34657d5c153c2c538c5b5567f99c77f78f1b",
+    "safety_final_evaluation.json": "a117aeaeb8a5cf587935108e69e4f69834b54c83fce42f9df3771fdfbeeaac79"
+  }
+}

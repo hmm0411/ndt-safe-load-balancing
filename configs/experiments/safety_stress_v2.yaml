@@ -1,0 +1,28 @@
+# Safety stress set v2 (Week 13): fresh evaluation of safety-policy-v2 near U = 1.
+# Owner: Vy (runs). EVALUATION ONLY: never used to train, select or calibrate anything;
+# read once, after safety-policy-v2 and its criteria are committed.
+# Levels differ from safety-stress-v1 (0.88, 0.95) and safety-calibration-v1
+# (0.80, 0.84, 0.92, 0.98), so it also tests unseen destination loads.
+schema_version: migration-outcome-v1
+topology: 2C20S
+controllers_config: configs/controllers_2c20s.yaml
+output_root: data/experiment_runs/safety-stress-v2
+
+pre_window_valid_snapshots: 5
+post_window_valid_snapshots: 5
+post_window_timeout_s: 60
+
+workloads:
+  stable: [early, middle, late]
+  gradual: [u40, u60, u95]
+  burst: [baseline_1, burst_1, recovery]
+  oscillating: [rising, peak, falling]
+  hot_switch: [moderate, high, peak]
+
+destination_load_levels: [0.90, 0.93, 0.97]
+directions: [[c1, c2], [c2, c1]]
+
+# New seed: not 101-105, 9201-9205, 9301 nor 9401.
+repeats: {r01: 9501}
+split: {stress: [r01]}
+no_op_controls: 0

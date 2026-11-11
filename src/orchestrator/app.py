@@ -16,6 +16,7 @@ from src.execution.migration import ControllerClient, RoleMigrationExecutor
 from src.execution.rollback import RollbackExecutor
 from src.execution.verification import MigrationVerifier
 from src.orchestrator.current_state import CurrentStateStore
+from src.orchestrator.decision_service import DecisionService
 from src.orchestrator.forecast_service import ForecastService
 from src.orchestrator.outcome_service import OutcomeService
 from src.orchestrator.ownership_manager import OwnershipManager
@@ -112,6 +113,9 @@ store = CurrentStateStore()
 writer = JsonlWriter()
 forecast_service = ForecastService.from_config(forecast_cfg, ROOT, store, writer)
 outcome_service = OutcomeService.from_config(outcome_cfg, ROOT, store)
+decision_service = DecisionService(
+    store, forecast_service.payload, outcome_service.predictor, transaction_manager
+)
 stop_event = threading.Event()
 
 
@@ -319,6 +323,13 @@ def twin_outcome_predict(request: OutcomePredictRequest):
         )
     except ValueError as exc:
         raise HTTPException(400, str(exc)) from exc
+
+
+@app.post("/api/v1/twin/decision/evaluate")
+def twin_decision_evaluate():
+    """Dry run of candidates, pre-check, outcome and Safety Gate on the current snapshot.
+    No side effects: no transaction, no ownership change, no role request."""
+    return decision_service.evaluate()
 
 
 @app.post("/api/v1/init-roles")

@@ -52,3 +52,14 @@ class TransactionManager:
     def locked_switches(self):
         with self._lock:
             return sorted(self._locked_switches)
+
+    def last_finished_at(self) -> datetime | None:
+        """Finish time of the latest completed transaction (global cooldown), or None."""
+        with self._lock:
+            times = [tx.finished_at for tx in self._transactions.values() if tx.finished_at]
+            return max(times) if times else None
+
+    def active_count(self) -> int:
+        """Number of switches currently locked by an in-flight transaction."""
+        with self._lock:
+            return len(self._locked_switches)
