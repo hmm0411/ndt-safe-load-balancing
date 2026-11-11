@@ -1,0 +1,75 @@
+{
+  "schema_version": "1.0",
+  "model_version": "post-migration-v1",
+  "capacity_version": "controller_capacity.json@sha256:952c64644b99",
+  "method": "predict_per_candidate_sequential_perf_counter_ns",
+  "model_preloaded": true,
+  "input": "synthetic TwinState, 2 controllers x 10 switches, 5-snapshot history",
+  "warmup": 50,
+  "repeats": 1000,
+  "candidates": {
+    "1": {
+      "repeats": 1000.0,
+      "warmup": 50.0,
+      "mean_ms": 2.535814,
+      "p50_ms": 2.328111,
+      "p95_ms": 2.71685,
+      "p99_ms": 5.454598,
+      "max_ms": 55.340285,
+      "ms_per_candidate_mean": 2.535814
+    },
+    "10": {
+      "repeats": 1000.0,
+      "warmup": 50.0,
+      "mean_ms": 24.454367,
+      "p50_ms": 23.428754,
+      "p95_ms": 28.836901,
+      "p99_ms": 49.503333,
+      "max_ms": 63.377436,
+      "ms_per_candidate_mean": 2.445437
+    }
+  },
+  "batch_method": "predict_batch_one_call_perf_counter_ns",
+  "batch_candidates": {
+    "1": {
+      "repeats": 1000.0,
+      "warmup": 50.0,
+      "mean_ms": 2.434518,
+      "p50_ms": 2.297303,
+      "p95_ms": 2.662804,
+      "p99_ms": 5.223438,
+      "max_ms": 17.779757,
+      "ms_per_candidate_mean": 2.434518,
+      "speedup_mean": 1.042
+    },
+    "10": {
+      "repeats": 1000.0,
+      "warmup": 50.0,
+      "mean_ms": 4.913416,
+      "p50_ms": 4.686669,
+      "p95_ms": 5.570725,
+      "p99_ms": 8.259473,
+      "max_ms": 36.604322,
+      "ms_per_candidate_mean": 0.491342,
+      "speedup_mean": 4.977
+    }
+  },
+  "environment": {
+    "hostname": "kltn-sdn",
+    "python": "3.10.12",
+    "cpu_count": 8,
+    "load_average_before": [
+      0.55,
+      0.22,
+      0.07
+    ],
+    "load_average_after": [
+      4.18,
+      1.2,
+      0.41
+    ],
+    "git_commit": "7b6d6fce54c7806e55740c4a1274606518ea500d",
+    "git_tracked_changes": false,
+    "measured_at": "2026-11-08T15:38:51.102131+00:00"
+  }
+}
