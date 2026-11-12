@@ -46,7 +46,7 @@ def _executed(r: Record, status: str) -> bool:
 
 
 # Scenarios whose workload may stay below the risk threshold (U + m_f >= 1). When every
-# record is NO_RISK the result is NOT_TRIGGERED: neither PASS nor FAIL, reported as is.
+# record ever flags a controller at risk the result is NOT_TRIGGERED: neither PASS nor FAIL, reported as is.
 MAY_NOT_TRIGGER = ("gradual", "hot_switch")
 NOT_TRIGGERED = "NOT_TRIGGERED"
 
@@ -103,11 +103,17 @@ def stats(values: Sequence[Any]) -> dict[str, Any]:
 
 
 def latency(records: Sequence[Record]) -> dict[str, Any]:
+    """Stage latency; decision_total only over decisions that ran the whole pipeline
+    (candidates, outcome, Gate, ranking): a NO_RISK decision stops after the forecast
+    and would make the total look two orders of magnitude faster than it is."""
     out = {s: stats([r["timings_ms"].get(s) for r in records if s in r["timings_ms"]])
            for s in STAGES}
-    totals = [sum(float(v) for k, v in r["timings_ms"].items() if k in STAGES) for r in records
-              if r["timings_ms"]]
-    out["decision_total"] = stats(totals)
+    full = [r for r in records if "ranking" in r["timings_ms"]]
+    out["decision_total"] = stats(
+        [sum(float(v) for k, v in r["timings_ms"].items() if k in STAGES) for r in full])
+    out["decision_total_all_records"] = stats(
+        [sum(float(v) for k, v in r["timings_ms"].items() if k in STAGES) for r in records
+         if r["timings_ms"]])
     return out
 
 
@@ -160,7 +166,8 @@ def analyze(records: Sequence[Record]) -> dict[str, Any]:
         rs = scenarios.get(name, [])
         if not rs:
             result = "MISSING"
-        elif name in MAY_NOT_TRIGGER and all(r["status"] == "NO_RISK" for r in rs):
+        elif name in MAY_NOT_TRIGGER and not any(
+                r.get("at_risk") or r.get("transaction") for r in rs):
             result = NOT_TRIGGERED
         else:
             result = "PASS" if check(rs) else "FAIL"

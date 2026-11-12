@@ -51,6 +51,11 @@ class AnalyzeTest(unittest.TestCase):
         total = report["latency_ms"]["decision_total"]
         self.assertEqual(total["n"], 9)
         self.assertAlmostEqual(total["p95"], sum(TIMINGS.values()))
+        short = record(40, "stable", status="NO_RISK")
+        short["timings_ms"] = {"forecast": 1.0, "risk": 0.1}
+        both = acl.analyze(ALL_PASS + [short])["latency_ms"]
+        self.assertEqual(both["decision_total"]["n"], 9)            # full pipeline only
+        self.assertEqual(both["decision_total_all_records"]["n"], 10)
         pe = report["prediction_errors"]
         self.assertEqual(pe["n"], 3)
         self.assertEqual(pe["u_dst_upper_bound_coverage"], "2/3")  # 0.90 > 0.83 + 0.037
@@ -76,11 +81,12 @@ class AnalyzeTest(unittest.TestCase):
     def test_workload_below_the_risk_threshold_is_not_triggered(self) -> None:
         quiet = [r for r in ALL_PASS if r["scenario"] != "gradual"]
         quiet += [record(20 + i, "gradual", status="NO_RISK") for i in range(3)]
+        quiet += [record(25, "gradual", status="NOT_READY")]  # forecaster warm-up
         report = acl.analyze(quiet)
         self.assertEqual(report["scenario_gates"]["gradual"]["result"], "NOT_TRIGGERED")
         self.assertEqual(report["not_triggered"], ["gradual"])
         self.assertTrue(report["all_gates_pass"])
-        mixed = quiet + [record(30, "gradual", status="NO_SAFE_ACTION")]
+        mixed = quiet + [{**record(30, "gradual", status="NO_SAFE_ACTION"), "at_risk": ["c1"]}]
         self.assertEqual(acl.analyze(mixed)["scenario_gates"]["gradual"]["result"], "FAIL")
 
     def test_stats(self) -> None:
