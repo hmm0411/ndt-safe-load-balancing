@@ -23,6 +23,7 @@ def record(i: int, scenario: str, *, mode: str = "execute", status: str = "SELEC
         "snapshot_id": f"snap-{i}", "timings_ms": dict(TIMINGS), "collection_latency_ms": 12.0,
         "funnel": {"raw": 10, "eligible": 10, "evaluated": 10, "safe": 8},
         "reasons": reasons or {}, "selected": selected,
+        "at_risk": [] if status in ("NO_RISK", "NOT_READY", "INVALID_SNAPSHOT") else ["c1"],
         "transaction": {"transaction_id": f"t{i}", "status": tx, "duration_s": 2.0} if tx else None,
         "actual_post": {"u_src": 0.78, "u_dst": actual_dst, "i": 0.04} if tx else None,
     }
@@ -62,6 +63,10 @@ class AnalyzeTest(unittest.TestCase):
         h = report["horizon"]
         self.assertEqual(h["status"], "OK")
         self.assertEqual(h["migration_source"], "closed-loop runs")
+        self.assertEqual(h["n_committed"], 3)
+        self.assertEqual(h["including_rollbacks"]["n"], 4)
+        self.assertEqual(len(pe["migrations"]), 3)
+        self.assertFalse(any(m["dst_above_safe_limit"] for m in pe["migrations"]))
         # 12 ms + 5.5 ms + 2000 ms -> 3 steps of 1 s: h = 3 still enough
         self.assertEqual(h["horizon_steps"], 3)
         self.assertTrue(h["current_h_sufficient"])
@@ -88,6 +93,19 @@ class AnalyzeTest(unittest.TestCase):
         self.assertTrue(report["all_gates_pass"])
         mixed = quiet + [{**record(30, "gradual", status="NO_SAFE_ACTION"), "at_risk": ["c1"]}]
         self.assertEqual(acl.analyze(mixed)["scenario_gates"]["gradual"]["result"], "FAIL")
+
+    def test_no_safe_action_ignores_warm_up_but_not_a_selected_action(self) -> None:
+        base = [r for r in ALL_PASS if r["scenario"] != "no_safe_action"]
+        risky = {**record(50, "no_safe_action", status="NO_SAFE_ACTION"), "at_risk": ["c1"]}
+        warm = [record(51, "no_safe_action", status="NOT_READY"),
+                record(52, "no_safe_action", status="NO_RISK")]
+        ok = acl.analyze(base + [risky] + warm)["scenario_gates"]["no_safe_action"]
+        self.assertEqual(ok["result"], "PASS")
+        chosen = {**record(53, "no_safe_action", status="SELECTED"), "at_risk": ["c1"]}
+        bad = acl.analyze(base + [risky, chosen])["scenario_gates"]["no_safe_action"]
+        self.assertEqual(bad["result"], "FAIL")
+        never = acl.analyze(base + warm)["scenario_gates"]["no_safe_action"]
+        self.assertEqual(never["result"], "FAIL")  # no risk ever: the scenario did not happen
 
     def test_stats(self) -> None:
         self.assertEqual(acl.stats([]), {"n": 0})
