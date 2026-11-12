@@ -174,7 +174,9 @@ def analyze(records: Sequence[Record]) -> dict[str, Any]:
         peak = max((float(c["utilization"]) for r in rs
                     for c in (r.get("twin_state") or {}).get("controllers", [])), default=None)
         gates[name] = {"expect": expect, "n": len(rs), "result": result,
-                       "peak_utilization": peak}
+                       "peak_utilization": peak,
+                       "status_counts": dict(sorted(Counter(
+                           f"{r['mode']}:{r['status']}" for r in rs).items()))}
     reasons: Counter[str] = Counter()
     for r in records:
         reasons.update({k: int(v) for k, v in r["reasons"].items()})
@@ -203,7 +205,8 @@ def main(argv: list[str] | None = None) -> int:
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     for name, gate in report["scenario_gates"].items():
-        print(f"{gate['result']:7s} {name:22s} n={gate['n']:<3d} {gate['expect']}")
+        print(f"{gate['result']:13s} {name:22s} n={gate['n']:<3d} {gate['expect']}")
+        print(f"{'':13s} {gate['status_counts']}")
     print("horizon:", json.dumps(report["horizon"]))
     print(f"wrote {args.out}")
     return 0 if report["all_gates_pass"] else 1
