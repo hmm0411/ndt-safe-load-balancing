@@ -29,6 +29,20 @@ class LoopWorkloadTest(unittest.TestCase):
         self.assertIn("NDT_HOT_SWITCH_LEVEL=peak", cmd)
         self.assertIn("NDT_HOT_SWITCH_CHECK_LOAD=0", cmd)
 
+    def test_source_level_replaces_only_the_source_profile(self) -> None:
+        plan = rlw.make_plan("stable", "run", 0.45, "c1", "c2", 9601)
+        cmd = build_workload_command(plan, self.settings(), Path("/w"), plan.attempt_id, 180.0)
+        self.assertEqual(rlw.source_profile(cmd, plan, None), cmd)
+        out = rlw.source_profile(cmd, plan, 1.05)
+        self.assertIn("c1=constant:1.05", out)
+        self.assertNotIn("c1=stable", out)
+        self.assertIn("c2=constant:0.45", out)
+        gradual = rlw.make_plan("gradual", "run", 0.45, "c1", "c2", 9601)
+        with self.assertRaises(ValueError):
+            rlw.source_profile(cmd, gradual, 1.05)
+        with self.assertRaises(ValueError):
+            rlw.source_profile(cmd, plan, 3.0)
+
     def test_seed_is_not_a_data_seed_and_bad_plans_are_refused(self) -> None:
         used = {101, 102, 103, 104, 105, 9201, 9202, 9203, 9204, 9205, 9301, 9401, 9501}
         self.assertNotIn(rlw.DEFAULT_SEED, used)

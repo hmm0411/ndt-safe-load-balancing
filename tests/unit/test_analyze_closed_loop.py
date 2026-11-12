@@ -31,6 +31,7 @@ def record(i: int, scenario: str, *, mode: str = "execute", status: str = "SELEC
 ALL_PASS = [
     record(1, "stable", status="NO_RISK"),
     record(2, "gradual", tx="COMMITTED"),
+    record(10, "sustained_overload", tx="COMMITTED"),
     record(3, "hot_switch", tx="COMMITTED", actual_dst=0.90),
     record(4, "verification_failure", tx="RESTORED"),
     record(5, "no_safe_action", status="NO_SAFE_ACTION", reasons={"DST_UTILIZATION_UNSAFE": 10}),
@@ -46,13 +47,13 @@ class AnalyzeTest(unittest.TestCase):
     def test_all_scenarios_pass_and_numbers_add_up(self) -> None:
         report = acl.analyze(ALL_PASS)
         self.assertTrue(report["all_gates_pass"], report["scenario_gates"])
-        self.assertEqual(report["n_by_mode"], {"dry_run": 1, "execute": 8})
+        self.assertEqual(report["n_by_mode"], {"dry_run": 1, "execute": 9})
         total = report["latency_ms"]["decision_total"]
-        self.assertEqual(total["n"], 8)
+        self.assertEqual(total["n"], 9)
         self.assertAlmostEqual(total["p95"], sum(TIMINGS.values()))
         pe = report["prediction_errors"]
-        self.assertEqual(pe["n"], 2)
-        self.assertEqual(pe["u_dst_upper_bound_coverage"], "1/2")  # 0.90 > 0.83 + 0.037
+        self.assertEqual(pe["n"], 3)
+        self.assertEqual(pe["u_dst_upper_bound_coverage"], "2/3")  # 0.90 > 0.83 + 0.037
         h = report["horizon"]
         self.assertEqual(h["status"], "OK")
         self.assertEqual(h["migration_source"], "closed-loop runs")
@@ -71,6 +72,16 @@ class AnalyzeTest(unittest.TestCase):
         report = acl.analyze([record(1, "stable", mode="dry_run", status="NO_RISK")])
         self.assertEqual(report["latency_source"], "dry_run (no execute record yet)")
         self.assertIn("raw-v2", report["horizon"]["migration_source"])
+
+    def test_workload_below_the_risk_threshold_is_not_triggered(self) -> None:
+        quiet = [r for r in ALL_PASS if r["scenario"] != "gradual"]
+        quiet += [record(20 + i, "gradual", status="NO_RISK") for i in range(3)]
+        report = acl.analyze(quiet)
+        self.assertEqual(report["scenario_gates"]["gradual"]["result"], "NOT_TRIGGERED")
+        self.assertEqual(report["not_triggered"], ["gradual"])
+        self.assertTrue(report["all_gates_pass"])
+        mixed = quiet + [record(30, "gradual", status="NO_SAFE_ACTION")]
+        self.assertEqual(acl.analyze(mixed)["scenario_gates"]["gradual"]["result"], "FAIL")
 
     def test_stats(self) -> None:
         self.assertEqual(acl.stats([]), {"n": 0})

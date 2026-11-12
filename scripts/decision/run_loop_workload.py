@@ -9,6 +9,12 @@ command, and collects nothing: decisions are recorded by the orchestrator itself
   python3 scripts/decision/run_loop_workload.py --workload gradual --dst-level 0.45
   python3 scripts/decision/run_loop_workload.py --workload hot_switch --level peak \
       --dst-level 0.95 --duration 150
+  python3 scripts/decision/run_loop_workload.py --workload stable --source-level 1.05 \
+      --dst-level 0.45 --duration 180      # sustained overload of the source
+
+The forecast workloads were built to keep U below 1 (gradual tops at a 0.95 target,
+0.91 measured), so they never reach the risk threshold U + m_f >= 1; --source-level
+holds the source at a constant utilization instead (stable workload only).
 
 In a second terminal, once this prints "workload started":
   python3 scripts/decision/run_closed_loop.py --scenario gradual --mode dry_run --duration 110
@@ -63,12 +69,28 @@ def make_plan(workload: str, level: str, dst_level: float, source: str, target: 
                        "closed_loop")
 
 
+def source_profile(cmd: list[str], plan: AttemptPlan, source_level: float | None) -> list[str]:
+    """Replace the source profile of the workload command by constant:<U> if asked."""
+    if source_level is None:
+        return cmd
+    if plan.workload != "stable":
+        raise ValueError("--source-level needs --workload stable (constant source load)")
+    if not 0.0 <= source_level <= 1.5:
+        raise ValueError("source-level must be within [0, 1.5]")
+    old = f"{plan.source_controller}={plan.workload}"
+    if cmd.count(old) != 1:
+        raise ValueError(f"cannot find the source profile {old!r} in the workload command")
+    return [f"{plan.source_controller}=constant:{source_level}" if x == old else x for x in cmd]
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--workload", required=True, choices=sorted(WORKLOAD_FLAGS))
     ap.add_argument("--level", default="run", help="hot_switch: moderate | high | peak")
     ap.add_argument("--dst-level", type=float, required=True,
                     help="constant utilization of the target controller, e.g. 0.45 or 0.95")
+    ap.add_argument("--source-level", type=float, default=None,
+                    help="hold the source at this constant utilization (stable workload only)")
     ap.add_argument("--source", default="c1")
     ap.add_argument("--target", default="c2")
     ap.add_argument("--duration", type=float, default=120.0, help="workload seconds")
@@ -80,13 +102,7 @@ def main(argv: list[str] | None = None) -> int:
         print("run this as the normal user (the workload calls sudo itself)", file=sys.stderr)
         return 2
     os.chdir(REPO_ROOT)
-    try:
-        plan = make_plan(args.workload, args.level, args.dst_level, args.source, args.target,
-                         args.seed)
-    except ValueError as exc:
-        print(exc, file=sys.stderr)
-        return 2
-    work_dir = REPO_ROOT / WORK_ROOT / plan.attempt_id
+    work_dir = REPO_ROOT / WORK_ROOT / "pending"
     settings = RunnerSettings(
         repo_root=REPO_ROOT, output_root=work_dir, work_root=REPO_ROOT / WORK_ROOT,
         config_path=REPO_ROOT / args.controllers_config,
@@ -95,6 +111,17 @@ def main(argv: list[str] | None = None) -> int:
         capacity_runs=REPO_ROOT / "data/benchmarks/capacity_runs.csv",
         orchestrator_url=args.orchestrator_url,
     )
+    try:
+        plan = make_plan(args.workload, args.level, args.dst_level, args.source, args.target,
+                         args.seed)
+        tag = "" if args.source_level is None else f"-src{int(round(args.source_level * 100)):03d}"
+        work_dir = REPO_ROOT / WORK_ROOT / (plan.attempt_id + tag)
+        command = source_profile(
+            build_workload_command(plan, settings, work_dir / "workload", plan.attempt_id,
+                                   args.duration), plan, args.source_level)
+    except ValueError as exc:
+        print(exc, file=sys.stderr)
+        return 2
     url = args.orchestrator_url.rstrip("/")
     orchestrator = workload = None
     try:
@@ -107,9 +134,7 @@ def main(argv: list[str] | None = None) -> int:
                  "RUN_ID": plan.attempt_id},
             log_path=work_dir / "orchestrator.log")
         workload = ProcessGroup(
-            build_workload_command(plan, settings, work_dir / "workload", plan.attempt_id,
-                                   args.duration),
-            cwd=REPO_ROOT, env=dict(os.environ), log_path=work_dir / "workload.log",
+            command, cwd=REPO_ROOT, env=dict(os.environ), log_path=work_dir / "workload.log",
             use_sudo_to_signal=True)
         print(f"[{plan.attempt_id}] starting orchestrator", flush=True)
         orchestrator.start()

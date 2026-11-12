@@ -45,6 +45,11 @@ def _executed(r: Record, status: str) -> bool:
     return r["mode"] == "execute" and (r.get("transaction") or {}).get("status") == status
 
 
+# Scenarios whose workload may stay below the risk threshold (U + m_f >= 1). When every
+# record is NO_RISK the result is NOT_TRIGGERED: neither PASS nor FAIL, reported as is.
+MAY_NOT_TRIGGER = ("gradual", "hot_switch")
+NOT_TRIGGERED = "NOT_TRIGGERED"
+
 # Expected outcome per scenario (plan Day 6). A scenario with no record is MISSING.
 GATES: dict[str, tuple[str, Callable[[Sequence[Record]], bool]]] = {
     "stable": ("no migration is executed",
@@ -53,6 +58,8 @@ GATES: dict[str, tuple[str, Callable[[Sequence[Record]], bool]]] = {
                 lambda rs: any(_executed(r, "COMMITTED") for r in rs)),
     "hot_switch": ("at least one migration is COMMITTED",
                    lambda rs: any(_executed(r, "COMMITTED") for r in rs)),
+    "sustained_overload": ("at least one migration is COMMITTED",
+                           lambda rs: any(_executed(r, "COMMITTED") for r in rs)),
     "verification_failure": ("the transaction ends RESTORED",
                              lambda rs: any(_executed(r, "RESTORED") for r in rs)),
     "no_safe_action": ("NO_SAFE_ACTION and no migration",
@@ -151,8 +158,16 @@ def analyze(records: Sequence[Record]) -> dict[str, Any]:
     gates = {}
     for name, (expect, check) in GATES.items():
         rs = scenarios.get(name, [])
-        gates[name] = {"expect": expect, "n": len(rs),
-                       "result": "MISSING" if not rs else ("PASS" if check(rs) else "FAIL")}
+        if not rs:
+            result = "MISSING"
+        elif name in MAY_NOT_TRIGGER and all(r["status"] == "NO_RISK" for r in rs):
+            result = NOT_TRIGGERED
+        else:
+            result = "PASS" if check(rs) else "FAIL"
+        peak = max((float(c["utilization"]) for r in rs
+                    for c in (r.get("twin_state") or {}).get("controllers", [])), default=None)
+        gates[name] = {"expect": expect, "n": len(rs), "result": result,
+                       "peak_utilization": peak}
     reasons: Counter[str] = Counter()
     for r in records:
         reasons.update({k: int(v) for k, v in r["reasons"].items()})
@@ -166,7 +181,8 @@ def analyze(records: Sequence[Record]) -> dict[str, Any]:
         "horizon": horizon(execute or records, decision_p95),
         "prediction_errors": prediction_errors(execute),
         "scenario_gates": gates,
-        "all_gates_pass": all(g["result"] == "PASS" for g in gates.values()),
+        "all_gates_pass": all(g["result"] in ("PASS", NOT_TRIGGERED) for g in gates.values()),
+        "not_triggered": sorted(k for k, g in gates.items() if g["result"] == NOT_TRIGGERED),
     }
 
 

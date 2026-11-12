@@ -41,17 +41,24 @@ Terminal B (loop), started when terminal A prints `workload started`:
 | stable | `--workload stable --dst-level 0.45` | `--duration 60` |
 | gradual | `--workload gradual --dst-level 0.45` | `--duration 110` |
 | hot_switch | `--workload hot_switch --level peak --dst-level 0.45` | `--duration 110` |
-| dst_near_capacity | `--workload gradual --dst-level 0.95` | `--duration 110` |
-| no_safe_action | `--workload hot_switch --level peak --dst-level 0.95` | `--duration 110` |
-| cooldown | as gradual, `--duration 180` | execute: `--after-commit cooldown` |
-| conflict | as gradual | `--duration 8 --interval 0.1 --conflict-migration s1:c2`, started when the source is at risk |
+| sustained_overload | `--workload stable --source-level 1.05 --dst-level 0.45 --duration 180` | `--duration 170` |
+| dst_near_capacity | `--workload stable --source-level 1.05 --dst-level 0.95 --duration 150` | `--duration 140` |
+| no_safe_action | as dst_near_capacity | `--duration 140` |
+| cooldown | as sustained_overload | execute: `--after-commit cooldown` |
+| conflict | as sustained_overload | `--duration 8 --interval 0.1 --conflict-migration s1:c2`, started when the source is at risk |
 | invalid_snapshot | as stable | pause one controller for ~5 s (below) |
-| verification_failure | as gradual | execute: `--simulate-failure flow_mod` |
+| verification_failure | as sustained_overload | execute: `--simulate-failure flow_mod` |
+
+First pass on the VM (13/11): gradual peaks at U = 0.914 on the source (target 0.95),
+below the risk threshold 0.942 (1 - m_f of c1), so every decision is `NO_RISK`. The
+forecast workloads were built to stay under U = 1; a migration can only be triggered
+by a source held above the threshold, hence `sustained_overload`. gradual and
+hot_switch are still run and reported as `NOT_TRIGGERED` when no risk is ever flagged.
 
 The workload seed is 9601 (not a seed of any training, calibration or stress set).
 Dry run all rows first (`--mode dry_run`). Execute (`--mode execute --wait-post 50`,
 terminal A with `--duration 180` so the orchestrator outlives the post window) only
-gradual, hot_switch and verification_failure, one at a time.
+sustained_overload (with `--after-commit cooldown`) and verification_failure, one at a time.
 
 invalid_snapshot: while the loop runs, `pkill -STOP -f 'ryu-manager.*6654'`, wait 5 s,
 `pkill -CONT -f 'ryu-manager.*6654'`. Expected: records with status `INVALID_SNAPSHOT`

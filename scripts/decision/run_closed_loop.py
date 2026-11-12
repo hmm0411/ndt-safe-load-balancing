@@ -23,7 +23,7 @@ from collections import Counter
 from collections.abc import Callable
 from typing import Any
 
-SCENARIOS = ("stable", "gradual", "hot_switch", "verification_failure", "no_safe_action",
+SCENARIOS = ("stable", "gradual", "hot_switch", "sustained_overload", "verification_failure", "no_safe_action",
              "dst_near_capacity", "invalid_snapshot", "cooldown", "conflict")
 Post = Callable[[str, dict[str, Any]], dict[str, Any]]
 
