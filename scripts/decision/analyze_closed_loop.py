@@ -204,7 +204,10 @@ def analyze(records: Sequence[Record]) -> dict[str, Any]:
         if not rs:
             result = "MISSING"
         elif name in MAY_NOT_TRIGGER and not any(
-                r.get("at_risk") or r.get("transaction") for r in rs):
+                r.get("at_risk") or r.get("transaction")
+                for r in ([r for r in rs if r["mode"] == "execute"] or rs)):
+            # judged on the execute run when there is one: a risk seen only in an
+            # earlier dry run could not have been executed there
             result = NOT_TRIGGERED
         else:
             result = "PASS" if check(rs) else "FAIL"

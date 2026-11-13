@@ -91,6 +91,9 @@ class AnalyzeTest(unittest.TestCase):
         self.assertEqual(report["scenario_gates"]["gradual"]["result"], "NOT_TRIGGERED")
         self.assertEqual(report["not_triggered"], ["gradual"])
         self.assertTrue(report["all_gates_pass"])
+        dry = {**record(31, "gradual", mode="dry_run", status="SELECTED"), "at_risk": ["c1"]}
+        self.assertEqual(acl.analyze(quiet + [dry])["scenario_gates"]["gradual"]["result"],
+                         "NOT_TRIGGERED")  # the execute run never saw a risk
         mixed = quiet + [{**record(30, "gradual", status="NO_SAFE_ACTION"), "at_risk": ["c1"]}]
         self.assertEqual(acl.analyze(mixed)["scenario_gates"]["gradual"]["result"], "FAIL")
 
