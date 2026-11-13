@@ -1,0 +1,347 @@
+{
+  "all_gates_pass": true,
+  "horizon": {
+    "collection_p95_ms": 981.6709999999999,
+    "current_h": 3,
+    "current_h_sufficient": false,
+    "decision_p95_ms": 71.18691013017059,
+    "effective_horizon_seconds": 4.0,
+    "horizon_steps": 4,
+    "including_rollbacks": {
+      "horizon_steps": 4,
+      "migration_p95_ms": 2089.275,
+      "n": 7,
+      "required_lead_time_seconds": 3.142132910130171
+    },
+    "margin_seconds": -0.14213291013017093,
+    "migration_p95_ms": 2089.275,
+    "migration_source": "closed-loop runs",
+    "n_committed": 6,
+    "required_lead_time_seconds": 3.142132910130171,
+    "status": "OK"
+  },
+  "latency_ms": {
+    "candidate": {
+      "max": 0.8789291605353355,
+      "mean": 0.45745597385308323,
+      "n": 85,
+      "p50": 0.4459419287741184,
+      "p95": 0.7794168777763844
+    },
+    "decision_total": {
+      "max": 86.21862027366352,
+      "mean": 20.8049464952163,
+      "n": 85,
+      "p50": 17.115877894404413,
+      "p95": 71.18691013017059
+    },
+    "decision_total_all_records": {
+      "max": 86.21862027366352,
+      "mean": 3.97171057851754,
+      "n": 663,
+      "p50": 1.385453801223755,
+      "p95": 18.46982068062997
+    },
+    "forecast": {
+      "max": 6.319185,
+      "mean": 1.7503521975867258,
+      "n": 663,
+      "p50": 1.365285,
+      "p95": 4.477171
+    },
+    "outcome": {
+      "max": 78.53133697062731,
+      "mean": 15.679721167201505,
+      "n": 85,
+      "p50": 12.545408215373755,
+      "p95": 63.05026076734066
+    },
+    "ranking": {
+      "max": 0.6647608242928982,
+      "mean": 0.13949952143080094,
+      "n": 85,
+      "p50": 0.10995334014296532,
+      "p95": 0.4927162081003189
+    },
+    "revalidation": {
+      "max": 0.1424313522875309,
+      "mean": 0.11616299993225507,
+      "n": 7,
+      "p50": 0.10617077350616455,
+      "p95": 0.1424313522875309
+    },
+    "risk": {
+      "max": 0.05922000855207443,
+      "mean": 0.012450269247836477,
+      "n": 663,
+      "p50": 0.011597760021686554,
+      "p95": 0.015541911125183105
+    },
+    "safety": {
+      "max": 2.083257772028446,
+      "mean": 0.9432402439415455,
+      "n": 85,
+      "p50": 0.8644862100481987,
+      "p95": 1.84650719165802
+    }
+  },
+  "latency_source": "execute",
+  "n_by_mode": {
+    "dry_run": 491,
+    "execute": 706
+  },
+  "n_records": 1197,
+  "not_triggered": [
+    "hot_switch"
+  ],
+  "prediction_errors": {
+    "i_error_actual_minus_pred": {
+      "max": 0.022765106222431053,
+      "mean": 0.001152022686523757,
+      "n": 6,
+      "p50": -0.002454140356793033,
+      "p95": 0.022765106222431053
+    },
+    "migrations": [
+      {
+        "actual_dst": 0.6172878300936462,
+        "actual_src": 0.8117458241583797,
+        "candidate_id": "snap-0758b0c75db4:s3:c1->c2",
+        "decision_id": "dec-execute-snap-0758b0c75db4",
+        "dst_above_safe_limit": false,
+        "dst_upper_bound": 0.6736272751643347,
+        "predicted_dst": 0.6369980419243377,
+        "scenario": "sustained_overload",
+        "u_before": {
+          "c1": 0.9432513950611457,
+          "c2": 0.5650595227666326
+        }
+      },
+      {
+        "actual_dst": 0.5208411329226218,
+        "actual_src": 0.9171526384119527,
+        "candidate_id": "snap-5289e05494e1:s10:c1->c2",
+        "decision_id": "dec-execute-snap-5289e05494e1",
+        "dst_above_safe_limit": false,
+        "dst_upper_bound": 0.5645502239538359,
+        "predicted_dst": 0.5279209907138389,
+        "scenario": "sustained_overload",
+        "u_before": {
+          "c1": 1.0283911992157635,
+          "c2": 0.42823841756957765
+        }
+      },
+      {
+        "actual_dst": 1.0067272482271619,
+        "actual_src": 0.9233296491535372,
+        "candidate_id": "snap-5670f67823b5:s11:c2->c1",
+        "decision_id": "dec-execute-snap-5670f67823b5",
+        "dst_above_safe_limit": true,
+        "dst_upper_bound": 0.993883224554767,
+        "predicted_dst": 0.95725399131477,
+        "scenario": "dst_near_capacity",
+        "u_before": {
+          "c1": 0.9089583666397837,
+          "c2": 1.0137621325143171
+        }
+      },
+      {
+        "actual_dst": 1.0258517333521782,
+        "actual_src": 0.920858067979388,
+        "candidate_id": "snap-7a298ac0a721:s9:c1->c2",
+        "decision_id": "dec-execute-snap-7a298ac0a721",
+        "dst_above_safe_limit": true,
+        "dst_upper_bound": 0.9990106460213545,
+        "predicted_dst": 0.9623814127813575,
+        "scenario": "dst_near_capacity",
+        "u_before": {
+          "c1": 1.0893325103892908,
+          "c2": 0.9127438629984802
+        }
+      },
+      {
+        "actual_dst": 0.5102156591872641,
+        "actual_src": 0.8234619640390249,
+        "candidate_id": "snap-9cbfd6bc5aee:s1:c1->c2",
+        "decision_id": "dec-execute-snap-9cbfd6bc5aee",
+        "dst_above_safe_limit": false,
+        "dst_upper_bound": 0.5627138811450242,
+        "predicted_dst": 0.5260846479050272,
+        "scenario": "gradual",
+        "u_before": {
+          "c1": 0.9238569946649938,
+          "c2": 0.42703795728282484
+        }
+      },
+      {
+        "actual_dst": 0.5155796828342961,
+        "actual_src": 0.9135279092312316,
+        "candidate_id": "snap-e8c78412065a:s10:c1->c2",
+        "decision_id": "dec-execute-snap-e8c78412065a",
+        "dst_above_safe_limit": false,
+        "dst_upper_bound": 0.5593768303815576,
+        "predicted_dst": 0.5227475971415606,
+        "scenario": "cooldown",
+        "u_before": {
+          "c1": 1.0128051063932195,
+          "c2": 0.4141194243939971
+        }
+      }
+    ],
+    "n": 6,
+    "n_committed_without_actual_post": 0,
+    "u_dst_error_actual_minus_pred": {
+      "max": 0.06347032057082069,
+      "mean": 0.010519434139379391,
+      "n": 6,
+      "p50": -0.007123886049240802,
+      "p95": 0.06347032057082069
+    },
+    "u_dst_upper_bound_coverage": "4/6",
+    "u_src_error_actual_minus_pred": {
+      "max": 0.05835680067986393,
+      "mean": 0.0025075034127651405,
+      "n": 6,
+      "p50": 0.0007704264394849947,
+      "p95": 0.05835680067986393
+    }
+  },
+  "reason_counts": {
+    "ACTIVE_TRANSACTION_CONFLICT": 2,
+    "COOLDOWN_ACTIVE": 48,
+    "DESTINATION_ALREADY_AT_RISK": 440,
+    "DST_UTILIZATION_UNSAFE": 2075,
+    "INVALID_SNAPSHOT": 55
+  },
+  "scenario_gates": {
+    "conflict": {
+      "expect": "ACTIVE_TRANSACTION_CONFLICT or DEFERRED is recorded",
+      "n": 27,
+      "peak_utilization": 1.2682786152223655,
+      "result": "PASS",
+      "status_counts": {
+        "dry_run:DEFERRED": 2,
+        "dry_run:INVALID_SNAPSHOT": 12,
+        "dry_run:NO_RISK": 13
+      }
+    },
+    "cooldown": {
+      "expect": "COOLDOWN_ACTIVE or DEFERRED is recorded",
+      "n": 87,
+      "peak_utilization": 1.1225425751561984,
+      "result": "PASS",
+      "status_counts": {
+        "execute:COMMITTED": 1,
+        "execute:DEFERRED": 1,
+        "execute:INVALID_SNAPSHOT": 33,
+        "execute:NO_RISK": 52
+      }
+    },
+    "dst_near_capacity": {
+      "expect": "the Gate rejects at least one candidate for the destination",
+      "n": 216,
+      "peak_utilization": 1.2469231224597561,
+      "result": "PASS",
+      "status_counts": {
+        "dry_run:NOT_READY": 1,
+        "dry_run:NO_RISK": 7,
+        "dry_run:NO_SAFE_ACTION": 45,
+        "dry_run:SELECTED": 1,
+        "execute:COMMITTED": 2,
+        "execute:DEFERRED": 44,
+        "execute:INVALID_SNAPSHOT": 2,
+        "execute:NO_RISK": 36,
+        "execute:NO_SAFE_ACTION": 78
+      }
+    },
+    "gradual": {
+      "expect": "at least one migration is COMMITTED",
+      "n": 275,
+      "peak_utilization": 1.0032893749966536,
+      "result": "PASS",
+      "status_counts": {
+        "dry_run:NO_RISK": 105,
+        "dry_run:SELECTED": 3,
+        "execute:COMMITTED": 1,
+        "execute:NOT_READY": 1,
+        "execute:NO_RISK": 165
+      }
+    },
+    "hot_switch": {
+      "expect": "at least one migration is COMMITTED",
+      "n": 175,
+      "peak_utilization": 1.2277421867467604,
+      "result": "NOT_TRIGGERED",
+      "status_counts": {
+        "dry_run:NO_RISK": 58,
+        "dry_run:SELECTED": 2,
+        "execute:NO_RISK": 115
+      }
+    },
+    "invalid_snapshot": {
+      "expect": "no migration on an invalid snapshot",
+      "n": 18,
+      "peak_utilization": 1.4704492345002258,
+      "result": "PASS",
+      "status_counts": {
+        "dry_run:INVALID_SNAPSHOT": 1,
+        "dry_run:NO_RISK": 8,
+        "dry_run:NO_SAFE_ACTION": 9
+      }
+    },
+    "no_safe_action": {
+      "expect": "every decision with a controller at risk is NO_SAFE_ACTION, no migration",
+      "n": 58,
+      "peak_utilization": 1.209049211028463,
+      "result": "PASS",
+      "status_counts": {
+        "dry_run:NOT_READY": 2,
+        "dry_run:NO_RISK": 5,
+        "dry_run:NO_SAFE_ACTION": 51
+      }
+    },
+    "stable": {
+      "expect": "no migration is executed",
+      "n": 60,
+      "peak_utilization": 0.7040063218899417,
+      "result": "PASS",
+      "status_counts": {
+        "dry_run:NO_RISK": 60
+      }
+    },
+    "sustained_overload": {
+      "expect": "at least one migration is COMMITTED",
+      "n": 272,
+      "peak_utilization": 1.2723578960948732,
+      "result": "PASS",
+      "status_counts": {
+        "dry_run:NOT_READY": 2,
+        "dry_run:SELECTED": 104,
+        "execute:COMMITTED": 2,
+        "execute:DEFERRED": 3,
+        "execute:INVALID_SNAPSHOT": 7,
+        "execute:NO_RISK": 154
+      }
+    },
+    "verification_failure": {
+      "expect": "the transaction ends RESTORED",
+      "n": 9,
+      "peak_utilization": 1.2099446761458112,
+      "result": "PASS",
+      "status_counts": {
+        "execute:NO_RISK": 8,
+        "execute:RESTORED": 1
+      }
+    }
+  },
+  "status_counts": {
+    "COMMITTED": 6,
+    "DEFERRED": 50,
+    "INVALID_SNAPSHOT": 55,
+    "NOT_READY": 6,
+    "NO_RISK": 786,
+    "NO_SAFE_ACTION": 183,
+    "RESTORED": 1,
+    "SELECTED": 110
+  }
+}
