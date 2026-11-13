@@ -1,0 +1,25 @@
+# Week 13-14 (2C) Definition of Done, generated 2026-11-13T16:18:25.632322+00:00
+# PASS = evidence found and criterion met; MISSING = not proven yet; FAIL = not met
+
+Tiền đề: tag outcome-v1, processed-v1, forecast-raw-v3                     PASS     all tags exist
+forecast-models-v3 có m_f và so với persistence                            PASS     error_margin.json, skill_vs_persistence.json
+Risk Detector chạy forecast-models-v3                                      PASS     configs/forecasting/runtime.yaml
+Schema, policy v1, reason codes freeze                                     PASS     policy + frozen-sha test
+Candidate chỉ sinh khi có risk, không trùng                                PASS     candidate_generator.py + tests
+Safety Gate 11 check, boundary inclusive                                   PASS     safety_gate.py + tests
+Gate A/B trên test và stress, có CI Wilson                                 PASS     evidence/week13/safety_*
+Endpoint evaluate không side-effect                                        PASS     src/orchestrator/app.py route
+Ranking: policy có version, tie-break, NO_SAFE_ACTION                      PASS     ranking_policy_v1.yaml + tests
+Ranking sensitivity                                                        PASS     ranking_sensitivity.json n_epochs=180
+State machine, decision_id, pinning, revalidation, kill switch, idempotency PASS     closed_loop.py, decision_context.py, /decision/plan
+Dry-run và execute 2C đạt kỳ vọng từng kịch bản                            PASS     conflict=PASS, cooldown=PASS, dst_near_capacity=PASS, gradual=PASS, hot_switch=NOT_TRIGGERED, invalid_snapshot=PASS, no_safe_action=PASS, stable=PASS, sustained_overload=PASS, verification_failure=PASS
+Latency toàn chuỗi và kết luận h = 3                                       PASS     horizon_steps=4 current_h_sufficient=False
+Sai số dự đoán so với thực tế                                              PASS     n=6 coverage=4/6
+4C readiness audit                                                         PASS     evidence/week14/readiness_4c.md
+make ci                                                                    PASS     ci.txt (run with --ci)
+Tag forecast-models-v3                                                     PASS     exists
+Tag decision-safety-v1                                                     PASS     exists
+Tag ranking-policy-v1                                                      PASS     exists
+Tag closed-loop-2c-v1                                                      PASS     exists
+
+20/20 PASS
