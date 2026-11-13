@@ -88,6 +88,11 @@ class PlanTest(unittest.TestCase):
         busy = make(transactions=manager)[0].plan("conflict")
         self.assertEqual(busy["status"], "DEFERRED")
         self.assertEqual(busy["reasons"], {"ACTIVE_TRANSACTION_CONFLICT": 1})
+        # also without any risk and on an invalid snapshot: a transaction in flight wins
+        quiet = make(transactions=manager, fc=forecast(c1=False))[0].plan("conflict")
+        self.assertEqual(quiet["status"], "DEFERRED")
+        invalid = make(transactions=manager, twin=make_twin(valid=False))[0].plan("conflict")
+        self.assertEqual(invalid["status"], "DEFERRED")
         manager.finish(tx)
         tx.finished_at = NOW - timedelta(seconds=5)
         cooling = make(transactions=manager)[0].plan("cooldown")

@@ -318,6 +318,10 @@ class DecisionService:
 
         if not self.enabled:
             return stop(cl.KILL_SWITCH)
+        # A transaction in flight is the most specific reason to do nothing: checked before
+        # the Hard Gate, because the snapshots taken during a role change are often invalid.
+        if self.transactions.active_count() >= 1:
+            return stop(cl.DEFERRED, reasons={ACTIVE_TRANSACTION_CONFLICT: 1})
         if not twin.quality.valid:  # Hard Gate: nothing runs on an invalid snapshot
             return stop(INVALID_SNAPSHOT, reasons={INVALID_SNAPSHOT: 1})
         forecast = self.forecast_payload()
@@ -339,8 +343,6 @@ class DecisionService:
         last = self.transactions.last_finished_at()
         elapsed = None if last is None else max(0.0, (ctx.decided_at - last).total_seconds())
         cooldown = self.policy.cooldown_seconds.value
-        if self.transactions.active_count() >= 1:
-            return stop(cl.DEFERRED, reasons={ACTIVE_TRANSACTION_CONFLICT: 1})
         if cooldown is not None and elapsed is not None and elapsed < cooldown:
             return stop(cl.DEFERRED, f"cooldown {elapsed:.1f}/{cooldown:.0f} s",
                         {COOLDOWN_ACTIVE: 1})
