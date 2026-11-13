@@ -1,0 +1,48 @@
+# make ci + git diff --check, 2026-11-13T16:17:00.877631+00:00
+commit: 529f63b1c2594e095eaf3d5c2246b6fa6d0b3a13
+$ make ci
+exit_code: 0
+ce.Week12EvidenceTest) ... ok
+test_margins_one_sided_from_validation (test_week12_evidence.Week12EvidenceTest) ... ok
+test_prediction_has_no_safe_field (test_week12_evidence.Week12EvidenceTest) ... ok
+test_runtime_smoke_needs_six_ready (test_week12_evidence.Week12EvidenceTest) ... ok
+test_selection_and_split (test_week12_evidence.Week12EvidenceTest) ... ok
+test_write_dod_and_file_check (test_week12_evidence.Week12EvidenceTest) ... ok
+test_empty_tree_is_all_missing_never_pass (test_week13_evidence.Week13EvidenceTest) ... ok
+test_repo_items_that_already_exist_pass (test_week13_evidence.Week13EvidenceTest) ... ok
+test_deadline_sequence (test_workload_generator.TestDeadlinePacer) ... ok
+test_period_ms_matches_rate (test_workload_generator.TestDeadlinePacer) ... ok
+test_wait_until_sleeps_remaining_time (test_workload_generator.TestDeadlinePacer) ... ok
+test_invalid_sample_interval_rejected (test_workload_generator.TestGeneratorValidation) ... ok
+test_negative_rate_is_rejected (test_workload_generator.TestGeneratorValidation) ... ok
+test_rate_zero_is_rejected (test_workload_generator.TestGeneratorValidation) ... ok
+test_valid_smoke_config (test_workload_generator.TestGeneratorValidation) ... ok
+test_invalid_port_range_rejected (test_workload_generator.TestPortAllocator) ... ok
+test_port_allocator_increments_sequentially (test_workload_generator.TestPortAllocator) ... ok
+test_port_allocator_wraps_to_start (test_workload_generator.TestPortAllocator) ... ok
+test_safe_port_pool (test_workload_generator.TestPortReuseSafety) ... ok
+test_unsafe_port_pool_rejected (test_workload_generator.TestPortReuseSafety) ... ok
+test_workload_sample_serializes (test_workload_generator.TestWorkloadSample) ... ok
+test_burst_phases (test_workload_phases.ExistingPhaseMappingTests) ... ok
+test_gradual_phases (test_workload_phases.ExistingPhaseMappingTests) ... ok
+test_default_keeps_single_phase (test_workload_phases.OscillatingPhaseTests) ... ok
+test_phases_follow_the_wave (test_workload_phases.OscillatingPhaseTests) ... ok
+test_default_keeps_single_phase (test_workload_phases.StablePhaseTests) ... ok
+test_rejects_non_positive_duration (test_workload_phases.StablePhaseTests) ... ok
+test_three_phases_by_time (test_workload_phases.StablePhaseTests) ... ok
+test_hot_switch_fields_accept_valid_values (test_workload_profiles.WorkloadPointTests) ... ok
+test_hot_switch_fields_are_optional_together (test_workload_profiles.WorkloadPointTests) ... ok
+test_hot_switch_fields_must_be_provided_together (test_workload_profiles.WorkloadPointTests) ... ok
+test_hot_switch_id_must_not_be_empty (test_workload_profiles.WorkloadPointTests) ... ok
+test_hot_switch_share_must_be_between_zero_and_one (test_workload_profiles.WorkloadPointTests) ... ok
+test_hot_switch_share_must_be_finite (test_workload_profiles.WorkloadPointTests) ... ok
+test_serialization (test_workload_schema.WorkloadSchemaTests) ... ok
+
+----------------------------------------------------------------------
+Ran 977 tests in 78.688s
+
+OK
+
+$ git diff --check
+exit_code: 0
+
