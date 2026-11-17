@@ -185,7 +185,8 @@ def save(fig: Figure, out: Path, stem: str) -> list[str]:
     paths = []
     for ext in ("png", "pdf"):
         path = out / f"{stem}.{ext}"
-        fig.savefig(path)
+        # no creation date in the PDF: a rerun on the same data gives the same file
+        fig.savefig(path, metadata={"CreationDate": None} if ext == "pdf" else None)
         paths.append(str(path))
     plt.close(fig)
     return paths
