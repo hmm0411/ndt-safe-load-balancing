@@ -526,16 +526,16 @@
         "parts": [
           {
             "p95_ms": 981.6709999999999,
-            "part": "Thu thập telemetry"
+            "part": "Telemetry collection"
           },
           {
             "p95_ms": 71.18691013017059,
-            "part": "Chuỗi quyết định"
+            "part": "Decision pipeline"
           },
           {
             "n": 6,
             "p95_ms": 2089.275,
-            "part": "Migration đã commit"
+            "part": "Committed migration"
           }
         ],
         "required_h": 4
@@ -549,5 +549,5 @@
       ]
     }
   },
-  "generated_from_commit": "2c93d18ec96bd74c3b019c55852365272b8cecfd"
+  "generated_from_commit": "3e6c8a0d4f17e1f9846db3b66983cbdba2a42eb0"
 }

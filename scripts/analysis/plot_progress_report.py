@@ -40,8 +40,8 @@ OUT = Path("evidence/week15/progress_report")
 ACCENT, GREY, DARK, RED = "#4C72B0", "#BBBBBB", "#555555", "#C44E52"
 WORKLOADS = ("stable", "gradual", "burst", "oscillating", "hot-switch")
 # display names of the candidates in safety_v2_round1_cv.txt (v1B = the frozen v1 policy)
-CV_NAMES = {"v1B": "v1 (đang dùng)", "a": "a: huấn luyện lại", "b1": "b1: tăng biên",
-            "b2": "b2: tăng biên"}
+CV_NAMES = {"v1B": "v1 (current)", "a": "a: retrained", "b1": "b1: wider margin",
+            "b2": "b2: wider margin"}
 TARGET_COVERAGE = 0.95  # alpha = 0.05 of every margin (CLAUDE.md section 6)
 U_LIMIT = 1.0  # overload threshold U = 1
 plt.rcParams.update({"font.size": 9, "axes.spines.top": False, "axes.spines.right": False,
@@ -147,14 +147,14 @@ def parse_cv_table(text: str) -> list[dict[str, Any]]:
             continue
         row = dict(zip(header, cells))
         try:
-            parsed = {"name": row["cand"],
+            parsed: dict[str, Any] = {"name": row["cand"],
                       "unsafe_accepted": int(row["unsafe_accepted"]),
                       "unsafe_rejected": int(row["unsafe_rejected"]),
                       "false_rejections": int(row["false_rejections"]),
                       "safe_accepted": int(row["safe_accepted"])}
         except (KeyError, ValueError):
             continue  # a summary line with '-' in it
-        seen.setdefault(parsed["name"], parsed)
+        seen.setdefault(str(parsed["name"]), parsed)
     return list(seen.values())
 
 
@@ -173,9 +173,9 @@ def closed_loop_migrations(report: dict[str, Any]) -> list[dict[str, Any]]:
 
 def lead_time(report: dict[str, Any]) -> list[dict[str, Any]]:
     h = report["horizon"]
-    return [{"part": "Thu thập telemetry", "p95_ms": float(h["collection_p95_ms"])},
-            {"part": "Chuỗi quyết định", "p95_ms": float(h["decision_p95_ms"])},
-            {"part": "Migration đã commit", "p95_ms": float(h["migration_p95_ms"]),
+    return [{"part": "Telemetry collection", "p95_ms": float(h["collection_p95_ms"])},
+            {"part": "Decision pipeline", "p95_ms": float(h["decision_p95_ms"])},
+            {"part": "Committed migration", "p95_ms": float(h["migration_p95_ms"]),
              "n": int(h["n_committed"])}]
 
 
@@ -207,15 +207,15 @@ def fig_capacity(rows: list[dict[str, Any]]) -> Figure:
                           (last["rate_fps"], last["setup_p95_ms"]), xytext=(5, 0),
                           textcoords="offset points", va="center", fontsize=8)
     for ax in (left, right):
-        for rate, text in ((90, "mức an toàn 90"), (140, "điểm gãy 140")):
+        for rate, text in ((90, "safe level 90"), (140, "knee 140")):
             ax.axvline(rate, color=DARK, ls="--", lw=0.8)
             if ax is left:
                 ax.text(rate, ax.get_ylim()[1], text, ha="center", va="bottom", fontsize=7,
                         color=DARK)
-        ax.set_xlabel("Tốc độ luồng mới (flows/s)")
+        ax.set_xlabel("New-flow rate (flows/s)")
     left.set_ylabel("ms")
-    left.set_title("Thiết lập luồng P95, đo từ host", pad=14)
-    right.set_title("Xử lý Packet-In P95, đo trong controller", pad=14)
+    left.set_title("Flow-setup latency P95, measured at the host", pad=14)
+    right.set_title("Packet-In handling P95, measured inside the controller", pad=14)
     left.set_xlim(25, 178)
     right.set_xlim(25, 205)
     right.set_ylim(0, 1.0)
@@ -240,9 +240,9 @@ def fig_skill(rows: list[dict[str, Any]], models: tuple[str, ...]) -> Figure:
     if "hot-switch" in order:
         ax.axvline(order.index("hot-switch") - 0.5, color=GREY, ls=":", lw=0.8)
     ax.set_xticks(range(len(order)),
-                  [f"{w}\n(chưa thấy)" if w == "hot-switch" else w for w in order])
-    ax.set_ylabel("RMSE / RMSE persistence")
-    ax.set_title("Dự báo tải h = 3 s: tỉ số RMSE so với persistence (thấp hơn là tốt hơn)")
+                  [f"{w}\n(unseen)" if w == "hot-switch" else w for w in order])
+    ax.set_ylabel("RMSE / RMSE of persistence")
+    ax.set_title("Load forecast, h = 3 s: RMSE ratio to persistence (lower is better)")
     ax.legend(frameon=False, fontsize=8, ncol=len(models))
     return fig
 
@@ -250,8 +250,8 @@ def fig_skill(rows: list[dict[str, Any]], models: tuple[str, ...]) -> Figure:
 def fig_coverage(rows: list[dict[str, Any]]) -> Figure:
     fig, ax = plt.subplots(figsize=(6.0, 2.8))
     order = [w for w in WORKLOADS if any(r["workload"] == w for r in rows)]
-    for margin, offset, marker, label in (("m_f", -0.12, "o", "m_f (dự báo tải)"),
-                                          ("m_U", 0.12, "s", "m_U (hậu migration)")):
+    for margin, offset, marker, label in (("m_f", -0.12, "o", "m_f (load forecast)"),
+                                          ("m_U", 0.12, "s", "m_U (post-migration)")):
         for i, w in enumerate(order):
             cell = next((r for r in rows if r["margin"] == margin and r["workload"] == w), None)
             if cell is None:
@@ -264,7 +264,7 @@ def fig_coverage(rows: list[dict[str, Any]]) -> Figure:
                         xytext=(-6 if margin == "m_f" else 6, 0), textcoords="offset points",
                         ha="right" if margin == "m_f" else "left", va="center", fontsize=7)
     ax.axhline(TARGET_COVERAGE, color=DARK, ls="--", lw=0.8)
-    ax.text(len(order) - 0.5, TARGET_COVERAGE + 0.004, "mục tiêu 95%", ha="right",
+    ax.text(len(order) - 0.5, TARGET_COVERAGE + 0.004, "target 95%", ha="right",
             fontsize=7, color=DARK)
     ax.set_xticks(range(len(order)), order)
     ax.set_xlim(-0.5, len(order) - 0.5)
@@ -272,8 +272,8 @@ def fig_coverage(rows: list[dict[str, Any]]) -> Figure:
     ax.yaxis.set_major_formatter(lambda v, _: f"{100 * v:.0f}%")
     n_u = sorted({r["n"] for r in rows if r["margin"] == "m_U"})
     below = sum(r["coverage"] < TARGET_COVERAGE for r in rows)
-    ax.set_title(f"Coverage của biên trên tập test: {below}/{len(rows)} điểm dưới 95% "
-                 f"(m_U: n = {', '.join(map(str, n_u))} mỗi workload)")
+    ax.set_title(f"Margin coverage on the test set: {below}/{len(rows)} points below 95% "
+                 f"(m_U: n = {', '.join(map(str, n_u))} per workload)")
     ax.legend(frameon=False, fontsize=8, loc="lower left")
     return fig
 
@@ -291,28 +291,28 @@ def fig_outcome(rows: list[dict[str, Any]], labels: dict[str, str]) -> Figure:
         ax.set_yticks(range(len(models)), [m.replace("_", " ") for m in models])
         ax.invert_yaxis()
         ax.set_title(labels.get(target, target))
-        ax.set_xlabel("RMSE (đơn vị U)")
+        ax.set_xlabel("RMSE (U units)")
     n = rows[0]["n"] if rows else 0
-    fig.suptitle(f"Post-Migration Outcome Model trên tập test (n = {n} migration)", fontsize=9,
+    fig.suptitle(f"Post-Migration Outcome Model on the test set (n = {n} migrations)", fontsize=9,
                  y=1.08)
     return fig
 
 
 def fig_gate_stress(rows: list[dict[str, Any]]) -> Figure:
     fig, ax = plt.subplots(figsize=(4.8, 2.4))
-    names = {"gate_a": "Gate A (không biên)", "gate_b": "Gate B (biên m_U)"}
+    names = {"gate_a": "Gate A (no margin)", "gate_b": "Gate B (margin m_U)"}
     xs = range(len(rows))
     leak = ax.bar([i - 0.18 for i in xs], [r["unsafe_accepted"] for r in rows], width=0.36,
-                  color=RED, label="ca nguy hiểm bị lọt")
+                  color=RED, label="unsafe accepted (leaked)")
     fr = ax.bar([i + 0.18 for i in xs], [r["safe_rejected"] for r in rows], width=0.36,
-                color=GREY, label="ca an toàn bị từ chối nhầm")
+                color=GREY, label="safe rejected (false rejection)")
     ax.bar_label(leak, labels=[f"{r['unsafe_accepted']}/{r['unsafe']}" for r in rows],
                  fontsize=7, padding=2)
     ax.bar_label(fr, labels=[f"{r['safe_rejected']}/{r['safe']}" for r in rows],
                  fontsize=7, padding=2)
     ax.set_xticks(list(xs), [names.get(r["gate"], r["gate"]) for r in rows])
-    ax.set_ylabel("số migration")
-    ax.set_title("Safety Gate trên safety-stress-v1 (đích bị đẩy sát ngưỡng)")
+    ax.set_ylabel("migrations")
+    ax.set_title("Safety Gate on safety-stress-v1 (destination pushed near the limit)")
     ax.legend(frameon=False, fontsize=8)
     return fig
 
@@ -326,7 +326,7 @@ def fig_tradeoff(rows: list[dict[str, Any]]) -> Figure:
                                color=ACCENT, alpha=0.08, lw=0))
     better = sum(r["false_rejections"] < ref["false_rejections"]
                  and r["unsafe_accepted"] < ref["unsafe_accepted"] for r in rows)
-    ax.text(0.3, 0.3, f"tốt hơn {CV_NAMES.get(ref['name'], ref['name'])}\nở cả hai: {better}",
+    ax.text(0.3, 0.3, f"better than {CV_NAMES.get(ref['name'], ref['name'])}\non both: {better}",
             fontsize=7, color=DARK)
     for r in rows:
         is_ref = r is ref
@@ -334,15 +334,16 @@ def fig_tradeoff(rows: list[dict[str, Any]]) -> Figure:
                    color=ACCENT if is_ref else GREY)
         right = r["false_rejections"] > 20
         name = CV_NAMES.get(r["name"], r["name"])
-        ax.annotate(f"{name} ({r['unsafe_accepted']} lọt, {r['false_rejections']} nhầm)",
+        ax.annotate(f"{name} ({r['unsafe_accepted']} leaked, {r['false_rejections']} false rej.)",
                     (r["false_rejections"], r["unsafe_accepted"]),
-                    xytext=(-6 if right else 6, 6), textcoords="offset points",
+                    xytext=(-6 if right else 6, -14 if 10 < r["false_rejections"] < 20 else 6),
+                    textcoords="offset points",
                     ha="right" if right else "left", fontsize=7)
     ax.set_xlim(0, max(r["false_rejections"] for r in rows) + 3)
     ax.set_ylim(0, max(r["unsafe_accepted"] for r in rows) + 2)
-    ax.set_xlabel(f"Ca an toàn bị từ chối nhầm (trên {safe})")
-    ax.set_ylabel(f"Ca nguy hiểm bị lọt (trên {unsafe})")
-    ax.set_title("Safety v2 vòng 1 (cross-validation): không phương án nào tốt hơn v1 ở cả hai")
+    ax.set_xlabel(f"Safe migrations falsely rejected (of {safe})")
+    ax.set_ylabel(f"Unsafe migrations leaked (of {unsafe})")
+    ax.set_title("Safety v2 round 1 (cross-validation): no candidate beats v1 on both")
     return fig
 
 
@@ -351,11 +352,11 @@ def fig_migrations(rows: list[dict[str, Any]]) -> Figure:
     for i, r in enumerate(rows):
         over = r["actual_dst"] > U_LIMIT
         ax.plot([r["predicted_dst"], r["dst_upper_bound"]], [i, i], color=GREY, lw=6,
-                solid_capstyle="butt", label="dự đoán → cận trên" if i == 0 else None)
+                solid_capstyle="butt", label="predicted → upper bound" if i == 0 else None)
         ax.scatter(r["u_dst_before"], i, facecolors="none", edgecolors=DARK, s=28,
-                   label="tải đích trước" if i == 0 else None)
+                   label="destination U before" if i == 0 else None)
         ax.scatter(r["actual_dst"], i, color=RED if over else "black", s=28, zorder=3,
-                   label="thực tế sau migration" if i == 0 else None)
+                   label="actual after migration" if i == 0 else None)
         ax.annotate(f"{r['actual_dst']:.3f}", (max(r["actual_dst"], r["dst_upper_bound"]), i),
                     xytext=(6, 0), textcoords="offset points", va="center", fontsize=7,
                     color=RED if over else "black")
@@ -364,9 +365,9 @@ def fig_migrations(rows: list[dict[str, Any]]) -> Figure:
                   [f"{r['scenario']} · {r['switch']} {r['src']}→{r['dst']}" for r in rows])
     ax.invert_yaxis()
     ax.set_xlim(0.35, 1.12)
-    ax.set_xlabel("U của controller đích")
+    ax.set_xlabel("Destination controller U")
     covered = sum(r["actual_dst"] <= r["dst_upper_bound"] for r in rows)
-    ax.set_title(f"Vòng kín 2C: {covered}/{len(rows)} migration có tải thực tế ≤ cận trên")
+    ax.set_title(f"Closed loop 2C: {covered}/{len(rows)} migrations with actual U ≤ upper bound")
     ax.legend(frameon=False, fontsize=7, loc="upper center", bbox_to_anchor=(0.45, -0.25),
               ncol=3)
     return fig
@@ -387,17 +388,17 @@ def fig_lead_time(rows: list[dict[str, Any]], current_h: int, required_h: int) -
                         textcoords="offset points", ha="left", fontsize=7,
                         arrowprops={"arrowstyle": "-", "lw": 0.6, "color": DARK})
         start += width
-    ax.text(start + 0.05, 0, f"tổng {start:.2f} s", va="center", fontsize=8, weight="bold")
-    for h, text in ((current_h, f"h hiện tại = {current_h} s"),
-                    (required_h, f"h cần = {required_h} s")):
+    ax.text(start + 0.05, 0, f"total {start:.2f} s", va="center", fontsize=8, weight="bold")
+    for h, text in ((current_h, f"current h = {current_h} s"),
+                    (required_h, f"required h = {required_h} s")):
         ax.axvline(h, color=DARK, ls="--", lw=0.8)
         ax.text(h + 0.04, -0.62, text, ha="left", fontsize=7, color=DARK)
     ax.set_ylim(-0.75, 0.9)
     ax.set_yticks([])
     ax.spines["left"].set_visible(False)
     ax.set_xlim(0, max(required_h, start) + 0.6)
-    ax.set_xlabel("giây (P95 từng giai đoạn trong vòng kín 2C)")
-    ax.set_title("Thời gian từ lúc thu dữ liệu tới khi migration xong so với horizon dự báo")
+    ax.set_xlabel("seconds (P95 of each stage, closed loop 2C)")
+    ax.set_title("Time from data collection to completed migration vs forecast horizon")
     return fig
 
 
@@ -439,7 +440,7 @@ def build(root: Path) -> dict[str, tuple[Callable[[], Figure], Any, list[str]]]:
                                           [SOURCES["forecast_coverage"],
                                            SOURCES["outcome_coverage"]])
     if need("outcome_test"):
-        labels = {"u_dst_post": "Tải controller đích", "u_src_post": "Tải controller nguồn"}
+        labels = {"u_dst_post": "Destination controller load", "u_src_post": "Source controller load"}
         rmse = outcome_rmse(load_json(src["outcome_test"]), tuple(labels))
         jobs["fig_04_outcome_rmse"] = (lambda: fig_outcome(rmse, labels), rmse,
                                        [SOURCES["outcome_test"]])
