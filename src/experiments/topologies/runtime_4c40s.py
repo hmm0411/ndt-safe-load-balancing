@@ -20,9 +20,14 @@ from src.experiments.topologies.capacity_smoke_2c20s import (
     post_json,
     wait_for_controller_connections,
 )
+from src.experiments.topologies.setup_probe_launcher import (
+    launch_setup_probes,
+    parse_switches,
+)
 
 SWITCH_COUNT = 40
 DEFAULT_CONFIG = Path("configs/controllers_4c40s.yaml")
+REPO_ROOT = Path(__file__).resolve().parents[3]
 
 
 class Runtime4C40STopo(Topo):
@@ -110,11 +115,34 @@ def build_arg_parser() -> argparse.ArgumentParser:
         default=0.0,
         help="keep the network up this long instead of opening the CLI",
     )
+    parser.add_argument("--setup-probe-dir", type=Path, default=None)
+    parser.add_argument("--setup-probe-run-id", default=None)
+    parser.add_argument("--setup-probe-rate", type=float, default=None)
+    parser.add_argument("--setup-probe-timeout", type=float, default=None)
+    parser.add_argument("--setup-probe-switches", default="all")
+    parser.add_argument("--setup-probe-port", type=int, default=9001)
     return parser
+
+
+def setup_probe_args_error(args: argparse.Namespace) -> str | None:
+    """With --setup-probe-dir the rate, timeout and run id have no default;
+    the probe runs for --hold-seconds."""
+    if args.setup_probe_dir is None:
+        return None
+    needed = ("setup_probe_run_id", "setup_probe_rate", "setup_probe_timeout")
+    missing = [n.replace("_", "-") for n in needed if getattr(args, n) is None]
+    if missing:
+        return "--setup-probe-dir also needs: --" + ", --".join(missing)
+    if args.hold_seconds <= 0:
+        return "--setup-probe-dir needs --hold-seconds > 0 (the probe duration)"
+    return None
 
 
 def main() -> None:
     args = build_arg_parser().parse_args()
+    probe_error = setup_probe_args_error(args)
+    if probe_error:
+        raise SystemExit(probe_error)
     config = load_yaml(args.controllers_config)
     specs = controller_specs(config)
     setLogLevel("info")
@@ -127,6 +155,7 @@ def main() -> None:
     )
     for cid, (port, _) in specs.items():
         net.addController(cid, controller=RemoteController, ip="127.0.0.1", port=port)
+    probes = None
     try:
         print("*** Building 4C40S topology")
         net.build()
@@ -135,11 +164,26 @@ def main() -> None:
         print(f"*** 4C40S runtime topology READY: {len(specs)} controllers")
         if args.init_roles:
             initialize_runtime(config, args.orchestrator_url)
+        if args.setup_probe_dir is not None:
+            probes = launch_setup_probes(
+                net,
+                parse_switches(args.setup_probe_switches, SWITCH_COUNT),
+                args.setup_probe_dir,
+                args.setup_probe_run_id,
+                args.setup_probe_port,
+                args.setup_probe_rate,
+                args.hold_seconds,
+                args.setup_probe_timeout,
+                REPO_ROOT,
+            )
+            print(f"*** SETUP PROBE started: {len(probes.probes)} probes", flush=True)
         if args.hold_seconds > 0:
             time.sleep(args.hold_seconds)
         else:
             CLI(net)
     finally:
+        if probes is not None:
+            probes.stop()
         print("*** Stopping network")
         net.stop()
 
