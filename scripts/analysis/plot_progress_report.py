@@ -30,6 +30,7 @@ import subprocess
 import sys
 from collections import defaultdict
 from collections.abc import Callable
+from functools import partial
 from pathlib import Path
 from typing import Any
 
@@ -755,7 +756,7 @@ def add_simple_jobs(jobs: dict[str, tuple[Callable[[], Figure], Any, list[str]]]
         got = take(old)
         if got is not None:
             data, sources = got
-            jobs[new] = (lambda d=data, f=draw: f(d), data, sources)
+            jobs[new] = (partial(draw, data), data, sources)
     stress, cv = take("fig_08_gate_stress"), take("fig_09_gate_tradeoff")
     if stress is not None and cv is not None:
         jobs["simple_08_safety_gate"] = (lambda: s_safety_gate(stress[0], cv[0]),
