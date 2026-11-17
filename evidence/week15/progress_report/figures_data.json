@@ -6,8 +6,8 @@
           "controller": "c1",
           "rate_fps": 30.0,
           "repeats": 5,
-          "response_p95_ms": 0.74929071,
-          "setup_p95_ms": 22.1125504
+          "response_p95_ms": 0.7492907099999999,
+          "setup_p95_ms": 22.112550399999996
         },
         {
           "controller": "c1",
@@ -21,7 +21,7 @@
           "rate_fps": 50.0,
           "repeats": 5,
           "response_p95_ms": 0.74254436,
-          "setup_p95_ms": 23.759202600000002
+          "setup_p95_ms": 23.7592026
         },
         {
           "controller": "c1",
@@ -35,7 +35,7 @@
           "rate_fps": 70.0,
           "repeats": 5,
           "response_p95_ms": 0.71492121,
-          "setup_p95_ms": 26.5962372
+          "setup_p95_ms": 26.596237199999997
         },
         {
           "controller": "c1",
@@ -49,7 +49,7 @@
           "rate_fps": 90.0,
           "repeats": 5,
           "response_p95_ms": 0.7711673033333334,
-          "setup_p95_ms": 42.4547856
+          "setup_p95_ms": 42.454785599999994
         },
         {
           "controller": "c1",
@@ -63,7 +63,7 @@
           "rate_fps": 110.0,
           "repeats": 5,
           "response_p95_ms": 0.7685519765536724,
-          "setup_p95_ms": 62.4821282
+          "setup_p95_ms": 62.48212820000001
         },
         {
           "controller": "c1",
@@ -77,13 +77,13 @@
           "rate_fps": 140.0,
           "repeats": 5,
           "response_p95_ms": 0.725383636885246,
-          "setup_p95_ms": 283.6840626
+          "setup_p95_ms": 283.68406259999995
         },
         {
           "controller": "c1",
           "rate_fps": 160.0,
           "repeats": 5,
-          "response_p95_ms": 0.5890135593442622,
+          "response_p95_ms": 0.5890135593442624,
           "setup_p95_ms": null
         },
         {
@@ -98,13 +98,13 @@
           "rate_fps": 30.0,
           "repeats": 5,
           "response_p95_ms": 0.8004108033333333,
-          "setup_p95_ms": 24.7730698
+          "setup_p95_ms": 24.773069800000002
         },
         {
           "controller": "c2",
           "rate_fps": 40.0,
           "repeats": 5,
-          "response_p95_ms": 0.7816486,
+          "response_p95_ms": 0.7816485999999999,
           "setup_p95_ms": 25.1102374
         },
         {
@@ -140,27 +140,27 @@
           "rate_fps": 90.0,
           "repeats": 5,
           "response_p95_ms": 0.7605255533333334,
-          "setup_p95_ms": 40.1623768
+          "setup_p95_ms": 40.162376800000004
         },
         {
           "controller": "c2",
           "rate_fps": 100.0,
           "repeats": 5,
-          "response_p95_ms": 0.7648844633333333,
+          "response_p95_ms": 0.7648844633333334,
           "setup_p95_ms": 49.074252200000004
         },
         {
           "controller": "c2",
           "rate_fps": 110.0,
           "repeats": 5,
-          "response_p95_ms": 0.75813563,
-          "setup_p95_ms": 63.9143266
+          "response_p95_ms": 0.7581356300000001,
+          "setup_p95_ms": 63.914326599999995
         },
         {
           "controller": "c2",
           "rate_fps": 120.0,
           "repeats": 5,
-          "response_p95_ms": 0.7536046166666667,
+          "response_p95_ms": 0.7536046166666666,
           "setup_p95_ms": 82.4857758
         },
         {
@@ -549,5 +549,5 @@
       ]
     }
   },
-  "generated_from_commit": "a665825af98d49307fd6764ffe24a5eacc9d44de"
+  "generated_from_commit": "44ac0b566586e00add41dad59fbcd59f86d306ae"
 }
