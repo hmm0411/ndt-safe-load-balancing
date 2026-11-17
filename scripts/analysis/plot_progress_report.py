@@ -1,15 +1,19 @@
 """Progress-report figures (16/11/2026): every number is read from files already in the repo.
 
 Inputs (all on dev; a missing one is skipped and reported, never replaced by a constant):
-  data/benchmarks/capacity_runs.csv                                 -> fig_01_capacity_latency
-  data/models/forecasting/forecast-models-v3/skill_vs_persistence.json -> fig_02_forecast_skill
-  data/models/forecasting/forecast-models-v3/coverage.json          \
-  evidence/week12/coverage_metrics.json                              -> fig_03_margin_coverage
-  data/models/outcome/post-migration-v1/test_metrics.json           -> fig_04_outcome_rmse
-  evidence/week13/safety_final_evaluation.json                       -> fig_05_gate_stress
-  evidence/week13/safety_v2_round1_cv.txt                            -> fig_06_gate_tradeoff
-  evidence/week14/closed_loop_2c_analysis.json                       -> fig_07_closed_loop_migrations
-                                                                        fig_08_lead_time
+  data/benchmarks/capacity_runs.csv                          -> fig_01_capacity_latency
+  data/models/forecasting/forecast-models-v3/
+    test_metrics.json, unseen_metrics.json                   -> fig_02_forecast_rmse_all_models
+    skill_vs_persistence.json                                -> fig_03_forecast_skill_by_workload
+    coverage.json + evidence/week12/coverage_metrics.json    -> fig_04_margin_coverage
+  evidence/week12/model_selection.json, direct_ml_metrics.csv,
+    hybrid_metrics.csv                                       -> fig_05_outcome_validation_all_models
+  evidence/week12/bootstrap_ci.csv                           -> fig_06_outcome_test_finalists
+  evidence/week12/ablation.csv                               -> fig_07_outcome_ablation
+  evidence/week13/safety_final_evaluation.json               -> fig_08_gate_stress
+  evidence/week13/safety_v2_round1_cv.txt                    -> fig_09_gate_tradeoff
+  evidence/week14/closed_loop_2c_analysis.json               -> fig_10_closed_loop_migrations
+                                                                fig_11_lead_time
 Writes PNG (200 dpi) and PDF of each figure plus figures_data.json (the plotted values and
 their source files) to evidence/week15/progress_report/. Flat academic style, same rcParams
 as plot_week13.py. Usage, from the repo root:
@@ -42,6 +46,23 @@ WORKLOADS = ("stable", "gradual", "burst", "oscillating", "hot-switch")
 # display names of the candidates in safety_v2_round1_cv.txt (v1B = the frozen v1 policy)
 CV_NAMES = {"v1B": "v1 (current)", "a": "a: retrained", "b1": "b1: wider margin",
             "b2": "b2: wider margin"}
+MODEL_NAMES = {
+    "persistence": "Persistence", "moving_average_w3": "Moving average (w=3)",
+    "linear_regression": "Linear regression", "random_forest": "Random forest",
+    "xgboost": "XGBoost", "analytical": "Analytical", "direct_rf": "Direct RF",
+    "direct_xgb": "Direct XGBoost", "hybrid_rf": "Hybrid RF", "hybrid_xgb": "Hybrid XGBoost",
+    # ablations of hybrid_xgb, configs/outcome/evaluation.yaml
+    "hybrid_full": "Hybrid XGBoost (full)",
+    "hybrid_no_temporal": "without temporal features",
+    "hybrid_no_switch_features": "without moved-switch features",
+    "hybrid_no_switch": "without switch features,\npersistence base",
+}
+FORECAST_MODELS = ("persistence", "moving_average_w3", "linear_regression", "random_forest",
+                   "xgboost")
+OUTCOME_MODELS = ("analytical", "direct_rf", "direct_xgb", "hybrid_rf", "hybrid_xgb")
+OUTCOME_TARGETS = {"u_dst_post": "Destination controller load",
+                   "u_src_post": "Source controller load", "i_post": "Imbalance"}
+DEPLOYED = {"xgboost", "hybrid_xgb", "hybrid_full"}  # highlighted in the figures
 TARGET_COVERAGE = 0.95  # alpha = 0.05 of every margin (CLAUDE.md section 6)
 U_LIMIT = 1.0  # overload threshold U = 1
 plt.rcParams.update({"font.size": 9, "axes.spines.top": False, "axes.spines.right": False,
@@ -52,7 +73,13 @@ SOURCES = {
     "skill": "data/models/forecasting/forecast-models-v3/skill_vs_persistence.json",
     "forecast_coverage": "data/models/forecasting/forecast-models-v3/coverage.json",
     "outcome_coverage": "evidence/week12/coverage_metrics.json",
-    "outcome_test": "data/models/outcome/post-migration-v1/test_metrics.json",
+    "forecast_test": "data/models/forecasting/forecast-models-v3/test_metrics.json",
+    "forecast_unseen": "data/models/forecasting/forecast-models-v3/unseen_metrics.json",
+    "outcome_selection": "evidence/week12/model_selection.json",
+    "outcome_direct": "evidence/week12/direct_ml_metrics.csv",
+    "outcome_hybrid": "evidence/week12/hybrid_metrics.csv",
+    "outcome_bootstrap": "evidence/week12/bootstrap_ci.csv",
+    "outcome_ablation": "evidence/week12/ablation.csv",
     "gate_final": "evidence/week13/safety_final_evaluation.json",
     "gate_cv": "evidence/week13/safety_v2_round1_cv.txt",
     "closed_loop": "evidence/week14/closed_loop_2c_analysis.json",
@@ -113,11 +140,52 @@ def margin_coverage(forecast: dict[str, Any], outcome: dict[str, Any]) -> list[d
     return rows
 
 
-def outcome_rmse(report: dict[str, Any], targets: tuple[str, ...]) -> list[dict[str, Any]]:
-    return [{"model": model, "target": target, "rmse": float(cells[target]["rmse"]),
-             "n": int(cells[target]["n"])}
-            for model, cells in report["metrics"].items() for target in targets
-            if target in cells]
+def name(key: str) -> str:
+    return MODEL_NAMES.get(key, key)
+
+
+def color(key: str) -> str:
+    return ACCENT if key in DEPLOYED else GREY
+
+
+def read_csv(path: Path) -> list[dict[str, str]]:
+    with path.open(newline="", encoding="utf-8") as handle:
+        return list(csv.DictReader(handle))
+
+
+def forecast_rmse(test: dict[str, Any], unseen: dict[str, Any]) -> list[dict[str, Any]]:
+    return [{"split": split, "model": model, "rmse": float(report[model]["rmse"])}
+            for split, report in (("test", test), ("unseen", unseen))
+            for model in FORECAST_MODELS if isinstance(report.get(model), dict)]
+
+
+def outcome_validation(direct: list[dict[str, str]], hybrid: list[dict[str, str]],
+                       selection: dict[str, Any]) -> list[dict[str, Any]]:
+    """Validation RMSE of every trained outcome model (the test set saw only the finalists)."""
+    rows: dict[tuple[str, str], dict[str, Any]] = {}
+    for row in direct + hybrid:
+        key = (row["model"], row["target"])
+        if row["split"] == "validation" and row["target"] in OUTCOME_TARGETS and key not in rows:
+            rows[key] = {"model": row["model"], "target": row["target"],
+                         "rmse": float(row["rmse"]), "n": int(float(row["n"]))}
+    scores = selection["frozen"]["validation_scores"]
+    for model, cell in scores.items():
+        rows[(model, "S")] = {"model": model, "target": "S", "rmse": float(cell["S"]), "n": 0}
+    order = {m: i for i, m in enumerate(OUTCOME_MODELS)}
+    return sorted(rows.values(), key=lambda r: (order.get(r["model"], 99), r["target"]))
+
+
+def outcome_test_ci(rows: list[dict[str, str]]) -> list[dict[str, Any]]:
+    """Test RMSE of the finalists with the bootstrap 95% interval (bootstrap_ci.csv)."""
+    return [{"model": r["model"], "target": r["target"], "rmse": float(r["estimate"]),
+             "ci_low": float(r["ci_low"]), "ci_high": float(r["ci_high"])}
+            for r in rows if r["kind"] == "rmse" and r["target"] in OUTCOME_TARGETS]
+
+
+def outcome_ablation(rows: list[dict[str, str]]) -> list[dict[str, Any]]:
+    return [{"variant": r["variant"], "target": r["target"], "rmse": float(r["rmse"]),
+             "n_features": int(r["n_features"]), "base": r["base"]}
+            for r in rows if r["split"] == "validation" and r["target"] in ("u_dst_post", "S")]
 
 
 def gate_stress(report: dict[str, Any]) -> list[dict[str, Any]]:
@@ -225,17 +293,17 @@ def fig_capacity(rows: list[dict[str, Any]]) -> Figure:
 
 
 def fig_skill(rows: list[dict[str, Any]], models: tuple[str, ...]) -> Figure:
-    fig, ax = plt.subplots(figsize=(6.0, 2.8))
+    fig, ax = plt.subplots(figsize=(7.2, 3.0))
     order = [w for w in WORKLOADS if any(r["workload"] == w for r in rows)]
-    width = 0.8 / len(models)
-    colors = {models[0]: ACCENT}
+    width = 0.84 / len(models)
+    shades = ("#E2E2E2", "#BBBBBB", "#8C8C8C")
     for k, model in enumerate(models):
         vals = [next((r["rmse_ratio"] for r in rows
                       if r["workload"] == w and r["model"] == model), math.nan) for w in order]
-        xs = [i - 0.4 + width * (k + 0.5) for i in range(len(order))]
-        bars = ax.bar(xs, vals, width=width * 0.95, color=colors.get(model, GREY),
-                      label=model.replace("_", " "))
-        ax.bar_label(bars, fmt="%.2f", fontsize=7, padding=2)
+        xs = [i - 0.42 + width * (k + 0.5) for i in range(len(order))]
+        fill = ACCENT if model in DEPLOYED else shades[min(k, len(shades) - 1)]
+        bars = ax.bar(xs, vals, width=width * 0.92, color=fill, label=name(model))
+        ax.bar_label(bars, fmt="%.2f", fontsize=5.5, padding=1)
     ax.axhline(1.0, color=DARK, ls="--", lw=0.8)
     ax.text(-0.45, 1.02, "persistence = 1.0", fontsize=7, color=DARK, va="bottom")
     if "hot-switch" in order:
@@ -244,7 +312,8 @@ def fig_skill(rows: list[dict[str, Any]], models: tuple[str, ...]) -> Figure:
                   [f"{w}\n(unseen)" if w == "hot-switch" else w for w in order])
     ax.set_ylabel("RMSE / RMSE of persistence")
     ax.set_title("Load forecast, h = 3 s: RMSE ratio to persistence (lower is better)")
-    ax.legend(frameon=False, fontsize=8, ncol=len(models))
+    ax.set_ylim(0, max(r["rmse_ratio"] for r in rows) * 1.12)
+    ax.legend(frameon=False, fontsize=7, ncol=len(models), loc="upper left")
     return fig
 
 
@@ -279,23 +348,90 @@ def fig_coverage(rows: list[dict[str, Any]]) -> Figure:
     return fig
 
 
-def fig_outcome(rows: list[dict[str, Any]], labels: dict[str, str]) -> Figure:
-    targets = list(dict.fromkeys(r["target"] for r in rows))
-    models = list(dict.fromkeys(r["model"] for r in rows))
-    fig, axes = plt.subplots(1, len(targets), figsize=(7.0, 2.2), sharex=True)
+def fig_forecast_rmse(rows: list[dict[str, Any]]) -> Figure:
+    splits = [("test", "Test set (4 seen workloads)"), ("unseen", "Hot-switch (unseen)")]
+    fig, axes = plt.subplots(1, 2, figsize=(7.2, 2.4), sharey=True)
+    for ax, (split, title) in zip(axes, splits):
+        own = [r for r in rows if r["split"] == split]
+        models = [r["model"] for r in own]
+        bars = ax.barh(range(len(own)), [r["rmse"] for r in own],
+                       color=[color(m) for m in models])
+        for text in ax.bar_label(bars, fmt="%.3f", fontsize=7, padding=2):
+            text.set_bbox({"facecolor": "white", "edgecolor": "none", "pad": 0.4})
+        base = next((r["rmse"] for r in own if r["model"] == "persistence"), None)
+        if base is not None:
+            ax.axvline(base, color=DARK, ls="--", lw=0.8, zorder=0)
+        ax.set_yticks(range(len(own)), [name(m) for m in models])
+        if ax is axes[0]:  # the y axis is shared: invert it once, first row on top
+            ax.invert_yaxis()
+        ax.set_title(title)
+        ax.set_xlabel("RMSE of U(t+3)")
+        ax.set_xlim(0, max(r["rmse"] for r in own) * 1.25)
+    fig.suptitle("Load forecast, h = 3 s: every model (dashed line = persistence)",
+                 fontsize=9, y=1.06)
+    return fig
+
+
+def fig_outcome_validation(rows: list[dict[str, Any]]) -> Figure:
+    targets = [*OUTCOME_TARGETS, "S"]
+    fig, axes = plt.subplots(1, len(targets), figsize=(8.4, 2.4), sharey=True)
     for ax, target in zip(axes, targets):
-        vals = [next(r["rmse"] for r in rows if r["model"] == m and r["target"] == target)
-                for m in models]
-        bars = ax.barh(range(len(models)), vals,
-                       color=[ACCENT if m == "hybrid_xgb" else GREY for m in models])
+        own = [r for r in rows if r["target"] == target]
+        models = [r["model"] for r in own]
+        bars = ax.barh(range(len(own)), [r["rmse"] for r in own],
+                       color=[color(m) for m in models])
         ax.bar_label(bars, fmt="%.3f", fontsize=7, padding=2)
-        ax.set_yticks(range(len(models)), [m.replace("_", " ") for m in models])
-        ax.invert_yaxis()
-        ax.set_title(labels.get(target, target))
+        ax.set_yticks(range(len(own)), [name(m) for m in models])
+        if ax is axes[0]:  # the y axis is shared: invert it once, first row on top
+            ax.invert_yaxis()
+        ax.set_xlim(0, max(r["rmse"] for r in own) * 1.35)
+        ax.set_title(OUTCOME_TARGETS.get(target, "Selection score S"))
+        ax.set_xlabel("RMSE (U units)" if target != "S" else "S (lower is better)")
+    n = max((r["n"] for r in rows), default=0)
+    fig.suptitle(f"Post-Migration Outcome Model, every trained model on validation (n = {n})",
+                 fontsize=9, y=1.06)
+    return fig
+
+
+def fig_outcome_test(rows: list[dict[str, Any]]) -> Figure:
+    targets = [t for t in OUTCOME_TARGETS if any(r["target"] == t for r in rows)]
+    fig, axes = plt.subplots(1, len(targets), figsize=(8.0, 2.2), sharey=True)
+    for ax, target in zip(axes, targets):
+        own = [r for r in rows if r["target"] == target]
+        models = [r["model"] for r in own]
+        vals = [r["rmse"] for r in own]
+        err = [[r["rmse"] - r["ci_low"] for r in own], [r["ci_high"] - r["rmse"] for r in own]]
+        ax.barh(range(len(own)), vals, xerr=err, color=[color(m) for m in models],
+                error_kw={"elinewidth": 0.8, "capsize": 2, "ecolor": DARK})
+        for i, r in enumerate(own):
+            ax.text(r["ci_high"], i, f"  {r['rmse']:.3f}", va="center", fontsize=7)
+        ax.set_yticks(range(len(own)), [name(m) for m in models])
+        if ax is axes[0]:  # the y axis is shared: invert it once, first row on top
+            ax.invert_yaxis()
+        ax.set_xlim(0, max(r["ci_high"] for r in own) * 1.45)
+        ax.set_title(OUTCOME_TARGETS[target])
         ax.set_xlabel("RMSE (U units)")
-    n = rows[0]["n"] if rows else 0
-    fig.suptitle(f"Post-Migration Outcome Model on the test set (n = {n} migrations)", fontsize=9,
-                 y=1.08)
+    fig.suptitle("Post-Migration Outcome Model, finalists on the test set (scored once), "
+                 "bars = bootstrap 95% CI", fontsize=9, y=1.08)
+    return fig
+
+
+def fig_ablation(rows: list[dict[str, Any]]) -> Figure:
+    fig, axes = plt.subplots(1, 2, figsize=(7.6, 2.6), sharey=True)
+    for ax, (target, label) in zip(axes, (("u_dst_post", "Destination load RMSE (U units)"),
+                                          ("S", "Selection score S"))):
+        own = [r for r in rows if r["target"] == target]
+        variants = [r["variant"] for r in own]
+        bars = ax.barh(range(len(own)), [r["rmse"] for r in own],
+                       color=[color(v) for v in variants])
+        ax.bar_label(bars, fmt="%.3f", fontsize=7, padding=2)
+        ax.set_yticks(range(len(own)), [name(v) for v in variants])
+        if ax is axes[0]:  # the y axis is shared: invert it once, first row on top
+            ax.invert_yaxis()
+        ax.set_xlim(0, max(r["rmse"] for r in own) * 1.3)
+        ax.set_xlabel(label)
+    fig.suptitle("Ablation of Hybrid XGBoost on validation (lower is better)", fontsize=9,
+                 y=1.02)
     return fig
 
 
@@ -429,30 +565,44 @@ def build(root: Path) -> dict[str, tuple[Callable[[], Figure], Any, list[str]]]:
     if need("capacity"):
         cap = capacity_curves(src["capacity"])
         jobs["fig_01_capacity_latency"] = (lambda: fig_capacity(cap), cap, [SOURCES["capacity"]])
+    if need("forecast_test", "forecast_unseen"):
+        frmse = forecast_rmse(load_json(src["forecast_test"]), load_json(src["forecast_unseen"]))
+        jobs["fig_02_forecast_rmse_all_models"] = (
+            lambda: fig_forecast_rmse(frmse), frmse,
+            [SOURCES["forecast_test"], SOURCES["forecast_unseen"]])
     if need("skill"):
-        models = ("xgboost", "random_forest")
+        models = ("moving_average_w3", "linear_regression", "random_forest", "xgboost")
         skill = forecast_skill(load_json(src["skill"]), models)
-        jobs["fig_02_forecast_skill"] = (lambda: fig_skill(skill, models), skill,
-                                         [SOURCES["skill"]])
+        jobs["fig_03_forecast_skill_by_workload"] = (lambda: fig_skill(skill, models), skill,
+                                                     [SOURCES["skill"]])
     if need("forecast_coverage", "outcome_coverage"):
         cov = margin_coverage(load_json(src["forecast_coverage"]),
                               load_json(src["outcome_coverage"]))
-        jobs["fig_03_margin_coverage"] = (lambda: fig_coverage(cov), cov,
+        jobs["fig_04_margin_coverage"] = (lambda: fig_coverage(cov), cov,
                                           [SOURCES["forecast_coverage"],
                                            SOURCES["outcome_coverage"]])
-    if need("outcome_test"):
-        labels = {"u_dst_post": "Destination controller load", "u_src_post": "Source controller load"}
-        rmse = outcome_rmse(load_json(src["outcome_test"]), tuple(labels))
-        jobs["fig_04_outcome_rmse"] = (lambda: fig_outcome(rmse, labels), rmse,
-                                       [SOURCES["outcome_test"]])
+    if need("outcome_direct", "outcome_hybrid", "outcome_selection"):
+        val = outcome_validation(read_csv(src["outcome_direct"]), read_csv(src["outcome_hybrid"]),
+                                 load_json(src["outcome_selection"]))
+        jobs["fig_05_outcome_validation_all_models"] = (
+            lambda: fig_outcome_validation(val), val,
+            [SOURCES["outcome_direct"], SOURCES["outcome_hybrid"], SOURCES["outcome_selection"]])
+    if need("outcome_bootstrap"):
+        test = outcome_test_ci(read_csv(src["outcome_bootstrap"]))
+        jobs["fig_06_outcome_test_finalists"] = (lambda: fig_outcome_test(test), test,
+                                                 [SOURCES["outcome_bootstrap"]])
+    if need("outcome_ablation"):
+        abl = outcome_ablation(read_csv(src["outcome_ablation"]))
+        jobs["fig_07_outcome_ablation"] = (lambda: fig_ablation(abl), abl,
+                                           [SOURCES["outcome_ablation"]])
     if need("gate_final"):
         stress = gate_stress(load_json(src["gate_final"]))
-        jobs["fig_05_gate_stress"] = (lambda: fig_gate_stress(stress), stress,
+        jobs["fig_08_gate_stress"] = (lambda: fig_gate_stress(stress), stress,
                                       [SOURCES["gate_final"]])
     if need("gate_cv"):
         cv = parse_cv_table(src["gate_cv"].read_text(encoding="utf-8"))
         if cv:
-            jobs["fig_06_gate_tradeoff"] = (lambda: fig_tradeoff(cv), cv, [SOURCES["gate_cv"]])
+            jobs["fig_09_gate_tradeoff"] = (lambda: fig_tradeoff(cv), cv, [SOURCES["gate_cv"]])
         else:
             print(f"SKIP: no table rows in {SOURCES['gate_cv']}")
     if need("closed_loop"):
@@ -461,9 +611,9 @@ def build(root: Path) -> dict[str, tuple[Callable[[], Figure], Any, list[str]]]:
         lead = lead_time(loop)
         current_h, required_h = int(loop["horizon"]["current_h"]), int(
             loop["horizon"]["horizon_steps"])
-        jobs["fig_07_closed_loop_migrations"] = (lambda: fig_migrations(migrations), migrations,
+        jobs["fig_10_closed_loop_migrations"] = (lambda: fig_migrations(migrations), migrations,
                                                  [SOURCES["closed_loop"]])
-        jobs["fig_08_lead_time"] = (lambda: fig_lead_time(lead, current_h, required_h),
+        jobs["fig_11_lead_time"] = (lambda: fig_lead_time(lead, current_h, required_h),
                                     {"parts": lead, "current_h": current_h,
                                      "required_h": required_h}, [SOURCES["closed_loop"]])
     return jobs

@@ -58,6 +58,31 @@ class LoaderTest(unittest.TestCase):
         self.assertAlmostEqual(rows[-1]["coverage"], 0.75)
 
 
+class OutcomeLoaderTest(unittest.TestCase):
+    def test_validation_rows_dedupe_and_add_selection_score(self) -> None:
+        row = {"model": "analytical", "split": "validation", "target": "u_dst_post",
+               "rmse": "0.07", "n": "60.0"}
+        other = dict(row, model="hybrid_xgb", rmse="0.02")
+        test_row = dict(row, split="test", rmse="9")
+        selection = {"frozen": {"validation_scores": {"analytical": {"S": 0.23},
+                                                      "hybrid_xgb": {"S": 0.1}}}}
+        rows = ppr.outcome_validation([row, test_row], [row, other], selection)
+        u = [r for r in rows if r["target"] == "u_dst_post"]
+        self.assertEqual([(r["model"], r["rmse"]) for r in u],
+                         [("analytical", 0.07), ("hybrid_xgb", 0.02)])
+        self.assertEqual(sum(r["target"] == "S" for r in rows), 2)
+
+    def test_bootstrap_keeps_rmse_rows_only(self) -> None:
+        rows = ppr.outcome_test_ci([
+            {"kind": "rmse", "model": "hybrid_xgb", "reference": "", "target": "u_dst_post",
+             "estimate": "0.027", "ci_low": "0.021", "ci_high": "0.034", "share_better": ""},
+            {"kind": "improvement", "model": "hybrid_xgb", "reference": "analytical",
+             "target": "u_dst_post", "estimate": "59", "ci_low": "52", "ci_high": "67",
+             "share_better": "1.0"}])
+        self.assertEqual(len(rows), 1)
+        self.assertLess(rows[0]["ci_low"], rows[0]["rmse"])
+
+
 class MainTest(unittest.TestCase):
     def test_missing_inputs_are_skipped(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -73,12 +98,16 @@ class MainTest(unittest.TestCase):
             self.assertEqual(ppr.main(["--out", tmp]), 0)
             manifest = json.loads((Path(tmp) / "figures_data.json").read_text(encoding="utf-8"))
             names = sorted(manifest["figures"])
-            self.assertEqual(len(names), 8)
+            self.assertEqual(len(names), 11)
             for name in names:
                 self.assertTrue((Path(tmp) / f"{name}.png").exists())
                 self.assertTrue((Path(tmp) / f"{name}.pdf").exists())
-        loop = manifest["figures"]["fig_07_closed_loop_migrations"]["data"]
+        loop = manifest["figures"]["fig_10_closed_loop_migrations"]["data"]
         self.assertEqual(len(loop), 6)
+        val = manifest["figures"]["fig_05_outcome_validation_all_models"]["data"]
+        self.assertEqual({r["model"] for r in val}, set(ppr.OUTCOME_MODELS))
+        fc = manifest["figures"]["fig_02_forecast_rmse_all_models"]["data"]
+        self.assertEqual({r["model"] for r in fc}, set(ppr.FORECAST_MODELS))
 
 
 if __name__ == "__main__":
