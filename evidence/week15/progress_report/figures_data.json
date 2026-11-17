@@ -1,0 +1,553 @@
+{
+  "figures": {
+    "fig_01_capacity_latency": {
+      "data": [
+        {
+          "controller": "c1",
+          "rate_fps": 30.0,
+          "repeats": 5,
+          "response_p95_ms": 0.7492907099999999,
+          "setup_p95_ms": 22.112550399999996
+        },
+        {
+          "controller": "c1",
+          "rate_fps": 40.0,
+          "repeats": 5,
+          "response_p95_ms": 0.7460572771584699,
+          "setup_p95_ms": 22.2535958
+        },
+        {
+          "controller": "c1",
+          "rate_fps": 50.0,
+          "repeats": 5,
+          "response_p95_ms": 0.74254436,
+          "setup_p95_ms": 23.7592026
+        },
+        {
+          "controller": "c1",
+          "rate_fps": 60.0,
+          "repeats": 5,
+          "response_p95_ms": 0.7325365633333334,
+          "setup_p95_ms": 24.260565
+        },
+        {
+          "controller": "c1",
+          "rate_fps": 70.0,
+          "repeats": 5,
+          "response_p95_ms": 0.71492121,
+          "setup_p95_ms": 26.596237199999997
+        },
+        {
+          "controller": "c1",
+          "rate_fps": 80.0,
+          "repeats": 5,
+          "response_p95_ms": 0.77492079,
+          "setup_p95_ms": 37.9110776
+        },
+        {
+          "controller": "c1",
+          "rate_fps": 90.0,
+          "repeats": 5,
+          "response_p95_ms": 0.7711673033333334,
+          "setup_p95_ms": 42.454785599999994
+        },
+        {
+          "controller": "c1",
+          "rate_fps": 100.0,
+          "repeats": 5,
+          "response_p95_ms": 0.77314416,
+          "setup_p95_ms": 47.9941508
+        },
+        {
+          "controller": "c1",
+          "rate_fps": 110.0,
+          "repeats": 5,
+          "response_p95_ms": 0.7685519765536724,
+          "setup_p95_ms": 62.48212820000001
+        },
+        {
+          "controller": "c1",
+          "rate_fps": 120.0,
+          "repeats": 5,
+          "response_p95_ms": 0.7588894089617486,
+          "setup_p95_ms": 87.0724234
+        },
+        {
+          "controller": "c1",
+          "rate_fps": 140.0,
+          "repeats": 5,
+          "response_p95_ms": 0.725383636885246,
+          "setup_p95_ms": 283.68406259999995
+        },
+        {
+          "controller": "c1",
+          "rate_fps": 160.0,
+          "repeats": 5,
+          "response_p95_ms": 0.5890135593442624,
+          "setup_p95_ms": null
+        },
+        {
+          "controller": "c1",
+          "rate_fps": 200.0,
+          "repeats": 5,
+          "response_p95_ms": 0.5882503866666667,
+          "setup_p95_ms": null
+        },
+        {
+          "controller": "c2",
+          "rate_fps": 30.0,
+          "repeats": 5,
+          "response_p95_ms": 0.8004108033333333,
+          "setup_p95_ms": 24.773069800000002
+        },
+        {
+          "controller": "c2",
+          "rate_fps": 40.0,
+          "repeats": 5,
+          "response_p95_ms": 0.7816485999999999,
+          "setup_p95_ms": 25.1102374
+        },
+        {
+          "controller": "c2",
+          "rate_fps": 50.0,
+          "repeats": 5,
+          "response_p95_ms": 0.7713514531147541,
+          "setup_p95_ms": 28.5269674
+        },
+        {
+          "controller": "c2",
+          "rate_fps": 60.0,
+          "repeats": 5,
+          "response_p95_ms": 0.7549694966666667,
+          "setup_p95_ms": 26.038085000000002
+        },
+        {
+          "controller": "c2",
+          "rate_fps": 70.0,
+          "repeats": 5,
+          "response_p95_ms": 0.73361162,
+          "setup_p95_ms": 27.7290976
+        },
+        {
+          "controller": "c2",
+          "rate_fps": 80.0,
+          "repeats": 5,
+          "response_p95_ms": 0.7667427466666666,
+          "setup_p95_ms": 36.7318594
+        },
+        {
+          "controller": "c2",
+          "rate_fps": 90.0,
+          "repeats": 5,
+          "response_p95_ms": 0.7605255533333334,
+          "setup_p95_ms": 40.162376800000004
+        },
+        {
+          "controller": "c2",
+          "rate_fps": 100.0,
+          "repeats": 5,
+          "response_p95_ms": 0.7648844633333334,
+          "setup_p95_ms": 49.074252200000004
+        },
+        {
+          "controller": "c2",
+          "rate_fps": 110.0,
+          "repeats": 5,
+          "response_p95_ms": 0.7581356300000001,
+          "setup_p95_ms": 63.914326599999995
+        },
+        {
+          "controller": "c2",
+          "rate_fps": 120.0,
+          "repeats": 5,
+          "response_p95_ms": 0.7536046166666666,
+          "setup_p95_ms": 82.4857758
+        },
+        {
+          "controller": "c2",
+          "rate_fps": 140.0,
+          "repeats": 5,
+          "response_p95_ms": 0.7188465063387979,
+          "setup_p95_ms": 243.58832379999998
+        },
+        {
+          "controller": "c2",
+          "rate_fps": 160.0,
+          "repeats": 5,
+          "response_p95_ms": 0.5912712800037048,
+          "setup_p95_ms": null
+        },
+        {
+          "controller": "c2",
+          "rate_fps": 200.0,
+          "repeats": 5,
+          "response_p95_ms": 0.5888936766666667,
+          "setup_p95_ms": null
+        }
+      ],
+      "files": [
+        "fig_01_capacity_latency.png",
+        "fig_01_capacity_latency.pdf"
+      ],
+      "sources": [
+        "data/benchmarks/capacity_runs.csv"
+      ]
+    },
+    "fig_02_forecast_skill": {
+      "data": [
+        {
+          "model": "xgboost",
+          "rmse_ratio": 0.5515327232195769,
+          "split": "test",
+          "workload": "burst"
+        },
+        {
+          "model": "random_forest",
+          "rmse_ratio": 0.6300791054913594,
+          "split": "test",
+          "workload": "burst"
+        },
+        {
+          "model": "xgboost",
+          "rmse_ratio": 0.8041666814473728,
+          "split": "test",
+          "workload": "gradual"
+        },
+        {
+          "model": "random_forest",
+          "rmse_ratio": 0.7176745035157219,
+          "split": "test",
+          "workload": "gradual"
+        },
+        {
+          "model": "xgboost",
+          "rmse_ratio": 0.17982188295552629,
+          "split": "test",
+          "workload": "oscillating"
+        },
+        {
+          "model": "random_forest",
+          "rmse_ratio": 0.18303407324599244,
+          "split": "test",
+          "workload": "oscillating"
+        },
+        {
+          "model": "xgboost",
+          "rmse_ratio": 0.6009453826366842,
+          "split": "test",
+          "workload": "stable"
+        },
+        {
+          "model": "random_forest",
+          "rmse_ratio": 0.5839401717910041,
+          "split": "test",
+          "workload": "stable"
+        },
+        {
+          "model": "xgboost",
+          "rmse_ratio": 1.2029866070729118,
+          "split": "unseen",
+          "workload": "hot-switch"
+        },
+        {
+          "model": "random_forest",
+          "rmse_ratio": 1.7711641182293234,
+          "split": "unseen",
+          "workload": "hot-switch"
+        }
+      ],
+      "files": [
+        "fig_02_forecast_skill.png",
+        "fig_02_forecast_skill.pdf"
+      ],
+      "sources": [
+        "data/models/forecasting/forecast-models-v3/skill_vs_persistence.json"
+      ]
+    },
+    "fig_03_margin_coverage": {
+      "data": [
+        {
+          "coverage": 0.8652694610778443,
+          "margin": "m_f",
+          "n": 334,
+          "workload": "burst"
+        },
+        {
+          "coverage": 0.9341317365269461,
+          "margin": "m_f",
+          "n": 334,
+          "workload": "gradual"
+        },
+        {
+          "coverage": 0.9431137724550899,
+          "margin": "m_f",
+          "n": 334,
+          "workload": "oscillating"
+        },
+        {
+          "coverage": 0.9730538922155688,
+          "margin": "m_f",
+          "n": 334,
+          "workload": "stable"
+        },
+        {
+          "coverage": 0.8604790419161676,
+          "margin": "m_f",
+          "n": 1670,
+          "workload": "hot-switch"
+        },
+        {
+          "coverage": 0.9166666666666666,
+          "margin": "m_U",
+          "n": 12,
+          "workload": "burst"
+        },
+        {
+          "coverage": 0.75,
+          "margin": "m_U",
+          "n": 12,
+          "workload": "gradual"
+        },
+        {
+          "coverage": 0.9166666666666666,
+          "margin": "m_U",
+          "n": 12,
+          "workload": "hot-switch"
+        },
+        {
+          "coverage": 1.0,
+          "margin": "m_U",
+          "n": 12,
+          "workload": "oscillating"
+        },
+        {
+          "coverage": 1.0,
+          "margin": "m_U",
+          "n": 12,
+          "workload": "stable"
+        }
+      ],
+      "files": [
+        "fig_03_margin_coverage.png",
+        "fig_03_margin_coverage.pdf"
+      ],
+      "sources": [
+        "data/models/forecasting/forecast-models-v3/coverage.json",
+        "evidence/week12/coverage_metrics.json"
+      ]
+    },
+    "fig_04_outcome_rmse": {
+      "data": [
+        {
+          "model": "analytical",
+          "n": 60,
+          "rmse": 0.06642570812030679,
+          "target": "u_dst_post"
+        },
+        {
+          "model": "analytical",
+          "n": 60,
+          "rmse": 0.15315466807369485,
+          "target": "u_src_post"
+        },
+        {
+          "model": "direct_xgb",
+          "n": 60,
+          "rmse": 0.030787168146676647,
+          "target": "u_dst_post"
+        },
+        {
+          "model": "direct_xgb",
+          "n": 60,
+          "rmse": 0.15371644097675888,
+          "target": "u_src_post"
+        },
+        {
+          "model": "hybrid_xgb",
+          "n": 60,
+          "rmse": 0.026961002129300568,
+          "target": "u_dst_post"
+        },
+        {
+          "model": "hybrid_xgb",
+          "n": 60,
+          "rmse": 0.1273385404713563,
+          "target": "u_src_post"
+        }
+      ],
+      "files": [
+        "fig_04_outcome_rmse.png",
+        "fig_04_outcome_rmse.pdf"
+      ],
+      "sources": [
+        "data/models/outcome/post-migration-v1/test_metrics.json"
+      ]
+    },
+    "fig_05_gate_stress": {
+      "data": [
+        {
+          "gate": "gate_a",
+          "safe": 49,
+          "safe_rejected": 2,
+          "unsafe": 11,
+          "unsafe_accepted": 3,
+          "unsafe_rejected": 8
+        },
+        {
+          "gate": "gate_b",
+          "safe": 49,
+          "safe_rejected": 10,
+          "unsafe": 11,
+          "unsafe_accepted": 2,
+          "unsafe_rejected": 9
+        }
+      ],
+      "files": [
+        "fig_05_gate_stress.png",
+        "fig_05_gate_stress.pdf"
+      ],
+      "sources": [
+        "evidence/week13/safety_final_evaluation.json"
+      ]
+    },
+    "fig_06_gate_tradeoff": {
+      "data": [
+        {
+          "false_rejections": 6,
+          "name": "v1B",
+          "safe_accepted": 78,
+          "unsafe_accepted": 6,
+          "unsafe_rejected": 30
+        },
+        {
+          "false_rejections": 29,
+          "name": "b1",
+          "safe_accepted": 55,
+          "unsafe_accepted": 4,
+          "unsafe_rejected": 32
+        },
+        {
+          "false_rejections": 28,
+          "name": "b2",
+          "safe_accepted": 56,
+          "unsafe_accepted": 1,
+          "unsafe_rejected": 35
+        },
+        {
+          "false_rejections": 13,
+          "name": "a",
+          "safe_accepted": 71,
+          "unsafe_accepted": 4,
+          "unsafe_rejected": 32
+        }
+      ],
+      "files": [
+        "fig_06_gate_tradeoff.png",
+        "fig_06_gate_tradeoff.pdf"
+      ],
+      "sources": [
+        "evidence/week13/safety_v2_round1_cv.txt"
+      ]
+    },
+    "fig_07_closed_loop_migrations": {
+      "data": [
+        {
+          "actual_dst": 0.6172878300936462,
+          "dst": "c2",
+          "dst_upper_bound": 0.6736272751643347,
+          "predicted_dst": 0.6369980419243377,
+          "scenario": "sustained_overload",
+          "src": "c1",
+          "switch": "s3",
+          "u_dst_before": 0.5650595227666326
+        },
+        {
+          "actual_dst": 0.5208411329226218,
+          "dst": "c2",
+          "dst_upper_bound": 0.5645502239538359,
+          "predicted_dst": 0.5279209907138389,
+          "scenario": "sustained_overload",
+          "src": "c1",
+          "switch": "s10",
+          "u_dst_before": 0.42823841756957765
+        },
+        {
+          "actual_dst": 1.0067272482271619,
+          "dst": "c1",
+          "dst_upper_bound": 0.993883224554767,
+          "predicted_dst": 0.95725399131477,
+          "scenario": "dst_near_capacity",
+          "src": "c2",
+          "switch": "s11",
+          "u_dst_before": 0.9089583666397837
+        },
+        {
+          "actual_dst": 1.0258517333521782,
+          "dst": "c2",
+          "dst_upper_bound": 0.9990106460213545,
+          "predicted_dst": 0.9623814127813575,
+          "scenario": "dst_near_capacity",
+          "src": "c1",
+          "switch": "s9",
+          "u_dst_before": 0.9127438629984802
+        },
+        {
+          "actual_dst": 0.5102156591872641,
+          "dst": "c2",
+          "dst_upper_bound": 0.5627138811450242,
+          "predicted_dst": 0.5260846479050272,
+          "scenario": "gradual",
+          "src": "c1",
+          "switch": "s1",
+          "u_dst_before": 0.42703795728282484
+        },
+        {
+          "actual_dst": 0.5155796828342961,
+          "dst": "c2",
+          "dst_upper_bound": 0.5593768303815576,
+          "predicted_dst": 0.5227475971415606,
+          "scenario": "cooldown",
+          "src": "c1",
+          "switch": "s10",
+          "u_dst_before": 0.4141194243939971
+        }
+      ],
+      "files": [
+        "fig_07_closed_loop_migrations.png",
+        "fig_07_closed_loop_migrations.pdf"
+      ],
+      "sources": [
+        "evidence/week14/closed_loop_2c_analysis.json"
+      ]
+    },
+    "fig_08_lead_time": {
+      "data": {
+        "current_h": 3,
+        "parts": [
+          {
+            "p95_ms": 981.6709999999999,
+            "part": "Telemetry collection"
+          },
+          {
+            "p95_ms": 71.18691013017059,
+            "part": "Decision pipeline"
+          },
+          {
+            "n": 6,
+            "p95_ms": 2089.275,
+            "part": "Committed migration"
+          }
+        ],
+        "required_h": 4
+      },
+      "files": [
+        "fig_08_lead_time.png",
+        "fig_08_lead_time.pdf"
+      ],
+      "sources": [
+        "evidence/week14/closed_loop_2c_analysis.json"
+      ]
+    }
+  },
+  "generated_from_commit": "44ac0b566586e00add41dad59fbcd59f86d306ae"
+}
