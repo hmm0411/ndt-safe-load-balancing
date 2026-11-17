@@ -6,6 +6,7 @@ import math
 import statistics
 from collections import defaultdict
 from pathlib import Path
+from typing import Any
 
 
 INPUT_PATH = Path(
@@ -20,28 +21,19 @@ FINE_PREFIX = "capacity-2c20s-fine-"
 
 EXPECTED_REPEATS = 5
 
-# Derived from the fine-sweep knee analysis on the 8-vCPU VM
-# (e2-standard-8, after the controller log-format fix;
-#  rates 30..240 flows/s, 5 repeats each).
-#
-# 140 fps (both controllers): highest rate meeting every health rule
-#   - QoS success 100%
-#   - process CPU p95 < 95%            (91-93%; 160 fps reaches 97-98%)
-#   - setup p95 < 2x low-load baseline (~46 ms vs ~22-25 ms at 30 fps)
-#
-# 200 fps (both controllers): setup-latency knee
-#   setup p95 jumps from ~90 ms (180 fps) to 205-232 ms; QoS still 100%,
-#   but at 220 fps QoS success falls to 18% (c1) / 71% (c2)
-#
-# 240 fps (both controllers): throughput knee
-#   processed Packet-In stops following the offered load
-#   (~2300 pkt/s instead of ~2450; QoS success 0%)
-SAFE_REFERENCE_RATE = 140.0
+# Constants of the capacity-v4 artifact (data/benchmarks/controller_capacity.json,
+# "method" block): safe reference 90 fps, setup knee 140 fps, throughput knee
+# 160 fps. The earlier values (140, 200, 240) did not match the artifact: with
+# the committed capacity_runs.csv the script stopped with "missing required
+# fine group". tests/unit/test_derive_controller_capacity.py regenerates the
+# artifact from the CSV and compares it. The earlier comment block, which
+# described the 140/200/240 sweep, is in git history.
+SAFE_REFERENCE_RATE = 90.0
 SETUP_KNEE_RATE = {
-    "c1": 200.0,
-    "c2": 200.0,
+    "c1": 140.0,
+    "c2": 140.0,
 }
-THROUGHPUT_KNEE_RATE = 240.0
+THROUGHPUT_KNEE_RATE = 160.0
 
 # One-sided 95% Student-t critical value,
 # df = n - 1 = 4.
@@ -143,7 +135,7 @@ def main() -> None:
         }
     )
 
-    result = {
+    result: dict[str, Any] = {
         "schema_version": "1.0",
         "method": {
             "experiment":
