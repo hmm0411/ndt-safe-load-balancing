@@ -20,6 +20,11 @@ class ControllerTelemetry:
     response_p95_ms: float
     managed_switch_count: int
 
+    # Flow-setup latency from the setup probe; None when the probe is off.
+    setup_p95_ms: float | None = None
+    setup_samples: int | None = None
+    setup_timeouts: int | None = None
+
     def to_dict(self) -> dict[str, Any]:
         data = asdict(self)
         data["observed_at"] = self.observed_at.isoformat()
