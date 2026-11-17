@@ -14,6 +14,7 @@ Inputs (all on dev; a missing one is skipped and reported, never replaced by a c
   evidence/week13/safety_v2_round1_cv.txt                    -> fig_09_gate_tradeoff
   evidence/week14/closed_loop_2c_analysis.json               -> fig_10_closed_loop_migrations
                                                                 fig_11_lead_time
+Each figure also has a simple_* version (one question, one measure) for slides.
 Writes PNG (200 dpi) and PDF of each figure plus figures_data.json (the plotted values and
 their source files) to evidence/week15/progress_report/. Flat academic style, same rcParams
 as plot_week13.py. Usage, from the repo root:
@@ -540,6 +541,228 @@ def fig_lead_time(rows: list[dict[str, Any]], current_h: int, required_h: int) -
     return fig
 
 
+# ---------------------------------------------------------------- simple figures
+# One question per figure, one measure, the deployed model in blue and the rest grey, and
+# one reference line (persistence = 1, target 95 %, U = 1). The fig_* set above keeps the
+# full detail; these simple_* figures are for slides and the main text.
+
+def bar_values(ax: Any, bars: Any, fmt: str) -> None:
+    ax.bar_label(bars, fmt=fmt, fontsize=8, padding=2)
+
+
+def s_capacity(rows: list[dict[str, Any]]) -> Figure:
+    own = [r for r in rows if r["controller"] == "c1" and r["setup_p95_ms"] is not None]
+    fig, (left, right) = plt.subplots(1, 2, figsize=(7.0, 2.6))
+    fig.subplots_adjust(wspace=0.35)
+    rates = [r["rate_fps"] for r in own]
+    left.plot(rates, [r["setup_p95_ms"] for r in own], marker="o", ms=3, color=ACCENT)
+    right.plot(rates, [r["response_p95_ms"] for r in own], marker="o", ms=3, color=GREY)
+    right.set_ylim(0, 1.0)
+    left.set_title("Measured at the host: flow-setup P95 (ms)")
+    right.set_title("Measured inside the controller: handling P95 (ms)")
+    for ax in (left, right):
+        ax.axvline(90, color=DARK, ls="--", lw=0.8)
+        ax.set_xlabel("New-flow rate (flows/s), controller c1")
+    left.text(88, left.get_ylim()[1] * 0.9, "safe level", ha="right", fontsize=7, color=DARK)
+    last = own[-1]
+    left.annotate(f"{last['setup_p95_ms']:.0f} ms", (last["rate_fps"], last["setup_p95_ms"]),
+                  xytext=(-6, 0), textcoords="offset points", ha="right", va="center",
+                  fontsize=8)
+    return fig
+
+
+def s_forecast_models(rows: list[dict[str, Any]]) -> Figure:
+    own = [r for r in rows if r["split"] == "test"]
+    fig, ax = plt.subplots(figsize=(5.4, 2.6))
+    bars = ax.bar([name(r["model"]).replace(" (w=3)", "").replace(" ", "\n") for r in own],
+                  [r["rmse"] for r in own], color=[color(r["model"]) for r in own])
+    bar_values(ax, bars, "%.3f")
+    ax.set_ylabel("RMSE of U(t+3), test set")
+    ax.set_title("Load forecast: XGBoost has the lowest error (lower is better)")
+    ax.tick_params(axis="x", labelsize=8)
+    ax.set_ylim(0, max(r["rmse"] for r in own) * 1.2)
+    return fig
+
+
+def s_forecast_by_workload(rows: list[dict[str, Any]]) -> Figure:
+    own = [r for r in rows if r["model"] == "xgboost"]
+    order = [w for w in WORKLOADS if any(r["workload"] == w for r in own)]
+    vals = [next(r["rmse_ratio"] for r in own if r["workload"] == w) for w in order]
+    fig, ax = plt.subplots(figsize=(5.4, 2.6))
+    bars = ax.bar(order, vals, color=[ACCENT if v < 1 else RED for v in vals])
+    bar_values(ax, bars, "%.2f")
+    ax.axhline(1.0, color=DARK, ls="--", lw=0.8)
+    ax.text(-0.45, 1.02, "persistence = 1", ha="left", va="bottom", fontsize=7, color=DARK)
+    ax.set_ylabel("RMSE / RMSE of persistence")
+    ax.set_title("XGBoost by workload: better than persistence except on hot-switch")
+    ax.set_ylim(0, max(vals) * 1.2)
+    return fig
+
+
+def s_forecast_coverage(rows: list[dict[str, Any]]) -> Figure:
+    own = [r for r in rows if r["margin"] == "m_f"]
+    order = [w for w in WORKLOADS if any(r["workload"] == w for r in own)]
+    vals = [next(r["coverage"] for r in own if r["workload"] == w) for w in order]
+    fig, ax = plt.subplots(figsize=(5.4, 2.6))
+    for i, v in enumerate(vals):
+        c = RED if v < TARGET_COVERAGE else GREY
+        ax.vlines(i, 0.8, v, color=c, lw=2)
+        ax.scatter(i, v, color=c, s=40, zorder=3)
+        near = abs(v - TARGET_COVERAGE) < 0.02  # keep the label off the target line
+        ax.annotate(f"{100 * v:.1f}%", (i, v), xytext=(10 if near else 0, -3 if near else 6),
+                    textcoords="offset points", ha="left" if near else "center", fontsize=8)
+    ax.axhline(TARGET_COVERAGE, color=DARK, ls="--", lw=0.8)
+    ax.text(len(order) - 0.5, TARGET_COVERAGE + 0.004, "target 95%", ha="right", fontsize=7,
+            color=DARK)
+    ax.set_xticks(range(len(order)), order)
+    ax.set_ylim(0.8, 1.01)
+    ax.yaxis.set_major_formatter(lambda v, _: f"{100 * v:.0f}%")
+    ax.set_title("Forecast margin m_f: share of test samples inside the margin")
+    return fig
+
+
+def s_outcome_models(rows: list[dict[str, Any]]) -> Figure:
+    own = [r for r in rows if r["target"] == "u_dst_post"]
+    fig, ax = plt.subplots(figsize=(5.4, 2.4))
+    bars = ax.barh([name(r["model"]) for r in own], [r["rmse"] for r in own],
+                   color=[color(r["model"]) for r in own])
+    bar_values(ax, bars, "%.3f")
+    ax.invert_yaxis()
+    ax.set_xlim(0, max(r["rmse"] for r in own) * 1.2)
+    ax.set_xlabel("RMSE of destination U after migration (validation)")
+    ax.set_title("Every learned model has under half the error of the formula")
+    return fig
+
+
+def s_outcome_test(rows: list[dict[str, Any]]) -> Figure:
+    own = [r for r in rows if r["target"] == "u_dst_post"]
+    fig, ax = plt.subplots(figsize=(5.4, 2.0))
+    err = [[r["rmse"] - r["ci_low"] for r in own], [r["ci_high"] - r["rmse"] for r in own]]
+    ax.barh([name(r["model"]) for r in own], [r["rmse"] for r in own], xerr=err,
+            color=[color(r["model"]) for r in own],
+            error_kw={"elinewidth": 0.8, "capsize": 3, "ecolor": DARK})
+    for i, r in enumerate(own):
+        ax.text(r["ci_high"], i, f"  {r['rmse']:.3f}", va="center", fontsize=8)
+    ax.invert_yaxis()
+    ax.set_xlim(0, max(r["ci_high"] for r in own) * 1.3)
+    ax.set_xlabel("RMSE of destination U, test set (whiskers: bootstrap 95% CI)")
+    ax.set_title("Test set: Hybrid beats the formula; Hybrid vs Direct not separable")
+    return fig
+
+
+ABLATION_SIMPLE = (("hybrid_full", "full model"),
+                   ("hybrid_no_temporal", "without temporal features"),
+                   ("hybrid_no_switch_features", "without moved-switch features"),
+                   ("hybrid_no_switch", "without the analytical base"))
+
+
+def s_ablation(rows: list[dict[str, Any]]) -> Figure:
+    own = [next(r for r in rows if r["variant"] == v and r["target"] == "u_dst_post")
+           for v, _ in ABLATION_SIMPLE if any(r["variant"] == v for r in rows)]
+    labels = dict(ABLATION_SIMPLE)
+    fig, ax = plt.subplots(figsize=(5.4, 2.2))
+    bars = ax.barh([labels[r["variant"]] for r in own], [r["rmse"] for r in own],
+                   color=[color(r["variant"]) for r in own])
+    bar_values(ax, bars, "%.3f")
+    ax.invert_yaxis()
+    ax.set_xlim(0, max(r["rmse"] for r in own) * 1.2)
+    ax.set_xlabel("RMSE of destination U (validation)")
+    ax.set_title("Hybrid XGBoost: removing the analytical base hurts most")
+    return fig
+
+
+def s_safety_gate(stress: list[dict[str, Any]], cv: list[dict[str, Any]]) -> Figure:
+    fig, (left, right) = plt.subplots(1, 2, figsize=(7.2, 2.6), sharey=True,
+                                      gridspec_kw={"width_ratios": [2, 4]})
+    groups = (
+        (left, "safety-stress-v1", [(f"Gate {r['gate'][-1].upper()}"
+                                     + (" (no margin)" if r["gate"] == "gate_a" else
+                                        " (margin)"),
+                                     r["unsafe_accepted"], r["unsafe"], r["safe_rejected"],
+                                     r["safe"]) for r in stress]),
+        (right, "round-1 cross-validation", [
+            (CV_NAMES.get(r["name"], r["name"]).replace(": ", ":\n"), r["unsafe_accepted"],
+             r["unsafe_accepted"] + r["unsafe_rejected"], r["false_rejections"],
+             r["false_rejections"] + r["safe_accepted"]) for r in cv]),
+    )
+    for ax, title, items in groups:
+        xs = range(len(items))
+        leak = [100 * i[1] / i[2] for i in items]
+        fr = [100 * i[3] / i[4] for i in items]
+        b1 = ax.bar([x - 0.2 for x in xs], leak, width=0.4, color=RED,
+                    label="unsafe accepted (leaked)")
+        b2 = ax.bar([x + 0.2 for x in xs], fr, width=0.4, color=GREY,
+                    label="safe rejected (false rejection)")
+        ax.bar_label(b1, labels=[f"{i[1]}/{i[2]}" for i in items], fontsize=7, padding=2)
+        ax.bar_label(b2, labels=[f"{i[3]}/{i[4]}" for i in items], fontsize=7, padding=2)
+        ax.set_xticks(list(xs), [i[0] for i in items], fontsize=7)
+        ax.set_title(title)
+    left.set_ylabel("% of cases")
+    right.legend(frameon=False, fontsize=7, loc="upper center", bbox_to_anchor=(0.2, -0.22),
+                 ncol=2)
+    fig.suptitle("Safety Gate: fewer leaks always cost more false rejections", fontsize=9,
+                 y=1.04)
+    return fig
+
+
+def s_migrations(rows: list[dict[str, Any]]) -> Figure:
+    room = [r for r in rows if r["u_dst_before"] < 0.8]
+    full = [r for r in rows if r["u_dst_before"] >= 0.8]
+    ordered = room + full
+    fig, ax = plt.subplots(figsize=(6.0, 2.6))
+    for i, r in enumerate(ordered):
+        over = r["actual_dst"] > U_LIMIT
+        ax.plot([r["dst_upper_bound"]] * 2, [i - 0.3, i + 0.3], color=DARK, lw=2,
+                label="predicted upper bound" if i == 0 else None)
+        ax.scatter(r["actual_dst"], i, s=36, zorder=3, color=RED if over else ACCENT,
+                   label="actual after migration" if i == 0 else None)
+        ax.annotate(f"{r['actual_dst']:.3f}", (max(r["actual_dst"], r["dst_upper_bound"]), i),
+                    xytext=(7, 0), textcoords="offset points", va="center", fontsize=7,
+                    color=RED if over else "black")
+    ax.axvline(U_LIMIT, color=RED, ls="--", lw=0.8)
+    if room and full:
+        ax.axhline(len(room) - 0.5, color=GREY, lw=0.6)
+    ax.set_yticks(range(len(ordered)),
+                  [f"{r['scenario']} ({r['src']}→{r['dst']})" for r in ordered], fontsize=7)
+    ax.invert_yaxis()
+    ax.set_xlim(0.45, 1.1)
+    ax.set_xlabel("Destination controller U after migration (limit U = 1)")
+    ax.set_title(f"Destination had room: {len(room)} migrations within the bound · "
+                 f"near full (U ≈ 0.91): {len(full)} over the limit")
+    ax.legend(frameon=False, fontsize=7, loc="upper center", bbox_to_anchor=(0.5, -0.25),
+              ncol=2)
+    return fig
+
+
+def add_simple_jobs(jobs: dict[str, tuple[Callable[[], Figure], Any, list[str]]]) -> None:
+    """simple_* figures from the data already loaded for the fig_* set."""
+    def take(key: str) -> tuple[Any, list[str]] | None:
+        job = jobs.get(key)
+        return (job[1], job[2]) if job else None
+
+    plan: list[tuple[str, str, Callable[[Any], Figure]]] = [
+        ("simple_01_capacity", "fig_01_capacity_latency", s_capacity),
+        ("simple_02_forecast_models", "fig_02_forecast_rmse_all_models", s_forecast_models),
+        ("simple_03_forecast_by_workload", "fig_03_forecast_skill_by_workload",
+         s_forecast_by_workload),
+        ("simple_04_forecast_coverage", "fig_04_margin_coverage", s_forecast_coverage),
+        ("simple_05_outcome_models", "fig_05_outcome_validation_all_models", s_outcome_models),
+        ("simple_06_outcome_test", "fig_06_outcome_test_finalists", s_outcome_test),
+        ("simple_07_outcome_ablation", "fig_07_outcome_ablation", s_ablation),
+        ("simple_09_closed_loop_migrations", "fig_10_closed_loop_migrations", s_migrations),
+    ]
+    for new, old, draw in plan:
+        got = take(old)
+        if got is not None:
+            data, sources = got
+            jobs[new] = (lambda d=data, f=draw: f(d), data, sources)
+    stress, cv = take("fig_08_gate_stress"), take("fig_09_gate_tradeoff")
+    if stress is not None and cv is not None:
+        jobs["simple_08_safety_gate"] = (lambda: s_safety_gate(stress[0], cv[0]),
+                                         {"stress": stress[0], "cross_validation": cv[0]},
+                                         stress[1] + cv[1])
+
+
 # ---------------------------------------------------------------- main
 
 def git_commit(root: Path) -> str:
@@ -617,6 +840,7 @@ def build(root: Path) -> dict[str, tuple[Callable[[], Figure], Any, list[str]]]:
         jobs["fig_11_lead_time"] = (lambda: fig_lead_time(lead, current_h, required_h),
                                     {"parts": lead, "current_h": current_h,
                                      "required_h": required_h}, [SOURCES["closed_loop"]])
+    add_simple_jobs(jobs)
     return jobs
 
 

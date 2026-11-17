@@ -98,7 +98,8 @@ class MainTest(unittest.TestCase):
             self.assertEqual(ppr.main(["--out", tmp]), 0)
             manifest = json.loads((Path(tmp) / "figures_data.json").read_text(encoding="utf-8"))
             names = sorted(manifest["figures"])
-            self.assertEqual(len(names), 11)
+            self.assertEqual(sum(n.startswith("fig_") for n in names), 11)
+            self.assertEqual(sum(n.startswith("simple_") for n in names), 9)
             for name in names:
                 self.assertTrue((Path(tmp) / f"{name}.png").exists())
                 self.assertTrue((Path(tmp) / f"{name}.pdf").exists())
