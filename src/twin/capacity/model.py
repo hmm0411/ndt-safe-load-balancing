@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import os
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
@@ -103,3 +105,20 @@ class CapacityModel:
             processed_packet_in_rate
             / capacity
         )
+
+
+CAPACITY_ENV = "NDT_CAPACITY_FILE"
+DEFAULT_CAPACITY_PATH = Path("data/benchmarks/controller_capacity.json")
+
+
+def resolve_capacity_path(
+    root: Path,
+    env: Mapping[str, str] | None = None,
+) -> Path:
+    """Capacity file of the orchestrator; NDT_CAPACITY_FILE overrides it."""
+    source = os.environ if env is None else env
+    value = source.get(CAPACITY_ENV)
+    if not value:
+        return root / DEFAULT_CAPACITY_PATH
+    path = Path(value)
+    return path if path.is_absolute() else root / path

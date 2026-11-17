@@ -25,7 +25,7 @@ from src.telemetry.collector import TelemetryCollector
 from src.telemetry.snapshot_builder import SnapshotBuilder
 from src.telemetry.snapshot_validator import SnapshotValidator
 from src.telemetry.writer import JsonlWriter
-from src.twin.capacity.model import CapacityModel
+from src.twin.capacity.model import CapacityModel, resolve_capacity_path
 from src.twin.state.builder import TwinStateBuilder
 from src.twin.state.quality import TwinQualityAssessor
 from src.twin.state.quality_score import validate_config
@@ -89,9 +89,7 @@ validator = SnapshotValidator(
     freshness_max_age_ms=float(telemetry_cfg["freshness_max_age_ms"]),
 )
 snapshot_builder = SnapshotBuilder(validator)
-capacity_model = CapacityModel.from_file(
-    ROOT / "data" / "benchmarks" / "controller_capacity.json"
-)
+capacity_model = CapacityModel.from_file(resolve_capacity_path(ROOT))
 quality_cfg = telemetry_cfg["twin_quality"]
 twinning_tracker = TwinningRateTracker(
     window_seconds=float(quality_cfg["twinning_window_seconds"]),
