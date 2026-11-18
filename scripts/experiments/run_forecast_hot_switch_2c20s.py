@@ -42,6 +42,13 @@ CONTROLLER_HOSTS = controller_paths.controller_hosts(_PATHS)
 
 HOT_HOST = controller_paths.hot_hosts(_PATHS)
 
+# Every workload host index (2C20S: 1..20, 4C40S: 1..40).
+ALL_HOSTS = tuple(sorted(i for p in _PATHS for i in p.switch_indices))
+
+# Host on s<i> with IP 10.0.0.(100+i) that receives the local flows: hs<i> in the 2C20S
+# hot-switch topology, p<i> in 4C40S (runtime_4c40s.py sets NDT_LOCAL_SINK_PREFIX=p).
+SINK_PREFIX = os.environ.get("NDT_LOCAL_SINK_PREFIX", "hs")
+
 
 # Packet-In messages generated per new flow on the LOCAL path h_i -> s_i -> hs_i.
 #
@@ -260,7 +267,7 @@ def validate_local_connectivity(
 
     failures: list[str] = []
 
-    for index in range(1, 21):
+    for index in ALL_HOSTS:
         source = net.get(f"h{index}")
         sink_ip = f"10.0.0.{100 + index}"
 
@@ -270,7 +277,7 @@ def validate_local_connectivity(
 
         if "1 received" not in result:
             failures.append(
-                f"h{index} -> hs{index} "
+                f"h{index} -> {SINK_PREFIX}{index} "
                 f"({sink_ip})"
             )
 
@@ -418,7 +425,7 @@ def run_forecast_hot_switch(
         ] = {
             "hot_host": f"h{hot_host}",
             "hot_switch": f"s{hot_host}",
-            "local_sink": f"hs{hot_host}",
+            "local_sink": f"{SINK_PREFIX}{hot_host}",
             "local_sink_ip": (
                 f"10.0.0.{100 + hot_host}"
             ),
@@ -455,8 +462,8 @@ def run_forecast_hot_switch(
     try:
         # Start one sink directly attached to
         # every switch.
-        for index in range(1, 21):
-            sink_name = f"hs{index}"
+        for index in ALL_HOSTS:
+            sink_name = f"{SINK_PREFIX}{index}"
             sink_ip = f"10.0.0.{100 + index}"
 
             process = start_host_process(
@@ -513,7 +520,7 @@ def run_forecast_hot_switch(
                 )
 
                 target_host = (
-                    f"hs{host_number}"
+                    f"{SINK_PREFIX}{host_number}"
                 )
 
                 target_ip = (
@@ -696,6 +703,6 @@ def run_forecast_hot_switch(
 
 if __name__ == "__main__":
     raise SystemExit(
-        "Use runtime_2c20s.py "
-        "--forecast-hot-switch"
+        "Use runtime_2c20s.py --forecast-hot-switch "
+        "or runtime_4c40s.py --forecast hot_switch"
     )

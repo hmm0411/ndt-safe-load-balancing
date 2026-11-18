@@ -4,6 +4,7 @@ switch one workload host (h<i>) and one probe host (p<i>)."""
 from __future__ import annotations
 
 import argparse
+import os
 import time
 from pathlib import Path
 from typing import Any
@@ -20,6 +21,8 @@ from src.experiments.topologies.capacity_smoke_2c20s import (
     post_json,
     wait_for_controller_connections,
 )
+from src.experiments.workloads import forecast_4c
+from src.experiments.workloads.profile_spec import parse_profile_specs
 from src.experiments.topologies.setup_probe_launcher import (
     launch_setup_probes,
     parse_switches,
@@ -121,6 +124,25 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--setup-probe-timeout", type=float, default=None)
     parser.add_argument("--setup-probe-switches", default="all")
     parser.add_argument("--setup-probe-port", type=int, default=9001)
+    # Week 15 Day 5: run one forecast workload (the 2C20S runners, host tables from the config)
+    parser.add_argument("--forecast", choices=sorted(forecast_4c.RUNNERS), default=None)
+    parser.add_argument("--capacity-runs", type=Path,
+                        default=Path("data/benchmarks/capacity_runs_4c40s.csv"))
+    parser.add_argument("--capacity-experiment", default=forecast_4c.CAPACITY_EXPERIMENT)
+    parser.add_argument("--controller-capacity", type=Path,
+                        default=Path("data/benchmarks/controller_capacity_v5.json"))
+    parser.add_argument("--output-dir", type=Path,
+                        default=Path("data/experiment_runs/transfer_4c"))
+    parser.add_argument("--duration", type=float, default=180.0)
+    parser.add_argument("--sample-interval", type=float, default=1.0)
+    parser.add_argument("--run-id", default=None)
+    parser.add_argument("--experiment-type", default="transfer-4c-forecast")
+    parser.add_argument("--repeat-index", type=int, default=None)
+    parser.add_argument("--seed", type=int, default=None)
+    parser.add_argument("--git-commit", default=None)
+    parser.add_argument("--target-utilization", type=float, default=0.60)
+    parser.add_argument("--profile", action="append", default=None,
+                        metavar="CONTROLLER=PROFILE")
     return parser
 
 
@@ -143,6 +165,17 @@ def main() -> None:
     probe_error = setup_probe_args_error(args)
     if probe_error:
         raise SystemExit(probe_error)
+    if args.forecast and args.setup_probe_dir is not None:
+        raise SystemExit("--forecast runs without the setup probe (the 2C models never saw it)")
+    runner = None
+    if args.forecast:
+        # the runners build their host tables at import time: environment first
+        os.environ.update(forecast_4c.runner_env(args.controllers_config))
+        runner = forecast_4c.load_runner(args.forecast)
+        used = args.output_dir / "capacity_runs_used.csv"
+        n = forecast_4c.filter_capacity_rows(args.capacity_runs, used, args.capacity_experiment)
+        print(f"*** capacity rows: {n} valid {args.capacity_experiment} rows -> {used}")
+        args.capacity_runs = used
     config = load_yaml(args.controllers_config)
     specs = controller_specs(config)
     setLogLevel("info")
@@ -162,8 +195,20 @@ def main() -> None:
         print("*** Starting network")
         net.start()
         print(f"*** 4C40S runtime topology READY: {len(specs)} controllers")
-        if args.init_roles:
+        if args.init_roles or runner is not None:
             initialize_runtime(config, args.orchestrator_url)
+        if runner is not None:
+            print(f"*** Starting {args.forecast} forecast workload on 4C40S", flush=True)
+            run_dir = runner(net, **forecast_4c.runner_kwargs(
+                args.forecast, capacity_runs=args.capacity_runs,
+                controller_capacity=args.controller_capacity, output_dir=args.output_dir,
+                duration=args.duration, sample_interval=args.sample_interval,
+                orchestrator_url=args.orchestrator_url, run_id=args.run_id, seed=args.seed,
+                repeat_index=args.repeat_index, experiment_type=args.experiment_type,
+                git_commit=args.git_commit, profiles=parse_profile_specs(args.profile),
+                target_utilization=args.target_utilization))
+            print(f"*** FORECAST RUN DONE: {run_dir}", flush=True)
+            return
         if args.setup_probe_dir is not None:
             probes = launch_setup_probes(
                 net,
