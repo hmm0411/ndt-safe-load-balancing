@@ -69,8 +69,21 @@ echo "PREFLIGHT: PASS"
 [[ "$PREFLIGHT_ONLY" -eq 1 ]] && exit 0
 
 # ---------------------------------------------------------------- runs
+# Leftover veth pairs of an interrupted Mininet (no process left) make the next
+# net.build() fail with "File exists". Clean them only when no Mininet is running.
+clean_leftover_links() {
+    if ip -br link | grep -qE '^s[0-9]+-eth' && ! pgrep -f "mininet:" >/dev/null; then
+        echo "cleaning leftover Mininet links"
+        sudo mn -c >/dev/null 2>&1
+    fi
+}
+
 FAILED_PROCESSES=0
+CONSECUTIVE_FAILURES=0
+MAX_CONSECUTIVE_FAILURES=3
+ABORTED=0
 for stage in ${STAGES//,/ }; do
+    [[ "$ABORTED" -eq 1 ]] && break
     cfg="${CONFIG[$stage]}"
     echo "== stage ${stage} (${cfg}) $(date -u +%FT%TZ)"
     read -r -a targets <<< "$("$PY" -c "
@@ -86,11 +99,20 @@ print(' '.join(str(r) for r in load_yaml(Path('${cfg}'))['workload']['rates_fps'
     for controller in "${targets[@]}"; do
         for rate in "${rates[@]}"; do
             echo "-- ${stage} ${controller} ${rate} fps $(date -u +%T)"
-            if ! sudo -E env PYTHONPATH="$PWD" "$PY" -m src.experiments.topologies.capacity_4c40s \
+            clean_leftover_links
+            if sudo -E env PYTHONPATH="$PWD" "$PY" -m src.experiments.topologies.capacity_4c40s \
                     --config "$cfg" --controller "$controller" --rate "$rate"; then
+                CONSECUTIVE_FAILURES=0
+            else
                 FAILED_PROCESSES=$((FAILED_PROCESSES + 1))
+                CONSECUTIVE_FAILURES=$((CONSECUTIVE_FAILURES + 1))
                 echo "!! ${stage} ${controller} ${rate}: a repeat failed (details above)"
-                if pgrep -f "mininet:" >/dev/null; then sudo mn -c >/dev/null 2>&1; fi
+                sudo mn -c >/dev/null 2>&1
+                if (( CONSECUTIVE_FAILURES >= MAX_CONSECUTIVE_FAILURES )); then
+                    echo "!! ${MAX_CONSECUTIVE_FAILURES} processes failed in a row: pass ABORTED"
+                    ABORTED=1
+                    break 2
+                fi
             fi
         done
     done
@@ -102,6 +124,7 @@ for stage in ${STAGES//,/ }; do
     "$PY" -m src.experiments.capacity.sweep_4c40s --config "${CONFIG[$stage]}" --list
 done
 echo "processes with a failed repeat: ${FAILED_PROCESSES}"
+[[ "$ABORTED" -eq 1 ]] && echo "PASS ABORTED: see the first '!!' lines above"
 sudo chown -R "$(id -un):$(id -gn)" data/experiment_runs 2>/dev/null || true
 if [[ "$SHUTDOWN" -eq 1 ]]; then
     echo "shutting the VM down in 5 minutes (cancel: sudo shutdown -c)"
