@@ -4,12 +4,13 @@ import json
 import subprocess
 import time
 from pathlib import Path
-from typing import Any, Dict, Iterable, Optional
+from typing import Any, Dict, Iterable, Mapping, Optional
 from urllib.request import urlopen
 
 from src.experiments.capacity.aggregator import aggregate_run
 from src.experiments.capacity.collector import RunCollector
 from src.experiments.capacity.validator import validate_summary
+from src.experiments.capacity.sweep_4c40s import probe_summary
 from src.experiments.common.run_io import (
     create_run_dir,
     git_commit,
@@ -17,6 +18,10 @@ from src.experiments.common.run_io import (
     restore_sudo_owner,
     utc_now,
     write_json,
+)
+from src.experiments.topologies.setup_probe_launcher import (
+    launch_setup_probes,
+    parse_switches,
 )
 from src.schemas.experiment import ExperimentMetadata
 
@@ -217,7 +222,17 @@ def run_capacity_experiment(
     rate: float,
     repeat_index: int,
     repo_root: Path,
+    background_rate: Optional[float] = None,
+    setup_probe: Optional[Mapping[str, Any]] = None,
+    run_conditions: Optional[Mapping[str, Any]] = None,
 ) -> Path:
+    """One capacity run. The three optional arguments are the 4C40S additions
+    (Week 15): left at None the run is exactly the capacity-v4 run.
+
+    background_rate: every other scenario's path carries this new-flow rate.
+    setup_probe: start the flow-setup probe on the listed switches for the run.
+    run_conditions: written as run_conditions.json (CPU model, background, probe).
+    """
     if controller_id not in config["scenarios"]:
         raise ValueError(f"unknown controller scenario: {controller_id}")
     if rate <= 0 or repeat_index <= 0:
@@ -241,6 +256,14 @@ def run_capacity_experiment(
 
     source = net.get(scenario["source_host"])
     target = net.get(scenario["target_host"])
+    background_ids = (
+        [cid for cid in config["scenarios"] if cid != controller_id]
+        if background_rate is not None else []
+    )
+    cleared_switches = list(scenario["path_switches"]) + [
+        switch for cid in background_ids for switch in config["scenarios"][cid]["path_switches"]
+    ]
+    probes = None
     collector = None
     processes: list[Any] = []
     streams: list[Any] = []
@@ -278,15 +301,26 @@ def run_capacity_experiment(
         )
         metadata_path = run_dir / "metadata.json"
         write_json(metadata_path, metadata.to_dict())
+        if run_conditions is not None or background_rate is not None or setup_probe:
+            write_json(run_dir / "run_conditions.json", {
+                **dict(run_conditions or {}),
+                "background_rate_fps": background_rate,
+                "background_controllers": background_ids,
+                "setup_probe": dict(setup_probe) if setup_probe else None,
+            })
+        for cid in background_ids:
+            for switch_name in config["scenarios"][cid]["path_switches"]:
+                if ownership.get(switch_name) != cid:
+                    raise RuntimeError(
+                        f"{switch_name} owner is {ownership.get(switch_name)}, expected {cid}"
+                    )
 
         wait_for_valid_snapshot(str(runtime["orchestrator_url"]))
         warmup_hosts(source, target)
-        clear_experiment_flows(scenario["path_switches"])
+        clear_experiment_flows(cleared_switches)
 
         wait_for_experiment_flows_absent(
-                switches=scenario[
-                    "path_switches"
-                ],
+                switches=cleared_switches,
                 timeout_seconds=5.0,
             )
 
@@ -332,6 +366,58 @@ def run_capacity_experiment(
             poll_interval_seconds=float(telemetry_config["interval_seconds"]),
         )
         collector.start()
+        for cid in background_ids:
+            background = config["scenarios"][cid]
+            bg_target = net.get(background["target_host"])
+            bg_source = net.get(background["source_host"])
+            sink_bg_log = (logs / f"background_{cid}_sink.log").open("w", encoding="utf-8")
+            bg_log = (logs / f"background_{cid}.log").open("w", encoding="utf-8")
+            streams.extend([sink_bg_log, bg_log])
+            bg_sink = bg_target.popen(
+                process_command(
+                    "src.experiments.workloads.udp_sink",
+                    "--bind-ip", str(background["target_ip"]),
+                    "--port", str(workload_config["target_port"]),
+                ),
+                cwd=str(repo_root), stdout=sink_bg_log, stderr=subprocess.STDOUT,
+            )
+            processes.append(bg_sink)
+            time.sleep(0.25)
+            ensure_process_running(bg_sink, f"background UDP sink {cid}")
+            processes.append(bg_source.popen(
+                process_command(
+                    "src.experiments.workloads.udp_new_flow",
+                    "--run-id", f"{run_id}-bg-{cid}",
+                    "--source-host", str(background["source_host"]),
+                    "--source-ip", str(background["source_ip"]),
+                    "--target-host", str(background["target_host"]),
+                    "--target-ip", str(background["target_ip"]),
+                    "--target-port", str(workload_config["target_port"]),
+                    "--pattern", str(workload_config["pattern"]),
+                    "--rate", str(background_rate),
+                    "--duration", str(workload_duration),
+                    "--sample-interval", str(workload_config["sample_interval_seconds"]),
+                    "--source-port-start", str(workload_config["source_port_start"]),
+                    "--source-port-end", str(workload_config["source_port_end"]),
+                    "--flow-idle-timeout", str(workload_config["flow_idle_timeout_seconds"]),
+                    "--port-reuse-safety-factor",
+                    str(workload_config["port_reuse_safety_factor"]),
+                    "--output", str(run_dir / f"background_{cid}.jsonl"),
+                ),
+                cwd=str(repo_root), stdout=bg_log, stderr=subprocess.STDOUT,
+            ))
+        if setup_probe:
+            probes = launch_setup_probes(
+                net,
+                parse_switches(str(setup_probe["switches"]), len(ownership)),
+                run_dir / "setup_probe",
+                run_id,
+                int(setup_probe["port"]),
+                float(setup_probe["rate_per_second"]),
+                workload_duration,
+                float(setup_probe["timeout_seconds"]),
+                repo_root,
+            )
         workload_process = source.popen(
             process_command(
                 "src.experiments.workloads.udp_new_flow",
@@ -463,6 +549,25 @@ def run_capacity_experiment(
         summary = aggregate_run(run_dir)
         write_json(run_dir / "summary.json", summary)
         validation = validate_summary(summary, config)
+        if setup_probe:
+            if probes is not None:
+                probes.stop()
+                probes = None
+            started = metadata.measurement_started_at
+            ended = metadata.measurement_ended_at
+            if started is None or ended is None:
+                raise RuntimeError("measurement window not recorded")
+            stats = probe_summary(
+                run_dir / "setup_probe",
+                {str(k): str(v) for k, v in post_state["ownership"].items()},
+                started,
+                ended,
+                float(setup_probe["timeout_seconds"]),
+            )
+            write_json(run_dir / "setup_probe_summary.json", stats)
+            if any(value is None for value in stats.values()):
+                validation["valid"] = False
+                validation["errors"].append("setup_probe_samples_missing")
         write_json(run_dir / "validation.json", validation)
         if not validation["valid"]:
             raise RuntimeError("capacity run validation failed: " + ", ".join(validation["errors"]))
@@ -479,6 +584,9 @@ def run_capacity_experiment(
         if collector is not None:
             collector.stop()
 
+        if probes is not None:
+            probes.stop()
+
         for process in processes:
             terminate_process(
                 process
@@ -494,7 +602,7 @@ def run_capacity_experiment(
         # draining queued Packet-In events.
         try:
             clear_experiment_flows(
-                scenario["path_switches"]
+                cleared_switches
             )
         except Exception:
             pass
