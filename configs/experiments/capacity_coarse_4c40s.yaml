@@ -1,0 +1,147 @@
+# Week 15 (plan 16-22/11). Owner: Vy (writes), My (reviews). Run with
+# scripts/experiments/run_week15_vm_4c40s.sh; status: python -m src.experiments.capacity.sweep_4c40s --config <this file>.
+# Day 4, capacity-v5 coarse sweep: rates of capacity_coarse_2c20s.yaml, other controllers idle
+# (as v4), flow-setup probe running.
+schema_version: "1.0"
+
+experiment:
+  type: capacity-4c40s-coarse
+  topology: runtime_4c40s
+  output_root: data/experiment_runs
+
+runtime:
+  orchestrator_url: "http://127.0.0.1:9000"
+  controller_urls:
+    c1: "http://127.0.0.1:8081"
+    c2: "http://127.0.0.1:8082"
+    c3: "http://127.0.0.1:8083"
+    c4: "http://127.0.0.1:8084"
+
+# Each controller owns a 10-switch slice of the 40-switch chain (configs/controllers_4c40s.yaml);
+# its scenario is the 10-hop path h<first> -> h<last> on that slice, as in capacity-v4.
+scenarios:
+  c1:
+    target_controller: c1
+    source_host: h1
+    source_ip: "10.0.0.1"
+    target_host: h10
+    target_ip: "10.0.0.10"
+    path_switches:
+      - s1
+      - s2
+      - s3
+      - s4
+      - s5
+      - s6
+      - s7
+      - s8
+      - s9
+      - s10
+  c2:
+    target_controller: c2
+    source_host: h11
+    source_ip: "10.0.0.11"
+    target_host: h20
+    target_ip: "10.0.0.20"
+    path_switches:
+      - s11
+      - s12
+      - s13
+      - s14
+      - s15
+      - s16
+      - s17
+      - s18
+      - s19
+      - s20
+  c3:
+    target_controller: c3
+    source_host: h21
+    source_ip: "10.0.0.21"
+    target_host: h30
+    target_ip: "10.0.0.30"
+    path_switches:
+      - s21
+      - s22
+      - s23
+      - s24
+      - s25
+      - s26
+      - s27
+      - s28
+      - s29
+      - s30
+  c4:
+    target_controller: c4
+    source_host: h31
+    source_ip: "10.0.0.31"
+    target_host: h40
+    target_ip: "10.0.0.40"
+    path_switches:
+      - s31
+      - s32
+      - s33
+      - s34
+      - s35
+      - s36
+      - s37
+      - s38
+      - s39
+      - s40
+
+workload:
+  protocol: udp
+  target_port: 9000
+  pattern: stable
+  sample_interval_seconds: 1.0
+  rates_fps:
+    - 25
+    - 50
+    - 100
+    - 200
+    - 400
+    - 800
+    - 1600
+  source_port_start: 12000
+  source_port_end: 65000
+  flow_idle_timeout_seconds: 5.0
+  port_reuse_safety_factor: 2.0
+
+# Every non-target controller carries this new-flow rate on its own path (null: idle, as v4).
+background:
+  rate_fps: null
+
+setup_probe:
+  enabled: true
+  rate_per_second: 1.0     # proposal: 10 switches x 1/s x 10 s window = 100 samples (plan Day 2)
+  timeout_seconds: 1.0     # proposal: same timeout as the Day 2 checks; a timeout counts as 1000 ms
+  port: 9101               # not 9000 (workload) nor 9001 (QoS probe on the 10-hop path)
+  switches: all
+
+timing:            # same as capacity-v4 (capacity_fine_2c20s.yaml)
+  warmup_seconds: 20
+  measurement_seconds: 60
+  cooldown_seconds: 20
+
+repeats: 2
+
+qos_probe:         # the capacity-v4 10-hop probe, kept so the curves compare with v4
+  enabled: true
+  target_port: 9001
+  rate_per_second: 1.0
+  source_port_start: 2000
+  source_port_end: 10000
+  flow_idle_timeout_seconds: 30.0
+  response_timeout_seconds: 0.8
+
+telemetry:
+  interval_seconds: 1.0
+
+migration:
+  enabled: false
+
+validation:
+  smoke_mode: false
+  emitted_rate_tolerance_ratio: 0.10
+  max_send_error_ratio: 0.01
+  min_qos_success_ratio: 0.95
