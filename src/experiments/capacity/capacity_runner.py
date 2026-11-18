@@ -81,6 +81,15 @@ def wait_for_valid_snapshot(orchestrator_url: str, timeout_seconds: float = 30.0
     raise RuntimeError(f"timed out waiting for valid snapshot: {last_reason}")
 
 
+def clear_cookie_flows(switches: Iterable[str], cookie: str) -> None:
+    for switch_name in switches:
+        subprocess.run(
+            ["ovs-ofctl", "-O", "OpenFlow13", "del-flows", switch_name,
+             f"cookie={cookie}/{COOKIE_MASK}"],
+            check=True, text=True, capture_output=True,
+        )
+
+
 def clear_experiment_flows(switches: Iterable[str]) -> None:
     for switch_name in switches:
         for cookie in EXPERIMENT_COOKIES:
@@ -121,7 +130,17 @@ def wait_for_cookie_absent(
     switches: Iterable[str],
     cookie: str,
     timeout_seconds: float,
+    reclear: bool = False,
 ) -> None:
+    """Wait until no flow with this cookie is left on the switches.
+
+    reclear=True deletes the remaining flows again on every check. The warm-up ping
+    leaves the hosts' ARP entries to be re-confirmed a few seconds later; that unicast
+    ARP exchange installs new reactive (cookie 0x10) flows, one per direction, on every
+    switch of the path after the first deletion (Week 15: 3 of 5 4C40S runs failed
+    with 2 such flows on each path switch). Deleting them again is what the first
+    deletion was meant to achieve; it changes nothing that is measured.
+    """
     switch_list = list(switches)
 
     deadline = (
@@ -148,6 +167,12 @@ def wait_for_cookie_absent(
         ):
             return
 
+        if reclear:
+            clear_cookie_flows(
+                [name for name, count in remaining.items() if count],
+                cookie,
+            )
+
         time.sleep(0.25)
 
     raise RuntimeError(
@@ -158,6 +183,7 @@ def wait_for_cookie_absent(
 def wait_for_experiment_flows_absent(
     switches: Iterable[str],
     timeout_seconds: float,
+    reclear: bool = False,
 ) -> None:
     switch_list = list(switches)
 
@@ -166,6 +192,7 @@ def wait_for_experiment_flows_absent(
             switches=switch_list,
             cookie=cookie,
             timeout_seconds=timeout_seconds,
+            reclear=reclear,
         )
 
 def warmup_hosts(source: Any, target: Any) -> None:
@@ -319,9 +346,16 @@ def run_capacity_experiment(
         warmup_hosts(source, target)
         clear_experiment_flows(cleared_switches)
 
+        # The 4C40S sweeps (any optional argument set) delete flows that reappear;
+        # the capacity-v4 call (none set) keeps its original single deletion.
         wait_for_experiment_flows_absent(
                 switches=cleared_switches,
                 timeout_seconds=5.0,
+                reclear=(
+                    background_rate is not None
+                    or bool(setup_probe)
+                    or run_conditions is not None
+                ),
             )
 
         logs = run_dir / "logs"
