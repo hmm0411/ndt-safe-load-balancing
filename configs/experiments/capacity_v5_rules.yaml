@@ -1,0 +1,33 @@
+# capacity-v5 derivation rules (Week 15 Day 4), written BEFORE the 4C40S fine sweep is read.
+# Owner: Vy (writes), My (reviews). Read by src/experiments/capacity/rules_v5.py.
+#
+# capacity-v4 picked its three rates by hand (safe 90, setup knee 140, throughput knee 160 fps,
+# scripts/experiments/derive_controller_capacity.py). These rules state that choice so it can be
+# applied to c1-c4 without looking at the numbers first. Applied to the frozen capacity-v4 runs
+# (data/benchmarks/capacity_runs.csv) they give back 90 / 140 / 160 fps and the same c_safe
+# (tests/unit/test_capacity_rules_v5.py). Changing a value after the v5 sweep is read -> v6.
+schema_version: "1.0"
+experiment: capacity-4c40s-fine
+repeats: 5                       # every rate needs all 5 valid repeats
+t_one_sided_95: 2.132            # Student t, df = 4, as in v4
+
+# Flow-setup latency: the capacity-v4 10-hop QoS probe (column flow_setup_latency_p95_ms),
+# mean over the repeats. The baseline is the lowest swept rate.
+healthy:
+  setup_ratio_max: 2.0           # mean setup P95 <= 2 x baseline (policy v1: 44.23 ms = 2 x 22.11)
+  qos_success_min: 0.95          # mean QoS success ratio of the probe
+  # A rate is healthy only if every lower rate of the same controller is healthy too.
+
+# One common operating point: the highest rate healthy for EVERY controller, so all
+# controllers are normalized at the same load (v4: c1 alone would allow 90, c2 alone 100).
+safe_reference: common
+
+# Setup knee: the first rate whose mean setup P95 is more than setup_jump_ratio x that of the
+# rate below it, or whose QoS success falls under qos_success_min (setup no longer measured).
+setup_jump_ratio: 2.0
+
+# Throughput knee: the first rate whose mean QoS success falls under qos_success_min
+# (the controller no longer installs the probe's new flows).
+
+# c_safe = one-sided 95% lower confidence bound of processed_packet_in_rate_mean at the safe
+# reference; c_setup / c_throughput = mean processed rate at the two knees (as v4).
