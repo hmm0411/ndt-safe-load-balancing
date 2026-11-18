@@ -81,7 +81,7 @@ class HybridOutcomeTest(unittest.TestCase):
         self.assertAlmostEqual(pred["u_dst_post"][0], 1.30)  # no upper clamp
         self.assertAlmostEqual(pred["r95_post"][1], 0.90)
         self.assertAlmostEqual(pred["i_post"][0], abs(0.0 - 1.30) / 2)
-        values = OutcomeValues(**{t: pred[t][1] for t in BASE_TARGETS})
+        values = OutcomeValues(**{t: pred[t][1] for t in BASE_TARGETS}, others_u_post=())
         self.assertAlmostEqual(values.i_post, pred["i_post"][1])
         self.assertEqual(hybrid.floored(analytical, residuals),
                          {"u_src_post": 1, "u_dst_post": 0, "r_src95_post": 0,

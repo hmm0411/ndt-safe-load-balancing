@@ -17,6 +17,7 @@ from scripts.experiments.run_forecast_stable_2c20s import (
     terminate_process,
     wait_for_twin_state,
 )
+from src.experiments.workloads import controller_paths
 from src.experiments.runners.forecast_data_runner import (
     ForecastDataRunner,
     ForecastRunConfig,
@@ -29,20 +30,17 @@ from src.experiments.workloads.hot_switch import (
 )
 
 
-CONTROLLER_IDS = ("c1", "c2")
+# Week 15: from the controllers config (NDT_CONTROLLERS_CONFIG; default 2C20S gives the
+# former literals). See controller_paths.py.
+_PATHS = controller_paths.load_paths()
+CONTROLLER_IDS = controller_paths.controller_ids(_PATHS)
 
 TARGET_UTILIZATION = 0.80
 HOT_SHARE = 0.55
 
-CONTROLLER_HOSTS = {
-    "c1": tuple(range(1, 11)),
-    "c2": tuple(range(11, 21)),
-}
+CONTROLLER_HOSTS = controller_paths.controller_hosts(_PATHS)
 
-HOT_HOST = {
-    "c1": 1,
-    "c2": 11,
-}
+HOT_HOST = controller_paths.hot_hosts(_PATHS)
 
 
 # Packet-In messages generated per new flow on the LOCAL path h_i -> s_i -> hs_i.

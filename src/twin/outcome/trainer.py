@@ -136,11 +136,20 @@ def predict_targets(models: Mapping[str, Any], rows: Sequence[Mapping[str, Any]]
     return with_derived(out)
 
 
-def with_derived(base: Mapping[str, Sequence[float]]) -> dict[str, list[float]]:
+def with_derived(base: Mapping[str, Sequence[float]],
+                 others_u_post: Sequence[Sequence[float]] | None = None) -> dict[str, list[float]]:
+    """r95_post and i_post per row. others_u_post: per row, the post-action U of the
+    controllers that are neither source nor destination (None or empty rows with 2C)."""
     out = {t: [float(v) for v in base[t]] for t in BASE_TARGETS}
+    rows = len(out["u_src_post"])
+    others = list(others_u_post) if others_u_post is not None else [()] * rows
+    if len(others) != rows:
+        raise ValueError(f"others_u_post has {len(others)} rows, predictions have {rows}")
     out["r95_post"] = [max(a, b) for a, b in zip(out["r_src95_post"], out["r_dst95_post"])]
-    out["i_post"] = [imbalance({"src": a, "dst": b})
-                     for a, b in zip(out["u_src_post"], out["u_dst_post"])]
+    out["i_post"] = [
+        imbalance({"src": a, "dst": b, **{f"other{i}": float(u) for i, u in enumerate(rest)}})
+        for a, b, rest in zip(out["u_src_post"], out["u_dst_post"], others)
+    ]
     return out
 
 

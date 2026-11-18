@@ -10,6 +10,7 @@ from typing import Any
 
 import requests
 
+from src.experiments.workloads import controller_paths
 from src.experiments.runners.forecast_data_runner import (
     ForecastDataRunner,
     ForecastRunConfig,
@@ -19,17 +20,14 @@ from src.experiments.workloads.profile_spec import stable_utilizations
 from src.experiments.workloads.stable import StableWorkload
 
 
-CONTROLLER_IDS = ("c1", "c2")
+# Week 15: from the controllers config (NDT_CONTROLLERS_CONFIG; default 2C20S gives the
+# former literals c1: h1 -> h10, c2: h11 -> h20). See controller_paths.py.
+_PATHS = controller_paths.load_paths()
+CONTROLLER_IDS = controller_paths.controller_ids(_PATHS)
 
-SINKS = (
-    ("h10", "10.0.0.10", 9000),
-    ("h20", "10.0.0.20", 9000),
-)
+SINKS = controller_paths.sinks(_PATHS)
 
-GENERATORS = (
-    ("h1", "10.0.0.1", "h10", "10.0.0.10"),
-    ("h11", "10.0.0.11", "h20", "10.0.0.20"),
-)
+GENERATORS = controller_paths.generators(_PATHS)
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_ORCHESTRATOR_URL = "http://127.0.0.1:9000"

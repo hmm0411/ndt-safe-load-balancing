@@ -31,6 +31,20 @@ class TargetsTest(unittest.TestCase):
         self.assertEqual(set(v.to_dict()), set(ALL_TARGETS))
         self.assertEqual(derive(v.to_dict()), {"r95_post": 0.8, "i_post": v.i_post})
 
+    def test_four_controllers_imbalance_is_system_wide(self) -> None:
+        after = views(fx.make_window([{"c1": 0.6, "c2": 0.8, "c3": 0.2, "c4": 0.4}] * 2, 10))
+        values = targets_from_window(after, "c1", "c2")
+        self.assertEqual(values.others_u_post, (0.2, 0.4))
+        # population std of (0.6, 0.8, 0.2, 0.4) = sqrt(0.05)
+        self.assertAlmostEqual(values.i_post, math.sqrt(0.05))
+        self.assertAlmostEqual(derive(values.to_dict(), (0.2, 0.4))["i_post"], math.sqrt(0.05))
+
+    def test_two_controllers_keep_the_pairwise_definition(self) -> None:
+        after = views(fx.make_window([{"c1": 0.6, "c2": 0.9}] * 2, 10))
+        values = targets_from_window(after, "c1", "c2")
+        self.assertEqual(values.others_u_post, ())
+        self.assertAlmostEqual(values.i_post, abs(0.6 - 0.9) / 2)
+
     def test_utilization_above_one_is_kept(self) -> None:
         self.assertEqual(OutcomeValues(0.2, 1.35, 0.7, 0.7).u_dst_post, 1.35)
 
