@@ -69,13 +69,21 @@ echo "PREFLIGHT: PASS"
 [[ "$PREFLIGHT_ONLY" -eq 1 ]] && exit 0
 
 # ---------------------------------------------------------------- runs
-# Leftover veth pairs of an interrupted Mininet (no process left) make the next
-# net.build() fail with "File exists". Clean them only when no Mininet is running.
+# Leftover veth pairs and OVS bridges of an interrupted Mininet make the next
+# net.build() fail with "File exists". They are removed one by one: never with
+# `mn -c`, which also kills ryu-manager (the four controllers of this pass).
 clean_leftover_links() {
-    if ip -br link | grep -qE '^s[0-9]+-eth' && ! pgrep -f "mininet:" >/dev/null; then
-        echo "cleaning leftover Mininet links"
-        sudo mn -c >/dev/null 2>&1
+    local links bridges
+    links=$(ip -o link show | awk -F': ' '{print $2}' | cut -d@ -f1 | grep -E '^s[0-9]+-eth[0-9]+$')
+    bridges=$(sudo ovs-vsctl list-br 2>/dev/null | grep -E '^s[0-9]+$')
+    [[ -z "$links" && -z "$bridges" ]] && return 0
+    if pgrep -f "mininet:" >/dev/null; then
+        echo "!! leftover Mininet processes still running; not cleaning"
+        return 1
     fi
+    echo "cleaning leftover Mininet links ($(echo "$links" | grep -c .)) and bridges ($(echo "$bridges" | grep -c .))"
+    for link in $links; do sudo ip link del "$link" 2>/dev/null; done
+    for bridge in $bridges; do sudo ovs-vsctl --if-exists del-br "$bridge"; done
 }
 
 FAILED_PROCESSES=0
@@ -107,7 +115,8 @@ print(' '.join(str(r) for r in load_yaml(Path('${cfg}'))['workload']['rates_fps'
                 FAILED_PROCESSES=$((FAILED_PROCESSES + 1))
                 CONSECUTIVE_FAILURES=$((CONSECUTIVE_FAILURES + 1))
                 echo "!! ${stage} ${controller} ${rate}: a repeat failed (details above)"
-                sudo mn -c >/dev/null 2>&1
+                sudo pkill -f "mininet:[hp][0-9]+" 2>/dev/null
+                clean_leftover_links
                 if (( CONSECUTIVE_FAILURES >= MAX_CONSECUTIVE_FAILURES )); then
                     echo "!! ${MAX_CONSECUTIVE_FAILURES} processes failed in a row: pass ABORTED"
                     ABORTED=1
