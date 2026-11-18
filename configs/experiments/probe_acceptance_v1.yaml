@@ -1,0 +1,28 @@
+# Day 3 acceptance criteria of the flow-setup probe (Week 15), written BEFORE the probe sweep
+# is read. Rationale: evidence/week15/probe_acceptance.md. Read by
+# src/experiments/capacity/probe_acceptance.py. Owner: My (writes), Vy (reviews).
+# Changing a value after evidence/week15/probe_sweep_summary.json exists -> v2, and say so.
+schema_version: "1.0"
+baseline_rate_fps: 30          # every controller at 30 fps = the background of the sweep
+rates_fps: [30, 90, 140]
+
+# P1 isolation: when one controller is loaded, the other three keep their baseline latency.
+isolation_max_ratio: 1.5       # non-target mean P95 <= 1.5 x its own baseline mean
+
+# P2 monotone: the target's mean P95 increases strictly 30 -> 90 -> 140 fps, every controller.
+
+# P3 saturation visible at the highest rate: timeouts > 0 OR mean P95 >= ratio x baseline.
+saturation_min_ratio: 2.0
+
+# P4 probe-induced load: |U(probe on) - U(probe off)| at the baseline, per controller.
+probe_load_max_delta_u: 0.02
+
+# P5 enough samples: per run and controller, at least this share of the expected samples
+# (10 switches x rate_per_second x measurement_seconds of probe_sweep_4c40s.yaml).
+min_sample_share: 0.95
+expected_switches_per_controller: 10
+probe_rate_per_second: 1.0
+measurement_seconds: 60
+
+# Decision (plan 16-22/11, Day 3): all five pass -> Huong 3 (R95 = per-controller flow-setup
+# P95 from this probe); any fails -> Huong 2. The criteria are not relaxed after the numbers.
