@@ -91,6 +91,16 @@ class MainTest(unittest.TestCase):
                 (Path(tmp) / ppr.OUT / "figures_data.json").read_text(encoding="utf-8"))
         self.assertEqual(manifest["figures"], {})
 
+    def test_decision_outcomes_must_add_up_to_n_records(self) -> None:
+        report = {"n_records": 3, "reason_counts": {"COOLDOWN_ACTIVE": 1},
+                  "scenario_gates": {"a": {"status_counts": {"dry_run:NO_RISK": 2,
+                                                             "execute:COMMITTED": 1}}}}
+        data = ppr.decision_outcomes(report)
+        self.assertEqual(data["statuses"], ["NO_RISK", "COMMITTED"])
+        report["n_records"] = 4
+        with self.assertRaises(ValueError):
+            ppr.decision_outcomes(report)
+
     def test_draws_every_figure_from_the_repo_files(self) -> None:
         if not all((ppr.ROOT / p).exists() for p in ppr.SOURCES.values()):
             self.skipTest("repository evidence files not present")
@@ -98,13 +108,16 @@ class MainTest(unittest.TestCase):
             self.assertEqual(ppr.main(["--out", tmp]), 0)
             manifest = json.loads((Path(tmp) / "figures_data.json").read_text(encoding="utf-8"))
             names = sorted(manifest["figures"])
-            self.assertEqual(sum(n.startswith("fig_") for n in names), 11)
+            self.assertEqual(sum(n.startswith("fig_") for n in names), 12)
             self.assertEqual(sum(n.startswith("simple_") for n in names), 9)
             for name in names:
                 self.assertTrue((Path(tmp) / f"{name}.png").exists())
                 self.assertTrue((Path(tmp) / f"{name}.pdf").exists())
         loop = manifest["figures"]["fig_10_closed_loop_migrations"]["data"]
         self.assertEqual(len(loop), 6)
+        outcomes = manifest["figures"]["fig_12_decision_outcomes"]["data"]
+        self.assertEqual(outcomes["n_records"], 1197)
+        self.assertEqual(outcomes["counts"]["execute"]["COMMITTED"], 6)
         val = manifest["figures"]["fig_05_outcome_validation_all_models"]["data"]
         self.assertEqual({r["model"] for r in val}, set(ppr.OUTCOME_MODELS))
         fc = manifest["figures"]["fig_02_forecast_rmse_all_models"]["data"]
