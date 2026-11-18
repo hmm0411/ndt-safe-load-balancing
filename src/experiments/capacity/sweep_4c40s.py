@@ -19,10 +19,11 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import subprocess
 import sys
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -155,6 +156,38 @@ def run_status(run_dir: Path) -> str:
     return "incomplete"
 
 
+RERUN_ROOT = Path("data/experiment_runs_invalid/week15_reruns")
+MAX_RERUNS = 1
+
+
+def quarantine_for_rerun(table: Mapping[str, list[str]], output_root: Path, rerun_root: Path,
+                         now: str) -> list[dict[str, Any]]:
+    """Move every failed / incomplete run to rerun_root/<run_id>-attempt<k> so the driver sees
+    it as missing and runs it again with the SAME seed (plan_runs is deterministic).
+
+    The moved directory is kept as evidence and every move is appended to
+    rerun_root/reruns.jsonl. A run that was already rerun MAX_RERUNS times is not moved again:
+    it raises, and the sweep has to be judged as it is.
+    """
+    todo = [(status, run_id) for status in ("failed", "incomplete")
+            for run_id in table.get(status, [])]
+    over = [rid for _, rid in todo if (rerun_root / f"{rid}-attempt{MAX_RERUNS}").exists()]
+    if over:
+        raise ValueError(f"already rerun {MAX_RERUNS} time(s), not moved again: {over}")
+    rerun_root.mkdir(parents=True, exist_ok=True)
+    moves = []
+    for status, run_id in todo:
+        attempt = 1 + sum(1 for _ in rerun_root.glob(f"{run_id}-attempt*"))
+        target = rerun_root / f"{run_id}-attempt{attempt}"
+        (output_root / run_id).rename(target)
+        moves.append({"run_id": run_id, "status": status, "moved_to": str(target),
+                      "attempt": attempt, "at": now})
+    with (rerun_root / "reruns.jsonl").open("a", encoding="utf-8") as handle:
+        for move in moves:
+            handle.write(json.dumps(move) + "\n")
+    return moves
+
+
 def probe_summary(
     probe_dir: Path,
     ownership: Mapping[str, str],
@@ -197,11 +230,27 @@ def main(argv: list[str] | None = None) -> int:
                         default=Path("configs/controllers_4c40s.yaml"))
     parser.add_argument("--repo-root", type=Path, default=Path.cwd())
     parser.add_argument("--list", action="store_true", help="print the run ids per status")
+    parser.add_argument("--quarantine-failed", action="store_true",
+                        help="move failed/incomplete runs aside so the driver reruns them "
+                             "(same seed, at most once); only when no sweep is running")
     args = parser.parse_args(argv)
     config = load_yaml(args.repo_root / args.config)
     controllers_config = load_yaml(args.repo_root / args.controllers_config)
     validate_sweep_config(config, controllers_config)
     table = status_table(config, sweep_controllers(config, controllers_config), args.repo_root)
+    if args.quarantine_failed:
+        busy = subprocess.run(["pgrep", "-f", "src.experiments.topologies.capacity_4c40s"],
+                              capture_output=True, text=True).stdout.strip()
+        if busy:
+            raise SystemExit(f"a sweep process is still running ({busy}); an incomplete run "
+                             "may be in progress, nothing moved")
+        output_root = args.repo_root / str(config["experiment"]["output_root"])
+        moves = quarantine_for_rerun(table, output_root, args.repo_root / RERUN_ROOT,
+                                     datetime.now(timezone.utc).isoformat())
+        for move in moves:
+            print(f"MOVED {move['status'].upper()}: {move['run_id']} -> {move['moved_to']}")
+        print(f"{len(moves)} run(s) to rerun; start the same stage again")
+        return 0
     total = sum(len(v) for v in table.values())
     print(f"{config['experiment']['type']}: " + ", ".join(
         f"{status} {len(table[status])}" for status in STATUSES) + f" / {total}")

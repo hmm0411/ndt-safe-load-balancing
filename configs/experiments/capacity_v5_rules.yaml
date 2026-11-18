@@ -9,6 +9,11 @@
 schema_version: "1.0"
 experiment: capacity-4c40s-fine
 repeats: 5                       # every rate needs all 5 valid repeats
+# A failed or incomplete repeat may be rerun ONCE with the same seed (decided 18/11, before the
+# fine sweep is read): sweep_4c40s --quarantine-failed moves it to
+# data/experiment_runs_invalid/week15_reruns/ (kept, logged in reruns.jsonl), then the stage is
+# started again. A repeat that fails twice is not rerun: the rate has fewer than 5 repeats and
+# derive() stops with that error, reported as it is.
 t_one_sided_95: 2.132            # Student t, df = 4, as in v4
 
 # Flow-setup latency: the capacity-v4 10-hop QoS probe (column flow_setup_latency_p95_ms),

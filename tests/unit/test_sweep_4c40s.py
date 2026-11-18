@@ -118,5 +118,25 @@ class ProbeSummaryTest(unittest.TestCase):
         self.assertIsNone(stats["c3"])  # no sample is None, never 0.0
 
 
+class RerunTest(unittest.TestCase):
+    def test_failed_runs_move_aside_once(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            out, aside = Path(tmp) / "runs", Path(tmp) / "aside"
+            for rid in ("a", "b", "c"):
+                (out / rid).mkdir(parents=True)
+            table = {"valid": ["c"], "failed": ["a"], "incomplete": ["b"], "missing": []}
+            moves = sw.quarantine_for_rerun(table, out, aside, "t0")
+            self.assertEqual([m["run_id"] for m in moves], ["a", "b"])
+            self.assertFalse((out / "a").exists())
+            self.assertTrue((aside / "a-attempt1").is_dir())
+            self.assertTrue((out / "c").exists())
+            log = (aside / "reruns.jsonl").read_text(encoding="utf-8").splitlines()
+            self.assertEqual(len(log), 2)
+            (out / "a").mkdir()  # the rerun failed again
+            with self.assertRaises(ValueError):
+                sw.quarantine_for_rerun({"failed": ["a"]}, out, aside, "t1")
+            self.assertTrue((out / "a").exists())
+
+
 if __name__ == "__main__":
     unittest.main()
