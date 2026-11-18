@@ -80,7 +80,7 @@ Random / Greedy chỉ là baseline phụ, không vào bảng chính.
 - Mỗi episode khởi động lại controller, mapping, flow table, twin, buffer; bỏ warm-up theo quy tắc khai
   báo trước (đến khi snapshot hợp lệ đầu tiên + cửa sổ twinning đầy).
 - 6 seed đánh giá, khác mọi seed đã dùng để sinh dữ liệu train / validation / calibration / tune
-  (forecast 101–105, outcome 9201–9205, closed loop 2C 9601). Seed đánh giá sẽ chọn và ghi ở đây.
+  (forecast 101–105, outcome 9201–9205, closed loop 2C 9501 và 9601, thử chuyển giao 4C 9701–9705). Seed đánh giá sẽ chọn và ghi ở đây.
 - Xáo trộn thứ tự chạy giữa các phương pháp; ghi tải host.
 - Pilot đo thời gian một episode trước khi chốt độ dài và số seed.
 

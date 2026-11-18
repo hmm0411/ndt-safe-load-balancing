@@ -42,12 +42,29 @@ def judge(summary: Mapping[str, Any], rules: Mapping[str, Any]) -> dict[str, Any
     base = baselines(summary, base_rate)
     criteria: dict[str, Any] = {}
 
-    # P1 isolation
+    # P1 isolation: the others stay under the limit and, when asked, the loaded controller
+    # rises more (relative to its own baseline) than any other one, so R95 points at it.
     rows, ok = [], True
+    rank_first = bool(rules.get("isolation_target_must_rank_first", False))
+    ranking = []
     for target in CONTROLLERS:
         for rate in rates:
             if rate == base_rate:
                 continue
+            if rank_first:
+                own, ref_t = _p95(curves, target, rate, target), base[target]
+                own_ratio = None if own is None or not ref_t else own / ref_t
+                others = []
+                for c in CONTROLLERS:
+                    v, ref_c = _p95(curves, target, rate, c), base[c]
+                    if c != target and v is not None and ref_c:
+                        others.append(v / ref_c)
+                first = (own_ratio is not None and len(others) == len(CONTROLLERS) - 1
+                         and all(own_ratio > o for o in others))
+                ok &= first
+                ranking.append({"target": target, "rate": rate, "target_ratio": own_ratio,
+                                "max_other_ratio": max(others) if others else None,
+                                "pass": first})
             for cid in CONTROLLERS:
                 if cid == target:
                     continue
@@ -59,6 +76,7 @@ def judge(summary: Mapping[str, Any], rules: Mapping[str, Any]) -> dict[str, Any
                              "p95_ms": value, "baseline_ms": ref, "ratio": ratio,
                              "pass": passed})
     criteria["P1_isolation"] = {"pass": ok, "limit_ratio": rules["isolation_max_ratio"],
+                                "target_must_rank_first": rank_first, "ranking": ranking,
                                 "rows": rows}
 
     # P2 monotone

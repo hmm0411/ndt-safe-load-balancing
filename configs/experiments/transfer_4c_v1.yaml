@@ -7,7 +7,7 @@ controllers_config: configs/controllers_4c40s.yaml
 capacity: data/benchmarks/controller_capacity_v5.json   # written by export_4c40s_sweeps.py --derive
 
 # New seeds: not 101-105 (forecast), 9201-9205 (outcome), 9501, 9601 (closed loop 2C).
-seeds: [9701, 9702]
+seeds: [9701, 9702]            # forecast runs; the outcome attempts list their own seeds
 
 forecast:
   models: data/models/forecasting/forecast-models-v3     # frozen, trained on 2C20S
@@ -20,8 +20,12 @@ outcome:
   variants: [analytical, direct_xgb, hybrid_xgb]
   destination_load_levels: [0.45, 0.75]                  # the levels the models were trained on
   workloads: [stable, gradual, burst, oscillating, hot_switch]
-  # 5 workloads x 2 levels x 2 seeds = 20 MIGRATE attempts, source c1, destination drawn
-  # among c2-c4 with the seed (the 2C models never saw a choice of destination).
+  # Revised 18/11, before any 4C run: 2 -> 5 seeds. With 2 seeds only 16 attempts were on seen
+  # workloads and coverage >= 0.95 allowed no miss at all (15/16 = 0.9375).
+  seeds: [9701, 9702, 9703, 9704, 9705]
+  # 5 workloads x 2 levels x 5 seeds = 50 MIGRATE attempts (40 on seen workloads: coverage
+  # >= 0.95 <=> at most 2 misses), source c1, destination drawn among c2-c4 with the seed
+  # (the 2C models never saw a choice of destination). Still below 0.95 -> retrain.
 
 # Decision rule, fixed now. Reuse = keep the 2C model for the 4C campaign; otherwise retrain
 # in 23/11-01/12 on 4C data (outcome: the Day 6 collection).

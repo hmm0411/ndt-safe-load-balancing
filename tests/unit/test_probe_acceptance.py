@@ -38,10 +38,17 @@ class ProbeAcceptanceTest(unittest.TestCase):
 
     def test_leak_to_another_controller_fails_isolation(self) -> None:
         summary = good_summary()
-        summary["curves"]["c1"]["140"]["c2"] = cell(BASE["c2"] * 2.0)
+        summary["curves"]["c1"]["140"]["c2"] = cell(BASE["c2"] * 2.5)
         result = judge(summary, RULES)
         self.assertFalse(result["criteria"]["P1_isolation"]["pass"])
         self.assertEqual(result["decision"], "Huong 2")
+
+    def test_other_controller_rising_more_than_target_fails_ranking(self) -> None:
+        summary = good_summary()
+        summary["curves"]["c1"]["90"]["c2"] = cell(BASE["c2"] * 1.8)  # under 2.0, above 1.6
+        result = judge(summary, RULES)
+        self.assertTrue(all(r["pass"] for r in result["criteria"]["P1_isolation"]["rows"]))
+        self.assertFalse(result["criteria"]["P1_isolation"]["pass"])
 
     def test_flat_curve_fails_monotone_and_saturation(self) -> None:
         summary = good_summary()

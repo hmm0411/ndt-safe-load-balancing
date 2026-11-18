@@ -17,14 +17,29 @@ theo tải, để dùng làm R95 trong Safety Gate (Hướng 3) không?
 
 | # | Tiêu chí | Cách đo | Ngưỡng | Vì sao |
 |---|---|---|---|---|
-| P1 | **Tách controller** | Khi chỉ một controller bị tăng tải (90/140 fps), P95 của ba controller kia so với mức nền của chính chúng | ≤ 1.5 × mức nền | R95 phải gắn được với đúng controller; nếu tải ở c1 làm tăng R95 của c2 thì không dùng được cho quyết định chọn đích |
+| P1 | **Tách controller** | Khi chỉ một controller bị tăng tải (90/140 fps), P95 của ba controller kia so với mức nền của chính chúng | ≤ 2.0 × mức nền, **và** controller bị tăng tải có tỉ số P95/mức nền lớn nhất | R95 phải gắn được với đúng controller; nếu tải ở c1 làm tăng R95 của c2 thì không dùng được cho quyết định chọn đích |
 | P2 | **Đơn điệu** | P95 của controller bị tăng tải ở 30 → 90 → 140 fps | tăng chặt, cả 4 controller | Một chỉ số an toàn phải tăng theo tải; R95 cũ (thời gian trong handler) không đạt điều này |
 | P3 | **Thấy được bão hòa** | Ở 140 fps: số timeout, hoặc P95 so với mức nền | timeout > 0 **hoặc** ≥ 2 × mức nền; không bao giờ 0 hay thiếu | Điểm gãy của capacity-v4 là 140 fps; probe phải nhìn thấy nó |
-| P4 | **Tải do probe gây ra** | Chênh lệch U của từng controller khi bật và tắt probe, mọi controller ở 30 fps | \|ΔU\| ≤ 0.02 | Probe không được làm thay đổi đại lượng mà nó đo |
+| P4 | **Tải do probe gây ra** | Chênh lệch U của từng controller khi bật và tắt probe, mọi controller ở 30 fps | \|ΔU\| ≤ 0.037 (= m_U) | Probe không được làm thay đổi đại lượng mà nó đo |
 | P5 | **Đủ mẫu** | Số mẫu mỗi run, mỗi controller | ≥ 95% × (10 switch × 1/s × 60 s) = 570 | Đủ để P95 ổn định (≈ 100 mẫu cho một cửa sổ 10 s) |
 
 Mức nền của một controller = trung bình P95 của nó trong mọi run mà cả bốn controller đều ở 30 fps.
 ΔU tạm tính theo thang capacity-v4 (933 pps) cho tới khi có capacity-v5; file kết quả ghi rõ thang.
+
+## Sửa trước khi đọc số (18/11/2026, 21:45)
+
+Sửa trong cùng ngày, **trước khi** có ai đọc `probe_sweep_summary.json` (file này chỉ sinh ra khi chạy
+`export_4c40s_sweeps.py` sáng 19/11). Lý do không dựa vào số liệu:
+
+- **P1: 1.5 → 2.0, thêm điều kiện xếp hạng.** 2.0 là cận "khỏe" của capacity-v5 (setup P95 ≤ 2 × mức
+  nền), để không gọi một controller là "bị ảnh hưởng" khi luật capacity vẫn gọi nó là khỏe. Bốn controller
+  chạy chung một máy 8 vCPU nên tranh CPU là đặc điểm của testbed, không phải lỗi của probe. Nới ngưỡng
+  thì đi kèm điều kiện chặt hơn về ý nghĩa: controller bị tăng tải phải là controller có độ trễ tăng
+  nhiều nhất (tương đối với mức nền của chính nó). Đây mới là điều Safety Gate cần khi chọn đích.
+- **P4: 0.02 → 0.037 (= m_U của post-migration-v1).** Probe bật trong mọi episode nên tải của nó nằm
+  trong U một cách nhất quán; độ lệch nhỏ hơn biên nhỏ nhất mà Safety Gate đã dành cho sai số thì không
+  đổi quyết định. Ước lượng thô trước khi đo: 10 probe/s × 1–2 Packet-In ≈ 10–20 pps ≈ 0.011–0.021 U.
+- P2, P3, P5 giữ nguyên. Từ thời điểm này không sửa nữa; sửa sau khi đọc số → v2 và ghi lý do.
 
 ## Quyết định
 
