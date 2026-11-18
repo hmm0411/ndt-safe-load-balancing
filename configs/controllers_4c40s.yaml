@@ -1,0 +1,105 @@
+controllers:
+  c1:
+    rest_url: "http://127.0.0.1:8081"
+    openflow_port: 6653
+
+  c2:
+    rest_url: "http://127.0.0.1:8082"
+    openflow_port: 6654
+
+  c3:
+    rest_url: "http://127.0.0.1:8083"
+    openflow_port: 6655
+
+  c4:
+    rest_url: "http://127.0.0.1:8084"
+    openflow_port: 6656
+
+switches:
+  s1:  {dpid: 1}
+  s2:  {dpid: 2}
+  s3:  {dpid: 3}
+  s4:  {dpid: 4}
+  s5:  {dpid: 5}
+  s6:  {dpid: 6}
+  s7:  {dpid: 7}
+  s8:  {dpid: 8}
+  s9:  {dpid: 9}
+  s10: {dpid: 10}
+  s11: {dpid: 11}
+  s12: {dpid: 12}
+  s13: {dpid: 13}
+  s14: {dpid: 14}
+  s15: {dpid: 15}
+  s16: {dpid: 16}
+  s17: {dpid: 17}
+  s18: {dpid: 18}
+  s19: {dpid: 19}
+  s20: {dpid: 20}
+  s21: {dpid: 21}
+  s22: {dpid: 22}
+  s23: {dpid: 23}
+  s24: {dpid: 24}
+  s25: {dpid: 25}
+  s26: {dpid: 26}
+  s27: {dpid: 27}
+  s28: {dpid: 28}
+  s29: {dpid: 29}
+  s30: {dpid: 30}
+  s31: {dpid: 31}
+  s32: {dpid: 32}
+  s33: {dpid: 33}
+  s34: {dpid: 34}
+  s35: {dpid: 35}
+  s36: {dpid: 36}
+  s37: {dpid: 37}
+  s38: {dpid: 38}
+  s39: {dpid: 39}
+  s40: {dpid: 40}
+
+initial_ownership:
+  s1: c1
+  s2: c1
+  s3: c1
+  s4: c1
+  s5: c1
+  s6: c1
+  s7: c1
+  s8: c1
+  s9: c1
+  s10: c1
+
+  s11: c2
+  s12: c2
+  s13: c2
+  s14: c2
+  s15: c2
+  s16: c2
+  s17: c2
+  s18: c2
+  s19: c2
+  s20: c2
+
+  s21: c3
+  s22: c3
+  s23: c3
+  s24: c3
+  s25: c3
+  s26: c3
+  s27: c3
+  s28: c3
+  s29: c3
+  s30: c3
+
+  s31: c4
+  s32: c4
+  s33: c4
+  s34: c4
+  s35: c4
+  s36: c4
+  s37: c4
+  s38: c4
+  s39: c4
+  s40: c4
+
+topology_version: 3

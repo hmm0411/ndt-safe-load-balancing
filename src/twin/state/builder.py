@@ -112,6 +112,12 @@ class TwinStateBuilder:
                         sample
                         .managed_switch_count
                     ),
+
+                    setup_p95_ms=sample.setup_p95_ms,
+
+                    setup_samples=sample.setup_samples,
+
+                    setup_timeouts=sample.setup_timeouts,
                 )
             )
 

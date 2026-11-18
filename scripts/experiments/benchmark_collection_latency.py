@@ -102,7 +102,15 @@ def main() -> None:
         ),
     )
 
+    parser.add_argument(
+        "--controllers",
+        default="c1,c2",
+        help="comma-separated controller ids the twin state must contain",
+    )
+
     args = parser.parse_args()
+
+    expected_ids = {item for item in args.controllers.split(",") if item}
 
     if args.count <= 0:
         raise ValueError(
@@ -210,14 +218,11 @@ def main() -> None:
             if isinstance(item, dict)
         }
 
-        if controller_ids != {
-            "c1",
-            "c2",
-        }:
+        if controller_ids != expected_ids:
             raise RuntimeError(
                 "expected controllers "
-                f"c1/c2, got "
-                f"{controller_ids}"
+                f"{sorted(expected_ids)}, got "
+                f"{sorted(controller_ids)}"
             )
 
         for controller in controllers:

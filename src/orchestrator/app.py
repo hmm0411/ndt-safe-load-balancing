@@ -4,6 +4,7 @@ import json
 import os
 import threading
 import time
+from datetime import datetime
 from pathlib import Path
 
 import yaml
@@ -25,8 +26,9 @@ from src.telemetry.collector import TelemetryCollector
 from src.telemetry.snapshot_builder import SnapshotBuilder
 from src.telemetry.snapshot_validator import SnapshotValidator
 from src.telemetry.writer import JsonlWriter
-from src.twin.capacity.model import CapacityModel
+from src.twin.capacity.model import CapacityModel, resolve_capacity_path
 from src.twin.state.builder import TwinStateBuilder
+from src.twin.state.setup_probe_store import SetupProbeStore, SetupStats
 from src.twin.state.quality import TwinQualityAssessor
 from src.twin.state.quality_score import validate_config
 from src.twin.state.twinning_rate import TwinningRateTracker
@@ -89,9 +91,7 @@ validator = SnapshotValidator(
     freshness_max_age_ms=float(telemetry_cfg["freshness_max_age_ms"]),
 )
 snapshot_builder = SnapshotBuilder(validator)
-capacity_model = CapacityModel.from_file(
-    ROOT / "data" / "benchmarks" / "controller_capacity.json"
-)
+capacity_model = CapacityModel.from_file(resolve_capacity_path(ROOT))
 quality_cfg = telemetry_cfg["twin_quality"]
 twinning_tracker = TwinningRateTracker(
     window_seconds=float(quality_cfg["twinning_window_seconds"]),
@@ -110,6 +110,7 @@ twin_state_builder = TwinStateBuilder(
     quality_provider=quality_assessor.assess,
 )
 store = CurrentStateStore()
+setup_probe_store = SetupProbeStore(float(telemetry_cfg["freshness_max_age_ms"]))
 writer = JsonlWriter()
 forecast_service = ForecastService.from_config(forecast_cfg, ROOT, store, writer)
 outcome_service = OutcomeService.from_config(outcome_cfg, ROOT, store)
@@ -156,6 +157,17 @@ class OutcomePredictRequest(BaseModel):
     target_controller: str
 
 
+class SetupProbeStatsRequest(BaseModel):
+    p95_ms: float
+    samples: int
+    timeouts: int
+    window_end: datetime
+
+
+class SetupProbeRequest(BaseModel):
+    controllers: dict[str, SetupProbeStatsRequest]
+
+
 def collect_once(run_id: str):
     for controller_id in CONTROLLERS:
         try:
@@ -196,6 +208,7 @@ def build_snapshot(run_id: str):
         ownership=ownership_manager.states(),
         role_matrix=store.role_matrix(),
     )
+    snapshot = setup_probe_store.overlay(snapshot)
     try:
         twinning_tracker.record(
             success=snapshot.quality.valid,
@@ -365,6 +378,24 @@ def twin_decision_execute(request: DecisionRequest):
 def twin_decision_kill_switch(request: KillSwitchRequest):
     """enabled=false stops every plan/execute before any work (status KILL_SWITCH)."""
     return decision_service.set_enabled(request.enabled)
+
+
+@app.post("/api/v1/twin/setup-probe")
+def update_setup_probe(request: SetupProbeRequest):
+    """Replace the per-controller flow-setup stats; a controller left out has none."""
+    unknown = sorted(set(request.controllers) - set(CONTROLLERS))
+    if unknown:
+        raise HTTPException(404, f"Unknown controller: {unknown}")
+    try:
+        setup_probe_store.update(
+            {
+                cid: SetupStats(x.p95_ms, x.samples, x.timeouts, x.window_end)
+                for cid, x in request.controllers.items()
+            }
+        )
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    return {"accepted": sorted(request.controllers)}
 
 
 @app.post("/api/v1/init-roles")
