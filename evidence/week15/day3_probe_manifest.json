@@ -1,10 +1,10 @@
 {
   "csv": "evidence/week15/day3_probe_runs_4c40s.csv",
-  "csv_sha256": "b79e1dae1ceb408a328597b90dfa8ae087fc4d44fcbba6fcb66218c8019ff61a",
+  "csv_sha256": "b66643136dc2fed732280be5798571c8a6b13fb5ff37ebd7a1999794faaa9ee5",
   "rows": 260,
-  "capacity_file": "/home/tntvy112_gmail_com/w15-trial/capacity_provisional.json",
-  "capacity_sha256": "677ee0fa9d0731af5a6f6564b54e73722a1a7efca580f31bb67239ae59f081b0",
-  "capacity_note": "provisional (2C-derived); recompute U with capacity-v5",
+  "capacity_file": "data/benchmarks/controller_capacity_v5.json",
+  "capacity_sha256": "55ffb9c8a5dd60c6429b9bf0938d1d8d1ee50bdff2fc45546a1f7d37b213f09c",
+  "capacity_note": "capacity-v5 (4C40S fine); U = rate / c_safe_pps",
   "skipped_invalid_runs": [],
   "runs": [
     {

@@ -41,9 +41,9 @@ COLUMNS = [
     "owned_switches_mean",
     "ownership_versions",
     "snapshot_valid_ratio",
-    "capacity_pps_provisional",
-    "u_provisional_mean",
-    "u_provisional_p95",
+    "capacity_pps",
+    "u_mean",
+    "u_p95",
 ]
 
 
@@ -181,11 +181,11 @@ def build_rows(run_dir: Path, capacity: dict[str, float]) -> list[dict[str, Any]
                 "snapshot_valid_ratio": (
                     sum(valid) / len(valid) if valid else None
                 ),
-                "capacity_pps_provisional": capacity[cid],
-                "u_provisional_mean": utilization(
+                "capacity_pps": capacity[cid],
+                "u_mean": utilization(
                     stats["processed_mean"], capacity[cid]
                 ),
-                "u_provisional_p95": utilization(
+                "u_p95": utilization(
                     stats["processed_p95"], capacity[cid]
                 ),
             }
@@ -240,7 +240,7 @@ def write_outputs(
         "rows": len(rows),
         "capacity_file": str(capacity_path),
         "capacity_sha256": sha256_file(capacity_path),
-        "capacity_note": "provisional (2C-derived); recompute U with capacity-v5",
+        "capacity_note": "capacity-v5 (4C40S fine); U = rate / c_safe_pps",
         "skipped_invalid_runs": skipped,
         "runs": [manifest_entry(run) for run in runs],
     }

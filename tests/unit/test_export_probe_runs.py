@@ -71,7 +71,7 @@ class ExportProbeRunsTest(unittest.TestCase):
             first = table[0]
             self.assertEqual(first["group"], "probe_off")
             self.assertEqual(first["probe_setup_p95_ms"], "")
-            self.assertAlmostEqual(float(first["u_provisional_mean"]), 1.0)
+            self.assertAlmostEqual(float(first["u_mean"]), 1.0)
             self.assertEqual(first["owned_switches_mean"], "10.0")
             sweep = table[4]
             self.assertEqual(sweep["probe_timeouts"], "2")
