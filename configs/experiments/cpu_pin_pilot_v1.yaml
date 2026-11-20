@@ -1,0 +1,26 @@
+# CPU-pinning pilot: can the flow-setup probe tell which controller is loaded once every Ryu
+# controller has a core of its own? Declared 20/11/2026 before any pinned run (My decided to
+# run it; testbed = Vy's part). Unpinned Day 3 result (evidence/week15/probe_validation.json):
+# with c1 loaded at 90 fps, another controller's setup P95 rose 1.375x, c1's own 1.374x.
+schema_version: "1.0"
+sweep_config: configs/experiments/probe_pin_pilot_4c40s.yaml
+
+# One core per controller (Ryu is one Python thread); Mininet, OVS, the workload generators
+# and the orchestrator share the other four. Kernel softirq work is not pinned (limitation).
+pinning:
+  controllers: {c1: "0", c2: "1", c3: "2", c4: "3"}
+  everything_else: "4-7"
+
+decision:
+  target: c1
+  # at every loaded rate (90 and 140 fps), against each controller's own mean P95 at 30 fps:
+  other_max_ratio: 1.20          # no other controller's mean P95 rises more than 20 %
+  target_must_rank_first: true   # c1's ratio is above every other controller's
+  repeats_required: 5            # every rate has 5 valid repeats, else "incomplete"
+  # pass at both rates -> re-measure with pinning: fine capacity sweep and the full probe
+  #   sweep, scored by probe-acceptance criteria v2 written BEFORE those runs (capacity-v6);
+  # fail -> Huong 2 stands (R95 off, reported as a limitation). No second pilot.
+  on_pass: remeasure_pinned
+  on_fail: keep_huong_2
+
+output: evidence/week15/cpu_pin_pilot.json
