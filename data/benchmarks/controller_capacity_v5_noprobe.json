@@ -64,21 +64,21 @@
       }
     },
     "c4": {
-      "c_throughput_pps": 1224.687578252363,
-      "c_setup_pps": 1224.687578252363,
+      "c_throughput_pps": 1833.4957040513223,
+      "c_setup_pps": 1833.4957040513223,
       "c_response_pps": null,
-      "c_critical_pps": 1224.687578252363,
-      "c_safe_pps": 921.919627342366,
-      "setup_knee_rate_fps": 120.0,
-      "throughput_knee_rate_fps": 120.0,
-      "highest_healthy_rate_fps": 110.0,
+      "c_critical_pps": 1833.4957040513223,
+      "c_safe_pps": 927.2766747232412,
+      "setup_knee_rate_fps": 180.0,
+      "throughput_knee_rate_fps": 180.0,
+      "highest_healthy_rate_fps": 120.0,
       "baseline_setup_p95_ms": 54.3703174,
       "safe_reference": {
         "target_rate_fps": 90.0,
-        "processed_mean_pps": 931.3968212412295,
-        "processed_std_pps": 9.939798214730406,
+        "processed_mean_pps": 938.4356780798814,
+        "processed_std_pps": 11.703700781705402,
         "sample_count": 5,
-        "setup_p95_ms": 80.7480222
+        "setup_p95_ms": 84.2549488
       }
     }
   }
