@@ -58,7 +58,12 @@ CONTROLLERS=$(curl -fsS http://127.0.0.1:9000/api/v1/twin/state | "$PY" -c \
 [[ "$CONTROLLERS" == "c1,c2,c3,c4" ]] || fail "orchestrator sees '${CONTROLLERS}', not c1..c4"
 pgrep -f "mininet:" >/dev/null && fail "a Mininet network is already up (someone else's run?)"
 [[ -z "$(git status --porcelain --untracked-files=no)" ]] || fail "tracked files changed (git status)"
+FREE_GB=$(df -BG --output=avail . | tail -1 | tr -dc '0-9')
+(( FREE_GB >= 3 )) || fail "only ${FREE_GB} GB free on the disk"
+"$PY" -m src.experiments.workloads.forecast_4c --check-range "$RUNS_CSV" "$CAPACITY" \
+    || fail "a workload U falls outside the measured capacity range"
 GIT_COMMIT="$(git rev-parse HEAD)"
+GIT_BRANCH="$(git branch --show-current)"
 echo "git: ${GIT_COMMIT} $(git describe --tags --always 2>/dev/null)"
 echo "PREFLIGHT: PASS"
 [[ "$PREFLIGHT_ONLY" -eq 1 ]] && exit 0
@@ -78,6 +83,13 @@ FAILED=0; CONSECUTIVE=0
 for line in "${PLAN[@]}"; do
     IFS='|' read -r workload seed repeat run_id <<< "$line"
     if [[ -e "$OUT/$run_id" ]]; then echo "SKIP existing: $run_id"; continue; fi
+    # 20/11: the worktree was switched to another branch in the middle of the first queue, and
+    # the next runs ran other code. Same commit for every run, or stop.
+    if [[ "$(git rev-parse HEAD)" != "$GIT_COMMIT" || "$(git branch --show-current)" != "$GIT_BRANCH" ]]; then
+        echo "!! the worktree moved to $(git branch --show-current) $(git rev-parse --short HEAD)" \
+             "(queue started on ${GIT_BRANCH} ${GIT_COMMIT:0:7}): queue ABORTED"
+        break
+    fi
     echo "-- $run_id $(date -u +%T)"
     clean_leftover_links
     if sudo -E env PYTHONPATH="$PWD" "$PY" -m src.experiments.topologies.runtime_4c40s \

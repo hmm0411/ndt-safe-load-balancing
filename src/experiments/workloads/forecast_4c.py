@@ -4,8 +4,11 @@ The five 2C20S runners already take their host tables from NDT_CONTROLLERS_CONFI
 (controller_paths.py); this module adds what is 4C-specific and testable without Mininet:
   - the environment the runners must see BEFORE they are imported (their tables are built
     at import time);
-  - the capacity rows they map U to offered rate with: only the fine capacity-v5 sweep, so the
-    Day 3 probe runs (with a 30 fps background) never enter the mapping;
+  - the capacity rows they map U to offered rate with: the two capacity-v5 sweeps (coarse
+    25-1600 fps and fine 30-... fps, same conditions: probe on, no background), so the Day 3
+    probe runs (with a 30 fps background) never enter the mapping. The fine sweep alone starts
+    at 30 fps (~352 pps), above the U = 0.40 of gradual (~337 pps): the first Day 5 queue
+    failed there (20/11);
   - the run plan of the transfer test (configs/experiments/transfer_4c_v1.yaml).
 """
 from __future__ import annotations
@@ -27,7 +30,9 @@ RUNNERS: dict[str, tuple[str, str]] = {
     "hot_switch": ("scripts.experiments.run_forecast_hot_switch_2c20s",
                    "run_forecast_hot_switch"),
 }
-CAPACITY_EXPERIMENT = "capacity-4c40s-fine"
+CAPACITY_EXPERIMENTS = ("capacity-4c40s-coarse", "capacity-4c40s-fine")
+# lowest and highest U the five profiles ask for: gradual 0.40, burst 1.10
+U_RANGE = (0.40, 1.10)
 TOPOLOGY = "4C40S"
 
 
@@ -45,23 +50,37 @@ def load_runner(workload: str) -> Callable[..., Path]:
     return runner
 
 
-def filter_capacity_rows(source: Path, target: Path, experiment: str = CAPACITY_EXPERIMENT,
+def filter_capacity_rows(source: Path, target: Path,
+                         experiments: tuple[str, ...] = CAPACITY_EXPERIMENTS,
                          controllers: tuple[str, ...] = ("c1", "c2", "c3", "c4")) -> int:
-    """Copy the valid rows of one experiment; every controller must keep some rows."""
+    """Copy the valid rows of the given experiments; every controller must keep some rows."""
     with source.open(newline="", encoding="utf-8") as handle:
         reader = csv.DictReader(handle)
         fields = list(reader.fieldnames or [])
-        rows = [r for r in reader if str(r.get("run_id", "")).startswith(experiment + "-")
+        rows = [r for r in reader
+                if any(str(r.get("run_id", "")).startswith(e + "-") for e in experiments)
                 and str(r.get("valid", "")).strip().lower() == "true"]
     missing = [c for c in controllers if not any(r.get("controller") == c for r in rows)]
     if missing:
-        raise ValueError(f"{source}: no valid {experiment} rows for {missing}")
+        raise ValueError(f"{source}: no valid {list(experiments)} rows for {missing}")
     target.parent.mkdir(parents=True, exist_ok=True)
     with target.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=fields)
         writer.writeheader()
         writer.writerows(rows)
     return len(rows)
+
+
+def check_u_range(capacity_runs: Path, controller_capacity: Path,
+                  controllers: tuple[str, ...] = ("c1", "c2", "c3", "c4"),
+                  u_range: tuple[float, float] = U_RANGE) -> dict[str, tuple[float, float]]:
+    """Offered fps at the lowest and highest U for every controller; raises the mapper's
+    ValueError when a target falls outside the measured range (checked before any run)."""
+    from src.experiments.workloads.capacity_mapper import CapacityWorkloadMapper
+
+    mapper = CapacityWorkloadMapper(capacity_runs, controller_capacity)
+    return {c: (mapper.offered_rate_for_utilization(c, u_range[0]),
+                mapper.offered_rate_for_utilization(c, u_range[1])) for c in controllers}
 
 
 @dataclass(frozen=True)
@@ -115,7 +134,19 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="transfer-test forecast plan")
     parser.add_argument("--config", type=Path,
                         default=Path("configs/experiments/transfer_4c_v1.yaml"))
+    parser.add_argument("--check-range", nargs=2, type=Path, metavar=("RUNS_CSV", "CAPACITY"),
+                        help="only check that U %s-%s maps inside the measured range" % U_RANGE)
     args = parser.parse_args(argv)
+    if args.check_range:
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            used = Path(tmp) / "used.csv"
+            n = filter_capacity_rows(args.check_range[0], used)
+            for cid, (low, high) in check_u_range(used, args.check_range[1]).items():
+                print(f"RANGE OK {cid}: U {U_RANGE[0]} -> {low:.1f} fps, "
+                      f"U {U_RANGE[1]} -> {high:.1f} fps ({n} rows)")
+        return 0
     config = yaml.safe_load(args.config.read_text(encoding="utf-8"))
     for run in transfer_plan(config):
         print(f"{run.workload}|{run.seed}|{run.repeat_index}|{run.run_id}")

@@ -128,7 +128,8 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--forecast", choices=sorted(forecast_4c.RUNNERS), default=None)
     parser.add_argument("--capacity-runs", type=Path,
                         default=Path("data/benchmarks/capacity_runs_4c40s.csv"))
-    parser.add_argument("--capacity-experiment", default=forecast_4c.CAPACITY_EXPERIMENT)
+    parser.add_argument("--capacity-experiment", action="append", default=None,
+                        help="repeatable; default: %s" % ", ".join(forecast_4c.CAPACITY_EXPERIMENTS))
     parser.add_argument("--controller-capacity", type=Path,
                         default=Path("data/benchmarks/controller_capacity_v5.json"))
     parser.add_argument("--output-dir", type=Path,
@@ -173,8 +174,9 @@ def main() -> None:
         os.environ.update(forecast_4c.runner_env(args.controllers_config))
         runner = forecast_4c.load_runner(args.forecast)
         used = args.output_dir / "capacity_runs_used.csv"
-        n = forecast_4c.filter_capacity_rows(args.capacity_runs, used, args.capacity_experiment)
-        print(f"*** capacity rows: {n} valid {args.capacity_experiment} rows -> {used}")
+        experiments = tuple(args.capacity_experiment or forecast_4c.CAPACITY_EXPERIMENTS)
+        n = forecast_4c.filter_capacity_rows(args.capacity_runs, used, experiments)
+        print(f"*** capacity rows: {n} valid {list(experiments)} rows -> {used}")
         args.capacity_runs = used
     config = load_yaml(args.controllers_config)
     specs = controller_specs(config)

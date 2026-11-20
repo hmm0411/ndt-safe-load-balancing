@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import csv
 import inspect
+import json
 import os
 import subprocess
 import sys
@@ -25,9 +26,10 @@ def write_rows(path: Path, rows: list[dict[str, str]]) -> None:
         writer.writerows(rows)
 
 
-def row(run_id: str, controller: str, valid: str = "true") -> dict[str, str]:
+def row(run_id: str, controller: str, valid: str = "true", fps: float = 90.0,
+        pps: float = 900.0) -> dict[str, str]:
     return {"run_id": run_id, "controller": controller, "valid": valid,
-            "target_new_flow_rate": "90", "processed_packet_in_rate_mean": "900"}
+            "target_new_flow_rate": str(fps), "processed_packet_in_rate_mean": str(pps)}
 
 
 class Forecast4CTest(unittest.TestCase):
@@ -45,13 +47,35 @@ class Forecast4CTest(unittest.TestCase):
             src, dst = Path(tmp) / "all.csv", Path(tmp) / "used.csv"
             rows = [row(f"capacity-4c40s-fine-{c}-90fps-r01", c) for c in ("c1", "c2", "c3",
                                                                           "c4")]
-            rows += [row("probe-sweep-4c40s-c1-90fps-r01", "c1"),
+            rows += [row("capacity-4c40s-coarse-c1-25-r01", "c1", fps=25, pps=293),
+                     row("probe-sweep-4c40s-c1-90fps-r01", "c1"),
                      row("capacity-4c40s-fine-c1-100fps-r01", "c1", valid="false")]
             write_rows(src, rows)
-            self.assertEqual(f4c.filter_capacity_rows(src, dst), 4)
+            self.assertEqual(f4c.filter_capacity_rows(src, dst), 5)
             with dst.open(encoding="utf-8") as handle:
                 kept = list(csv.DictReader(handle))
-        self.assertTrue(all(r["run_id"].startswith("capacity-4c40s-fine-") for r in kept))
+        self.assertTrue(all(r["run_id"].startswith("capacity-4c40s-") for r in kept))
+        self.assertFalse(any(r["valid"] == "false" for r in kept))
+
+    def test_u_range_needs_the_coarse_low_rates(self) -> None:
+        """20/11 failure: fine starts at ~352 pps, gradual U 0.40 x 842 = 336.8 pps."""
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            cap = base / "cap.json"
+            cap.write_text(json.dumps({"controllers": {"c1": {"c_safe_pps": 842.0}}}))
+            fine = [row(f"capacity-4c40s-fine-c1-{f}-r01", "c1", fps=f, pps=f * 11.73)
+                    for f in (30, 60, 90, 120)]
+            coarse = [row(f"capacity-4c40s-coarse-c1-{f}-r01", "c1", fps=f, pps=f * 11.73)
+                      for f in (25, 50, 100)]
+            src, used = base / "all.csv", base / "used.csv"
+            write_rows(src, fine + coarse)
+            f4c.filter_capacity_rows(src, used, ("capacity-4c40s-fine",), ("c1",))
+            with self.assertRaises(ValueError):
+                f4c.check_u_range(used, cap, ("c1",))
+            f4c.filter_capacity_rows(src, used, controllers=("c1",))
+            low, high = f4c.check_u_range(used, cap, ("c1",))["c1"]
+        self.assertAlmostEqual(low, 0.40 * 842.0 / 11.73, places=1)
+        self.assertAlmostEqual(high, 1.10 * 842.0 / 11.73, places=1)
 
     def test_a_controller_without_rows_is_an_error(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
