@@ -25,8 +25,15 @@ while [[ $# -gt 0 ]]; do
 done
 
 CONFIG=configs/experiments/transfer_4c_v1.yaml
-CAPACITY=data/benchmarks/controller_capacity_v5.json
-RUNS_CSV=data/benchmarks/capacity_runs_4c40s.csv
+# Capacity the runs are made with (20/11: Huong 2 -> the campaign runs with the probe off, so
+# the probe-off capacity, once derived). Override all three, e.g.
+#   CAPACITY=data/benchmarks/controller_capacity_v6.json \
+#   CAPACITY_EXPERIMENTS="capacity-4c40s-coarse capacity-4c40s-noprobe-fine" scripts/...
+CAPACITY="${CAPACITY:-data/benchmarks/controller_capacity_v5.json}"
+RUNS_CSV="${RUNS_CSV:-data/benchmarks/capacity_runs_4c40s.csv}"
+CAPACITY_EXPERIMENTS="${CAPACITY_EXPERIMENTS:-capacity-4c40s-coarse capacity-4c40s-fine}"
+EXP_ARGS=(); for e in $CAPACITY_EXPERIMENTS; do EXP_ARGS+=(--capacity-experiment "$e"); done
+echo "capacity: $CAPACITY | rows: $RUNS_CSV | experiments: $CAPACITY_EXPERIMENTS"
 # RUNS_ROOT: where the raw runs live. A second worktree (so nobody switches the branch under
 # a running queue, 20/11) points it at the first one: RUNS_ROOT=~/w15-day34/data/experiment_runs
 RUNS_ROOT="${RUNS_ROOT:-data/experiment_runs}"
@@ -64,7 +71,7 @@ pgrep -f "mininet:" >/dev/null && fail "a Mininet network is already up (someone
 [[ -z "$(git status --porcelain --untracked-files=no)" ]] || fail "tracked files changed (git status)"
 FREE_GB=$(df -BG --output=avail . | tail -1 | tr -dc '0-9')
 (( FREE_GB >= 3 )) || fail "only ${FREE_GB} GB free on the disk"
-"$PY" -m src.experiments.workloads.forecast_4c --check-range "$RUNS_CSV" "$CAPACITY" \
+"$PY" -m src.experiments.workloads.forecast_4c --check-range "$RUNS_CSV" "$CAPACITY" "${EXP_ARGS[@]}" \
     || fail "a workload U falls outside the measured capacity range"
 GIT_COMMIT="$(git rev-parse HEAD)"
 GIT_BRANCH="$(git branch --show-current)"
@@ -98,7 +105,8 @@ for line in "${PLAN[@]}"; do
     clean_leftover_links
     if sudo -E env PYTHONPATH="$PWD" "$PY" -m src.experiments.topologies.runtime_4c40s \
             --forecast "$workload" --seed "$seed" --repeat-index "$repeat" --run-id "$run_id" \
-            --output-dir "$OUT" --git-commit "$GIT_COMMIT"; then
+            --output-dir "$OUT" --git-commit "$GIT_COMMIT" --capacity-runs "$RUNS_CSV" \
+            --controller-capacity "$CAPACITY" "${EXP_ARGS[@]}"; then
         CONSECUTIVE=0; echo "PASS: $run_id"
     else
         FAILED=$((FAILED + 1)); CONSECUTIVE=$((CONSECUTIVE + 1))

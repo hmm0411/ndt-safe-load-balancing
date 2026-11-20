@@ -136,13 +136,15 @@ def main(argv: list[str] | None = None) -> int:
                         default=Path("configs/experiments/transfer_4c_v1.yaml"))
     parser.add_argument("--check-range", nargs=2, type=Path, metavar=("RUNS_CSV", "CAPACITY"),
                         help="only check that U %s-%s maps inside the measured range" % U_RANGE)
+    parser.add_argument("--capacity-experiment", action="append", default=None)
     args = parser.parse_args(argv)
     if args.check_range:
         import tempfile
 
         with tempfile.TemporaryDirectory() as tmp:
             used = Path(tmp) / "used.csv"
-            n = filter_capacity_rows(args.check_range[0], used)
+            experiments = tuple(args.capacity_experiment or CAPACITY_EXPERIMENTS)
+            n = filter_capacity_rows(args.check_range[0], used, experiments)
             for cid, (low, high) in check_u_range(used, args.check_range[1]).items():
                 print(f"RANGE OK {cid}: U {U_RANGE[0]} -> {low:.1f} fps, "
                       f"U {U_RANGE[1]} -> {high:.1f} fps ({n} rows)")
