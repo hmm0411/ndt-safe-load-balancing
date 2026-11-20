@@ -49,9 +49,9 @@ Random / Greedy chỉ là baseline phụ, không vào bảng chính.
 - **A. Thành phần (RQ1):** capacity; dự báo (so với persistence, hot-switch giữ riêng); what-if ở 5 mức tải
   đích; coverage của biên; Hard Gate; executor.
 - **B. So sánh chính (RQ2, RQ3):** 5 phương pháp × 5 workload (ổn định, tăng dần, đột biến, dao động,
-  hot-switch) × 6 seed, cấu hình **4C40S**. 2C20S: Static / Threshold / Full × 5 × 6 để xác nhận xu hướng.
+  hot-switch) × 10 seed, cấu hình **4C40S**. 2C20S: Static / Threshold / Full × 5 × 10 để xác nhận xu hướng.
 - **C. Ablation (RQ4), 4C:** bỏ phần học của outcome model, biên = 0, ranking → ngẫu nhiên trong tập an
-  toàn, cooldown = 0 (5 workload × 6 seed). Bỏ Hard Gate / OOD và bỏ verification chỉ chạy trong kịch bản
+  toàn, cooldown = 0 (5 workload × 10 seed). Bỏ Hard Gate / OOD và bỏ verification chỉ chạy trong kịch bản
   lỗi tương ứng (chúng không hoạt động khi không có lỗi). "Bỏ dự báo" và "bỏ feedback" đã nằm trong
   chuỗi baseline.
 - **D. Lỗi (RQ3), 4C, Full:** D1 snapshot cũ, D2 thiếu dữ liệu, D3 controller mất kết nối, D4 quá thời
@@ -79,16 +79,16 @@ Random / Greedy chỉ là baseline phụ, không vào bảng chính.
 
 - Mỗi episode khởi động lại controller, mapping, flow table, twin, buffer; bỏ warm-up theo quy tắc khai
   báo trước (đến khi snapshot hợp lệ đầu tiên + cửa sổ twinning đầy).
-- 6 seed đánh giá, khác mọi seed đã dùng để sinh dữ liệu train / validation / calibration / tune
-  (forecast 101–105, outcome 9201–9205, closed loop 2C 9501 và 9601, thử chuyển giao 4C 9701–9705). Seed đánh giá sẽ chọn và ghi ở đây.
+- 10 seed đánh giá (chốt 20/11): **9801–9810**, khác mọi seed đã dùng để sinh dữ liệu train / validation / calibration / tune
+  (forecast 101–105, outcome 9201–9205, closed loop 2C 9501 và 9601, thử chuyển giao 4C 9701–9705).
 - Xáo trộn thứ tự chạy giữa các phương pháp; ghi tải host.
 - Pilot đo thời gian một episode trước khi chốt độ dài và số seed.
 
 ## 6. Thống kê
 
 - Đơn vị phân tích là episode.
-- Mỗi workload: median [min–max] và "k/6 seed thắng" — mô tả, không gọi là "có ý nghĩa thống kê".
-- Kiểm định chính: Wilcoxon signed-rank ghép cặp trên 30 cặp workload × seed, Full so với từng baseline,
+- Mỗi workload: median [min–max] và "k/10 seed thắng" — mô tả, không gọi là "có ý nghĩa thống kê".
+- Kiểm định chính: Wilcoxon signed-rank ghép cặp trên 50 cặp workload × seed, Full so với từng baseline,
   hiệu chỉnh Holm cho 4 so sánh trên M2; kèm effect size (matched rank-biserial). Ablation và chỉ số phụ là
   mô tả.
 - Khi báo % cải thiện luôn kèm giá trị tuyệt đối.
