@@ -14,6 +14,7 @@ Inputs (all on dev; a missing one is skipped and reported, never replaced by a c
   evidence/week13/safety_v2_round1_cv.txt                    -> fig_09_gate_tradeoff
   evidence/week14/closed_loop_2c_analysis.json               -> fig_10_closed_loop_migrations
                                                                 fig_11_lead_time
+                                                                fig_12_decision_outcomes
 Each figure also has a simple_* version (one question, one measure) for slides.
 Writes PNG (200 dpi) and PDF of each figure plus figures_data.json (the plotted values and
 their source files) to evidence/week15/progress_report/. Flat academic style, same rcParams
@@ -248,6 +249,30 @@ def lead_time(report: dict[str, Any]) -> list[dict[str, Any]]:
             {"part": "Decision pipeline", "p95_ms": float(h["decision_p95_ms"])},
             {"part": "Committed migration", "p95_ms": float(h["migration_p95_ms"]),
              "n": int(h["n_committed"])}]
+
+
+# final status of a decision cycle, in pipeline order (src/twin/decision/closed_loop.py)
+CYCLE_STATUSES = ("INVALID_SNAPSHOT", "NOT_READY", "NO_RISK", "DEFERRED", "NO_SAFE_ACTION",
+                  "SELECTED", "COMMITTED", "RESTORED")
+
+
+def decision_outcomes(report: dict[str, Any]) -> dict[str, Any]:
+    """Cycles per final status and mode (summed over scenario_gates) + recorded reason codes."""
+    counts: dict[str, dict[str, int]] = {"dry_run": {}, "execute": {}}
+    for gate in report["scenario_gates"].values():
+        for key, n in gate["status_counts"].items():
+            mode, status = key.split(":", 1)
+            if status not in CYCLE_STATUSES:
+                raise ValueError(f"unknown cycle status {status!r}")
+            counts[mode][status] = counts[mode].get(status, 0) + int(n)
+    total = sum(sum(m.values()) for m in counts.values())
+    if total != int(report["n_records"]):
+        raise ValueError(f"scenario status counts sum to {total}, n_records is "
+                         f"{report['n_records']}")
+    statuses = [s for s in CYCLE_STATUSES if any(s in m for m in counts.values())]
+    reasons = sorted(report["reason_counts"].items(), key=lambda kv: -kv[1])
+    return {"statuses": statuses, "counts": counts, "n_records": total,
+            "reasons": [{"reason": k, "n": int(v)} for k, v in reasons]}
 
 
 # ---------------------------------------------------------------- figures
@@ -539,6 +564,38 @@ def fig_lead_time(rows: list[dict[str, Any]], current_h: int, required_h: int) -
     ax.set_xlim(0, max(required_h, start) + 0.6)
     ax.set_xlabel("seconds (P95 of each stage, closed loop 2C)")
     ax.set_title("Time from data collection to completed migration vs forecast horizon")
+    return fig
+
+
+def fig_decision_outcomes(data: dict[str, Any]) -> Figure:
+    fig, (left, right) = plt.subplots(1, 2, figsize=(8.2, 3.0))
+    fig.subplots_adjust(wspace=1.05)
+    statuses = data["statuses"]
+    ys = range(len(statuses))
+    for offset, mode, fill in ((-0.2, "dry_run", GREY), (0.2, "execute", ACCENT)):
+        vals = [data["counts"][mode].get(s, 0) for s in statuses]
+        bars = left.barh([y + offset for y in ys], vals, height=0.38, color=fill,
+                         label=mode.replace("_", " "))
+        left.bar_label(bars, labels=[str(v) if v else "" for v in vals], fontsize=7, padding=2)
+    left.set_yticks(list(ys), statuses, fontsize=7)
+    left.invert_yaxis()
+    left.set_xscale("symlog", linthresh=10)
+    left.set_xlim(0, 3000)
+    left.set_xlabel("decision cycles (symlog)")
+    left.set_title(f"(a) Final status of {data['n_records']} cycles")
+    left.legend(frameon=False, fontsize=7, loc="lower right")
+    reasons = data["reasons"]
+    bars = right.barh(range(len(reasons)), [r["n"] for r in reasons], color=DARK, height=0.55)
+    right.bar_label(bars, fontsize=7, padding=2)
+    right.set_yticks(range(len(reasons)), [r["reason"] for r in reasons], fontsize=7)
+    right.invert_yaxis()
+    right.set_xscale("symlog", linthresh=10)
+    right.set_xlim(0, 12000)
+    right.set_xlabel("times recorded (symlog)")
+    right.set_title("(b) Why no migration: reason codes")
+    fig.text(0.5, -0.1, "Closed loop 2C20S, Week 14. (b) counts each recorded code; one cycle "
+             "can record several (one per rejected candidate).", ha="center", fontsize=7,
+             color=DARK)
     return fig
 
 
@@ -841,6 +898,9 @@ def build(root: Path) -> dict[str, tuple[Callable[[], Figure], Any, list[str]]]:
         jobs["fig_11_lead_time"] = (lambda: fig_lead_time(lead, current_h, required_h),
                                     {"parts": lead, "current_h": current_h,
                                      "required_h": required_h}, [SOURCES["closed_loop"]])
+        outcomes = decision_outcomes(loop)
+        jobs["fig_12_decision_outcomes"] = (lambda: fig_decision_outcomes(outcomes), outcomes,
+                                            [SOURCES["closed_loop"]])
     add_simple_jobs(jobs)
     return jobs
 

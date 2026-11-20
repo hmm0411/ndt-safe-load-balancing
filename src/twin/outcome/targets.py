@@ -8,8 +8,11 @@ each other (plan sections 5-8):
   sample, which can still be transient);
 * ``r_src95_post`` / ``r_dst95_post``: mean ``response_p95_ms`` over the post window;
 * ``r95_post = max(r_src95_post, r_dst95_post)``: worst controller response;
-* ``i_post = imbalance(u_src_post, u_dst_post)``: population std of the controller
-  utilizations (2C: |U1 - U2| / 2), from ``src.experiments.migration.metrics``.
+* ``i_post``: population std of the utilizations of EVERY controller after the action,
+  from ``src.experiments.migration.metrics`` (Week 15: system-wide for 4C). The controllers
+  other than source and destination are in ``others_u_post``; with 2 controllers it is empty
+  and i_post = |U1 - U2| / 2, exactly the former source-destination definition, so
+  post-migration-v1 (2C) and its target schema name are unchanged.
 
 U is never clamped: U > 1 is the overload the Safety Gate must see.
 """
@@ -36,6 +39,9 @@ class OutcomeValues:
     u_dst_post: float
     r_src95_post: float
     r_dst95_post: float
+    # U after the action of the controllers that are neither source nor destination
+    # (sorted by controller id). Empty with 2 controllers.
+    others_u_post: tuple[float, ...] = ()
 
     def __post_init__(self) -> None:
         for name in BASE_TARGETS:
@@ -44,6 +50,9 @@ class OutcomeValues:
                 raise ValueError(f"{name} must be finite, got {value!r}")
         if self.u_src_post < 0 or self.u_dst_post < 0:
             raise ValueError("utilization cannot be negative")
+        for value in self.others_u_post:
+            if not math.isfinite(value) or value < 0:
+                raise ValueError(f"others_u_post must be finite and >= 0, got {value!r}")
 
     @property
     def r95_post(self) -> float:
@@ -51,7 +60,9 @@ class OutcomeValues:
 
     @property
     def i_post(self) -> float:
-        return imbalance({"src": self.u_src_post, "dst": self.u_dst_post})
+        utilization = {"src": self.u_src_post, "dst": self.u_dst_post}
+        utilization.update({f"other{i}": u for i, u in enumerate(self.others_u_post)})
+        return imbalance(utilization)
 
     def to_dict(self, prefix: str = "") -> dict[str, float]:
         return {f"{prefix}{name}": float(getattr(self, name)) for name in ALL_TARGETS}
@@ -67,17 +78,22 @@ def targets_from_window(
     after: Sequence[StateSnapshotView], source: str, target: str
 ) -> OutcomeValues:
     """Observed targets from the post window of one attempt."""
+    if not after:
+        raise ValueError("post window is empty")
+    others = sorted({c.controller_id for c in after[0].controllers} - {source, target})
     return OutcomeValues(
         u_src_post=_mean([s.controller(source).utilization for s in after]),
         u_dst_post=_mean([s.controller(target).utilization for s in after]),
         r_src95_post=_mean([s.controller(source).response_p95_ms for s in after]),
         r_dst95_post=_mean([s.controller(target).response_p95_ms for s in after]),
+        others_u_post=tuple(_mean([s.controller(c).utilization for s in after]) for c in others),
     )
 
 
-def derive(values: Mapping[str, float]) -> dict[str, float]:
+def derive(values: Mapping[str, float], others_u_post: Sequence[float] = ()) -> dict[str, float]:
     """r95_post and i_post from a mapping that holds the four base targets."""
-    base = OutcomeValues(**{name: float(values[name]) for name in BASE_TARGETS})
+    base = OutcomeValues(**{name: float(values[name]) for name in BASE_TARGETS},
+                         others_u_post=tuple(float(u) for u in others_u_post))
     return {"r95_post": base.r95_post, "i_post": base.i_post}
 
 
@@ -87,7 +103,8 @@ def target_schema() -> dict[str, Any]:
         "base_targets": list(BASE_TARGETS),
         "derived_targets": {
             "r95_post": "max(r_src95_post, r_dst95_post)",
-            "i_post": "population std of (u_src_post, u_dst_post) = |u_src_post - u_dst_post| / 2",
+            "i_post": "population std of the post-action U of every controller "
+                      "(2 controllers: |u_src_post - u_dst_post| / 2)",
         },
         "aggregation": "mean over the post window (Hard-Gate-valid snapshots after the action)",
         "units": {"u_*": "processed Packet-In rate / c_safe_pps (not clamped)",
