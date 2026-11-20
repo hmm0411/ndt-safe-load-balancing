@@ -90,6 +90,8 @@ def build_parser() -> argparse.ArgumentParser:
                         "Needs --output-root; never the raw collection root.")
     p.add_argument("--capacity-json", default="data/benchmarks/controller_capacity.json")
     p.add_argument("--capacity-runs", default="data/benchmarks/capacity_runs.csv")
+    p.add_argument("--capacity-experiment", action="append", default=None,
+                   help="4C only, repeatable: capacity-runs experiments that feed U")
     return p
 
 
@@ -139,6 +141,7 @@ def main(argv=None) -> int:
         required_window=int(cfg(config, "pre_window_valid_snapshots", "pre_window")),
         post_window_timeout_s=float(cfg(config, "post_window_timeout_s")),
         predict_url=args.predict_url,
+        capacity_experiments=tuple(args.capacity_experiment or ()),
     )
 
     print(f"{len(plans)} attempt(s) -> {settings.output_root}")

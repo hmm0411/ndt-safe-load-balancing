@@ -121,6 +121,8 @@ class RunnerSettings:
     post_window_timeout_s: float = 60.0
     # Week 12 smoke: URL of POST /api/v1/twin/outcome/predict. None = no prediction (raw collection).
     predict_url: str | None = None
+    # capacity-runs experiments feeding U (4C only); () = runtime default (probe-ON rows)
+    capacity_experiments: tuple[str, ...] = ()
 
 
 @dataclass
@@ -679,6 +681,7 @@ def build_workload_command(
             *profiles,
             "--capacity-runs", str(settings.capacity_runs),
             "--controller-capacity", str(settings.capacity_json),
+            *[a for e in settings.capacity_experiments for a in ("--capacity-experiment", e)],
             "--output-dir", str(workload_out),
             "--duration", str(duration),
             "--run-id", run_id,
