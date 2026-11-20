@@ -1,0 +1,772 @@
+{
+  "rules": "configs/experiments/probe_acceptance_v1.yaml",
+  "baseline_p95_ms": {
+    "c1": 8.642753500000001,
+    "c2": 8.621884,
+    "c3": 8.9799799,
+    "c4": 9.13817775
+  },
+  "criteria": {
+    "P1_isolation": {
+      "pass": false,
+      "limit_ratio": 2.0,
+      "target_must_rank_first": true,
+      "ranking": [
+        {
+          "target": "c1",
+          "rate": 90.0,
+          "target_ratio": 1.3736917291462725,
+          "max_other_ratio": 1.3751584920418787,
+          "pass": false
+        },
+        {
+          "target": "c1",
+          "rate": 140.0,
+          "target_ratio": 1.8719879954924084,
+          "max_other_ratio": 1.61658368403008,
+          "pass": true
+        },
+        {
+          "target": "c2",
+          "rate": 90.0,
+          "target_ratio": 1.2533767561706932,
+          "max_other_ratio": 1.17533857699401,
+          "pass": true
+        },
+        {
+          "target": "c2",
+          "rate": 140.0,
+          "target_ratio": 1.7035660651430709,
+          "max_other_ratio": 1.4209953806966724,
+          "pass": true
+        },
+        {
+          "target": "c3",
+          "rate": 90.0,
+          "target_ratio": 1.1549320951152686,
+          "max_other_ratio": 1.1752404926811821,
+          "pass": false
+        },
+        {
+          "target": "c3",
+          "rate": 140.0,
+          "target_ratio": 1.5734945019197648,
+          "max_other_ratio": 1.3524404642883157,
+          "pass": true
+        },
+        {
+          "target": "c4",
+          "rate": 90.0,
+          "target_ratio": 3.0293420370379636,
+          "max_other_ratio": 1.5150395203646907,
+          "pass": true
+        },
+        {
+          "target": "c4",
+          "rate": 140.0,
+          "target_ratio": 7.740847063299901,
+          "max_other_ratio": 1.5991078979953801,
+          "pass": true
+        }
+      ],
+      "rows": [
+        {
+          "target": "c1",
+          "rate": 90.0,
+          "controller": "c2",
+          "p95_ms": 11.856457,
+          "baseline_ms": 8.621884,
+          "ratio": 1.3751584920418787,
+          "pass": true
+        },
+        {
+          "target": "c1",
+          "rate": 90.0,
+          "controller": "c3",
+          "p95_ms": 11.859015,
+          "baseline_ms": 8.9799799,
+          "ratio": 1.3206059626035465,
+          "pass": true
+        },
+        {
+          "target": "c1",
+          "rate": 90.0,
+          "controller": "c4",
+          "p95_ms": 12.249639,
+          "baseline_ms": 9.13817775,
+          "ratio": 1.3404903401009025,
+          "pass": true
+        },
+        {
+          "target": "c1",
+          "rate": 140.0,
+          "controller": "c2",
+          "p95_ms": 13.937997000000001,
+          "baseline_ms": 8.621884,
+          "ratio": 1.61658368403008,
+          "pass": true
+        },
+        {
+          "target": "c1",
+          "rate": 140.0,
+          "controller": "c3",
+          "p95_ms": 14.3928808,
+          "baseline_ms": 8.9799799,
+          "ratio": 1.6027742779246088,
+          "pass": true
+        },
+        {
+          "target": "c1",
+          "rate": 140.0,
+          "controller": "c4",
+          "p95_ms": 14.1523948,
+          "baseline_ms": 9.13817775,
+          "ratio": 1.5487108247593453,
+          "pass": true
+        },
+        {
+          "target": "c2",
+          "rate": 90.0,
+          "controller": "c1",
+          "p95_ms": 10.1581616,
+          "baseline_ms": 8.642753500000001,
+          "ratio": 1.17533857699401,
+          "pass": true
+        },
+        {
+          "target": "c2",
+          "rate": 90.0,
+          "controller": "c3",
+          "p95_ms": 10.4017754,
+          "baseline_ms": 8.9799799,
+          "ratio": 1.1583294746572874,
+          "pass": true
+        },
+        {
+          "target": "c2",
+          "rate": 90.0,
+          "controller": "c4",
+          "p95_ms": 10.5307772,
+          "baseline_ms": 9.13817775,
+          "ratio": 1.152393561177993,
+          "pass": true
+        },
+        {
+          "target": "c2",
+          "rate": 140.0,
+          "controller": "c1",
+          "p95_ms": 12.2813128,
+          "baseline_ms": 8.642753500000001,
+          "ratio": 1.4209953806966724,
+          "pass": true
+        },
+        {
+          "target": "c2",
+          "rate": 140.0,
+          "controller": "c3",
+          "p95_ms": 12.4388148,
+          "baseline_ms": 8.9799799,
+          "ratio": 1.3851717864090096,
+          "pass": true
+        },
+        {
+          "target": "c2",
+          "rate": 140.0,
+          "controller": "c4",
+          "p95_ms": 12.7125626,
+          "baseline_ms": 9.13817775,
+          "ratio": 1.3911485361509848,
+          "pass": true
+        },
+        {
+          "target": "c3",
+          "rate": 90.0,
+          "controller": "c1",
+          "p95_ms": 9.9450994,
+          "baseline_ms": 8.642753500000001,
+          "ratio": 1.150686456578913,
+          "pass": true
+        },
+        {
+          "target": "c3",
+          "rate": 90.0,
+          "controller": "c2",
+          "p95_ms": 10.132787200000001,
+          "baseline_ms": 8.621884,
+          "ratio": 1.1752404926811821,
+          "pass": true
+        },
+        {
+          "target": "c3",
+          "rate": 90.0,
+          "controller": "c4",
+          "p95_ms": 10.225693,
+          "baseline_ms": 9.13817775,
+          "ratio": 1.1190078897294375,
+          "pass": true
+        },
+        {
+          "target": "c3",
+          "rate": 140.0,
+          "controller": "c1",
+          "p95_ms": 11.4927554,
+          "baseline_ms": 8.642753500000001,
+          "ratio": 1.3297562403000385,
+          "pass": true
+        },
+        {
+          "target": "c3",
+          "rate": 140.0,
+          "controller": "c2",
+          "p95_ms": 11.6605848,
+          "baseline_ms": 8.621884,
+          "ratio": 1.3524404642883157,
+          "pass": true
+        },
+        {
+          "target": "c3",
+          "rate": 140.0,
+          "controller": "c4",
+          "p95_ms": 11.948303,
+          "baseline_ms": 9.13817775,
+          "ratio": 1.307514837955521,
+          "pass": true
+        },
+        {
+          "target": "c4",
+          "rate": 90.0,
+          "controller": "c1",
+          "p95_ms": 12.140031,
+          "baseline_ms": 8.642753500000001,
+          "ratio": 1.404648530124109,
+          "pass": true
+        },
+        {
+          "target": "c4",
+          "rate": 90.0,
+          "controller": "c2",
+          "p95_ms": 13.062495,
+          "baseline_ms": 8.621884,
+          "ratio": 1.5150395203646907,
+          "pass": true
+        },
+        {
+          "target": "c4",
+          "rate": 90.0,
+          "controller": "c3",
+          "p95_ms": 12.7950768,
+          "baseline_ms": 8.9799799,
+          "ratio": 1.4248447037169871,
+          "pass": true
+        },
+        {
+          "target": "c4",
+          "rate": 140.0,
+          "controller": "c1",
+          "p95_ms": 13.7023768,
+          "baseline_ms": 8.642753500000001,
+          "ratio": 1.5854179805081792,
+          "pass": true
+        },
+        {
+          "target": "c4",
+          "rate": 140.0,
+          "controller": "c2",
+          "p95_ms": 13.7873228,
+          "baseline_ms": 8.621884,
+          "ratio": 1.5991078979953801,
+          "pass": true
+        },
+        {
+          "target": "c4",
+          "rate": 140.0,
+          "controller": "c3",
+          "p95_ms": 13.8819748,
+          "baseline_ms": 8.9799799,
+          "ratio": 1.545880386658772,
+          "pass": true
+        }
+      ]
+    },
+    "P2_monotone": {
+      "pass": true,
+      "rows": [
+        {
+          "controller": "c1",
+          "rates": [
+            30.0,
+            90.0,
+            140.0
+          ],
+          "p95_ms": [
+            10.1437754,
+            11.872479,
+            16.1791308
+          ],
+          "pass": true
+        },
+        {
+          "controller": "c2",
+          "rates": [
+            30.0,
+            90.0,
+            140.0
+          ],
+          "p95_ms": [
+            8.2272578,
+            10.806469,
+            14.687949
+          ],
+          "pass": true
+        },
+        {
+          "controller": "c3",
+          "rates": [
+            30.0,
+            90.0,
+            140.0
+          ],
+          "p95_ms": [
+            7.9166891999999995,
+            10.371267,
+            14.129949
+          ],
+          "pass": true
+        },
+        {
+          "controller": "c4",
+          "rates": [
+            30.0,
+            90.0,
+            140.0
+          ],
+          "p95_ms": [
+            9.0853132,
+            27.682665999999998,
+            70.7372364
+          ],
+          "pass": true
+        }
+      ]
+    },
+    "P3_saturation_visible": {
+      "pass": false,
+      "min_ratio": 2.0,
+      "rows": [
+        {
+          "controller": "c1",
+          "rate": 140.0,
+          "p95_ms": 16.1791308,
+          "baseline_ms": 8.642753500000001,
+          "ratio": 1.8719879954924084,
+          "timeouts": 0,
+          "pass": false
+        },
+        {
+          "controller": "c2",
+          "rate": 140.0,
+          "p95_ms": 14.687949,
+          "baseline_ms": 8.621884,
+          "ratio": 1.7035660651430709,
+          "timeouts": 0,
+          "pass": false
+        },
+        {
+          "controller": "c3",
+          "rate": 140.0,
+          "p95_ms": 14.129949,
+          "baseline_ms": 8.9799799,
+          "ratio": 1.5734945019197648,
+          "timeouts": 0,
+          "pass": false
+        },
+        {
+          "controller": "c4",
+          "rate": 140.0,
+          "p95_ms": 70.7372364,
+          "baseline_ms": 9.13817775,
+          "ratio": 7.740847063299901,
+          "timeouts": 9,
+          "pass": true
+        }
+      ]
+    },
+    "P4_probe_load": {
+      "pass": true,
+      "limit_delta_u": 0.037,
+      "scale_source": "data/benchmarks/controller_capacity.json c1 c_safe_pps (capacity-v4)",
+      "rows": [
+        {
+          "controller": "c1",
+          "delta_u": 0.0008674310661829841,
+          "delta_pps": 0.8092567593084823,
+          "pass": true
+        },
+        {
+          "controller": "c2",
+          "delta_u": 0.02428650093289446,
+          "delta_pps": 22.657725560120298,
+          "pass": true
+        },
+        {
+          "controller": "c3",
+          "delta_u": 0.024592816613086564,
+          "delta_pps": 22.943498164240225,
+          "pass": true
+        },
+        {
+          "controller": "c4",
+          "delta_u": 0.02507678515958086,
+          "delta_pps": 23.395009336495832,
+          "pass": true
+        }
+      ]
+    },
+    "P5_samples": {
+      "pass": true,
+      "floor_per_run": 570.0,
+      "rows": [
+        {
+          "target": "c1",
+          "rate": "30",
+          "controller": "c1",
+          "samples_per_run": 590.0,
+          "pass": true
+        },
+        {
+          "target": "c1",
+          "rate": "30",
+          "controller": "c2",
+          "samples_per_run": 592.4,
+          "pass": true
+        },
+        {
+          "target": "c1",
+          "rate": "30",
+          "controller": "c3",
+          "samples_per_run": 598.8,
+          "pass": true
+        },
+        {
+          "target": "c1",
+          "rate": "30",
+          "controller": "c4",
+          "samples_per_run": 599.8,
+          "pass": true
+        },
+        {
+          "target": "c1",
+          "rate": "90",
+          "controller": "c1",
+          "samples_per_run": 590.0,
+          "pass": true
+        },
+        {
+          "target": "c1",
+          "rate": "90",
+          "controller": "c2",
+          "samples_per_run": 592.4,
+          "pass": true
+        },
+        {
+          "target": "c1",
+          "rate": "90",
+          "controller": "c3",
+          "samples_per_run": 597.4,
+          "pass": true
+        },
+        {
+          "target": "c1",
+          "rate": "90",
+          "controller": "c4",
+          "samples_per_run": 599.0,
+          "pass": true
+        },
+        {
+          "target": "c1",
+          "rate": "140",
+          "controller": "c1",
+          "samples_per_run": 590.0,
+          "pass": true
+        },
+        {
+          "target": "c1",
+          "rate": "140",
+          "controller": "c2",
+          "samples_per_run": 592.6,
+          "pass": true
+        },
+        {
+          "target": "c1",
+          "rate": "140",
+          "controller": "c3",
+          "samples_per_run": 598.4,
+          "pass": true
+        },
+        {
+          "target": "c1",
+          "rate": "140",
+          "controller": "c4",
+          "samples_per_run": 599.8,
+          "pass": true
+        },
+        {
+          "target": "c2",
+          "rate": "30",
+          "controller": "c1",
+          "samples_per_run": 590.0,
+          "pass": true
+        },
+        {
+          "target": "c2",
+          "rate": "30",
+          "controller": "c2",
+          "samples_per_run": 592.6,
+          "pass": true
+        },
+        {
+          "target": "c2",
+          "rate": "30",
+          "controller": "c3",
+          "samples_per_run": 597.4,
+          "pass": true
+        },
+        {
+          "target": "c2",
+          "rate": "30",
+          "controller": "c4",
+          "samples_per_run": 599.8,
+          "pass": true
+        },
+        {
+          "target": "c2",
+          "rate": "90",
+          "controller": "c1",
+          "samples_per_run": 590.0,
+          "pass": true
+        },
+        {
+          "target": "c2",
+          "rate": "90",
+          "controller": "c2",
+          "samples_per_run": 592.0,
+          "pass": true
+        },
+        {
+          "target": "c2",
+          "rate": "90",
+          "controller": "c3",
+          "samples_per_run": 597.6,
+          "pass": true
+        },
+        {
+          "target": "c2",
+          "rate": "90",
+          "controller": "c4",
+          "samples_per_run": 599.8,
+          "pass": true
+        },
+        {
+          "target": "c2",
+          "rate": "140",
+          "controller": "c1",
+          "samples_per_run": 590.0,
+          "pass": true
+        },
+        {
+          "target": "c2",
+          "rate": "140",
+          "controller": "c2",
+          "samples_per_run": 591.4,
+          "pass": true
+        },
+        {
+          "target": "c2",
+          "rate": "140",
+          "controller": "c3",
+          "samples_per_run": 598.2,
+          "pass": true
+        },
+        {
+          "target": "c2",
+          "rate": "140",
+          "controller": "c4",
+          "samples_per_run": 600.0,
+          "pass": true
+        },
+        {
+          "target": "c3",
+          "rate": "30",
+          "controller": "c1",
+          "samples_per_run": 590.0,
+          "pass": true
+        },
+        {
+          "target": "c3",
+          "rate": "30",
+          "controller": "c2",
+          "samples_per_run": 592.4,
+          "pass": true
+        },
+        {
+          "target": "c3",
+          "rate": "30",
+          "controller": "c3",
+          "samples_per_run": 597.0,
+          "pass": true
+        },
+        {
+          "target": "c3",
+          "rate": "30",
+          "controller": "c4",
+          "samples_per_run": 599.8,
+          "pass": true
+        },
+        {
+          "target": "c3",
+          "rate": "90",
+          "controller": "c1",
+          "samples_per_run": 590.0,
+          "pass": true
+        },
+        {
+          "target": "c3",
+          "rate": "90",
+          "controller": "c2",
+          "samples_per_run": 591.6,
+          "pass": true
+        },
+        {
+          "target": "c3",
+          "rate": "90",
+          "controller": "c3",
+          "samples_per_run": 597.6,
+          "pass": true
+        },
+        {
+          "target": "c3",
+          "rate": "90",
+          "controller": "c4",
+          "samples_per_run": 599.6,
+          "pass": true
+        },
+        {
+          "target": "c3",
+          "rate": "140",
+          "controller": "c1",
+          "samples_per_run": 590.0,
+          "pass": true
+        },
+        {
+          "target": "c3",
+          "rate": "140",
+          "controller": "c2",
+          "samples_per_run": 591.8,
+          "pass": true
+        },
+        {
+          "target": "c3",
+          "rate": "140",
+          "controller": "c3",
+          "samples_per_run": 596.8,
+          "pass": true
+        },
+        {
+          "target": "c3",
+          "rate": "140",
+          "controller": "c4",
+          "samples_per_run": 600.0,
+          "pass": true
+        },
+        {
+          "target": "c4",
+          "rate": "30",
+          "controller": "c1",
+          "samples_per_run": 590.0,
+          "pass": true
+        },
+        {
+          "target": "c4",
+          "rate": "30",
+          "controller": "c2",
+          "samples_per_run": 591.6,
+          "pass": true
+        },
+        {
+          "target": "c4",
+          "rate": "30",
+          "controller": "c3",
+          "samples_per_run": 598.0,
+          "pass": true
+        },
+        {
+          "target": "c4",
+          "rate": "30",
+          "controller": "c4",
+          "samples_per_run": 600.0,
+          "pass": true
+        },
+        {
+          "target": "c4",
+          "rate": "90",
+          "controller": "c1",
+          "samples_per_run": 590.6,
+          "pass": true
+        },
+        {
+          "target": "c4",
+          "rate": "90",
+          "controller": "c2",
+          "samples_per_run": 592.8,
+          "pass": true
+        },
+        {
+          "target": "c4",
+          "rate": "90",
+          "controller": "c3",
+          "samples_per_run": 598.2,
+          "pass": true
+        },
+        {
+          "target": "c4",
+          "rate": "90",
+          "controller": "c4",
+          "samples_per_run": 599.4,
+          "pass": true
+        },
+        {
+          "target": "c4",
+          "rate": "140",
+          "controller": "c1",
+          "samples_per_run": 590.4,
+          "pass": true
+        },
+        {
+          "target": "c4",
+          "rate": "140",
+          "controller": "c2",
+          "samples_per_run": 594.0,
+          "pass": true
+        },
+        {
+          "target": "c4",
+          "rate": "140",
+          "controller": "c3",
+          "samples_per_run": 597.0,
+          "pass": true
+        },
+        {
+          "target": "c4",
+          "rate": "140",
+          "controller": "c4",
+          "samples_per_run": 599.8,
+          "pass": true
+        }
+      ]
+    }
+  },
+  "all_pass": false,
+  "decision": "Huong 2",
+  "summary_file": "evidence/week15/probe_sweep_summary.json",
+  "scale_pps": 932.9349510958949
+}
