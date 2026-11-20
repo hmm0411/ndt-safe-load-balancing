@@ -8,6 +8,7 @@
 # configs/controllers_4c40s.yaml and NDT_CAPACITY_FILE=data/benchmarks/controller_capacity_v5.json
 # (restart it after capacity-v5 is derived), and data/benchmarks/capacity_runs_4c40s.csv.
 # Existing run directories are skipped, so the same command resumes after a stop.
+# Run it from its own worktree; see RUNS_ROOT below.
 #
 #   scripts/experiments/run_week15_day5_vm.sh [--dry-run] [--shutdown] [--preflight-only]
 set -uo pipefail
@@ -26,7 +27,10 @@ done
 CONFIG=configs/experiments/transfer_4c_v1.yaml
 CAPACITY=data/benchmarks/controller_capacity_v5.json
 RUNS_CSV=data/benchmarks/capacity_runs_4c40s.csv
-OUT=data/experiment_runs/transfer_4c
+# RUNS_ROOT: where the raw runs live. A second worktree (so nobody switches the branch under
+# a running queue, 20/11) points it at the first one: RUNS_ROOT=~/w15-day34/data/experiment_runs
+RUNS_ROOT="${RUNS_ROOT:-data/experiment_runs}"
+OUT="${RUNS_ROOT}/transfer_4c"
 PY="$(command -v python3)"
 export PYTHONPATH="$PWD"
 mkdir -p "$OUT"
@@ -43,7 +47,7 @@ if [[ "$DRY_RUN" -eq 1 ]]; then printf '%s\n' "${PLAN[@]}"; exit 0; fi
 [[ -f "$CAPACITY" && -f "$RUNS_CSV" ]] || fail "capacity-v5 not derived yet ($CAPACITY, $RUNS_CSV)"
 [[ "$(nproc)" == "8" ]] || fail "nproc is $(nproc), capacity-v5 was measured on 8 vCPU"
 CPU_NOW="$(lscpu | sed -n 's/^Model name:[[:space:]]*//p')"
-FINE_RUN="$(ls -d data/experiment_runs/capacity-4c40s-fine-* 2>/dev/null | head -1)"
+FINE_RUN="$(ls -d "${RUNS_ROOT}"/capacity-4c40s-fine-* 2>/dev/null | head -1)"
 [[ -n "$FINE_RUN" && -f "$FINE_RUN/run_conditions.json" ]] || fail "no fine-sweep run_conditions.json"
 CPU_V5="$("$PY" -c "import json,sys; print(json.load(open(sys.argv[1]))['cpu_model'])" \
     "$FINE_RUN/run_conditions.json")"
