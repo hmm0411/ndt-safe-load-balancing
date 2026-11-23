@@ -845,7 +845,8 @@ def run_attempt(
     url = settings.orchestrator_url.rstrip("/")
     orchestrator = ProcessGroup(
         ["./scripts/start_orchestrator.sh"], cwd=settings.repo_root,
-        env={**os.environ, "NDT_CONTROLLERS_CONFIG": settings.controllers_config, "RUN_ID": name},
+        env={**os.environ, "NDT_CONTROLLERS_CONFIG": settings.controllers_config,
+             "RUN_ID": f"on-{name}" if settings.setup_probe else name},
         log_path=work_dir / "orchestrator.log",
     )
     workload = ProcessGroup(
