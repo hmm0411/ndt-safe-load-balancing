@@ -92,6 +92,8 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--capacity-runs", default="data/benchmarks/capacity_runs.csv")
     p.add_argument("--capacity-experiment", action="append", default=None,
                    help="4C only, repeatable: capacity-runs experiments that feed U")
+    p.add_argument("--setup-probe", action="store_true",
+                   help="4C only: probe on all switches + push loop (the probe-ON set)")
     return p
 
 
@@ -142,6 +144,7 @@ def main(argv=None) -> int:
         post_window_timeout_s=float(cfg(config, "post_window_timeout_s")),
         predict_url=args.predict_url,
         capacity_experiments=tuple(args.capacity_experiment or ()),
+        setup_probe=args.setup_probe,
     )
 
     print(f"{len(plans)} attempt(s) -> {settings.output_root}")

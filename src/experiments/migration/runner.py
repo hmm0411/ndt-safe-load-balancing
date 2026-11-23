@@ -37,6 +37,7 @@ from .schema import (
     MigrationTransactionView,
     StateSnapshotView,
 )
+from . import setup_probe_on as probe_on
 from .selection import select_switch
 from .writer import raw_transaction, transaction_from_raw, write_attempt
 
@@ -123,6 +124,7 @@ class RunnerSettings:
     predict_url: str | None = None
     # capacity-runs experiments feeding U (4C only); () = runtime default (probe-ON rows)
     capacity_experiments: tuple[str, ...] = ()
+    setup_probe: bool = False  # Day 6 probe-ON set: probe on all switches + push loop
 
 
 @dataclass
@@ -687,6 +689,7 @@ def build_workload_command(
             "--run-id", run_id,
             "--seed", str(plan.seed),
             "--experiment-type", "migration-outcome-4c",
+            *probe_on.workload_args(settings.setup_probe, workload_out, run_id, duration),
         ]
     return [
         "sudo", "-E", "env", *env_pairs, settings.python,
@@ -823,6 +826,8 @@ def run_attempt(
     started_at = now_iso()
     duration = float(duration or DEFAULT_DURATION_S[plan.workload])
     window = settings.required_window
+    if settings.setup_probe and settings.topology == "2C20S":
+        raise RunnerError("the setup probe set is 4C only")
 
     preflight(settings)
     commit, dirty = git_state(settings.repo_root)
@@ -848,6 +853,16 @@ def run_attempt(
         cwd=settings.repo_root, env=dict(os.environ),
         log_path=work_dir / "workload.log", use_sudo_to_signal=True,
     )
+    push = None
+    if settings.setup_probe:
+        (work_dir / "setup_probe.json").write_text(
+            json.dumps(probe_on.parameters(), indent=2), encoding="utf-8")
+        push = ProcessGroup(
+            probe_on.push_command(settings.python, probe_on.probe_dir(workload_out), url,
+                                  duration, settings.post_window_timeout_s),
+            cwd=settings.repo_root, env={**os.environ, "PYTHONPATH": str(settings.repo_root)},
+            log_path=work_dir / "setup_probe_push.log",
+        )
     poller = StatePoller(lambda: http_get_json(f"{url}/api/v1/twin/state"),
                          lambda: http_get_json(f"{url}/api/v1/twin/forecast"))
     try:
@@ -858,6 +873,8 @@ def run_attempt(
         log(f"[{name}] starting workload ({plan.workload}, {duration:.0f} s)")
         workload.start()
         poller.start()
+        if push is not None:
+            push.start()
 
         ctx = Context(
             samples=poller.samples, forecasts=poller.forecasts,
@@ -873,6 +890,13 @@ def run_attempt(
         )
         collected = collect_attempt(plan, ctx, failure=failure, duration=duration,
                                     window=window, post_timeout=settings.post_window_timeout_s)
+        if push is not None:
+            if not push.alive():
+                raise RunnerError("the setup probe push loop stopped early (see setup_probe_push.log)")
+            expected = topology_spec(settings.topology).switches
+            found = probe_on.written_files(probe_on.probe_dir(workload_out))
+            if found != expected:
+                raise RunnerError(f"the setup probe wrote {found} sample files, expected {expected}")
         poller.stop()
         log(f"[{name}] waiting for the workload to finish")
         code = workload.wait(duration + WORKLOAD_EXIT_MARGIN_S)
@@ -905,11 +929,15 @@ def run_attempt(
             written.validation.get("valid"))
     except BaseException as exc:
         poller.stop()
+        if push is not None:
+            push.stop()
         dest = quarantine(settings, name, work_dir, exc)
         log(f"[{name}] FAILED, moved to {dest}")
         raise
     finally:
         poller.stop()
+        if push is not None:
+            push.stop()
         workload.stop()  # signals only if still alive; always closes the log
         orchestrator.stop()
 
