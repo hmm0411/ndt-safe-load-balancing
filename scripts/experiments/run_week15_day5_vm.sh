@@ -24,7 +24,9 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-CONFIG=configs/experiments/transfer_4c_v1.yaml
+# PLAN_CONFIG / OUT_NAME: the 4C forecast collection (24/11) reuses this queue:
+#   PLAN_CONFIG=configs/experiments/forecast_collection_4c_v1.yaml OUT_NAME=forecast_4c
+CONFIG="${PLAN_CONFIG:-configs/experiments/transfer_4c_v1.yaml}"
 # Capacity the runs are made with (20/11: Huong 2 -> the campaign runs with the probe off, so
 # the probe-off capacity, once derived). Override all three, e.g.
 #   CAPACITY=data/benchmarks/controller_capacity_v5_noprobe.json \
@@ -37,7 +39,7 @@ echo "capacity: $CAPACITY | rows: $RUNS_CSV | experiments: $CAPACITY_EXPERIMENTS
 # RUNS_ROOT: where the raw runs live. A second worktree (so nobody switches the branch under
 # a running queue, 20/11) points it at the first one: RUNS_ROOT=~/w15-day34/data/experiment_runs
 RUNS_ROOT="${RUNS_ROOT:-data/experiment_runs}"
-OUT="${RUNS_ROOT}/transfer_4c"
+OUT="${RUNS_ROOT}/${OUT_NAME:-transfer_4c}"
 PY="$(command -v python3)"
 export PYTHONPATH="$PWD"
 mkdir -p "$OUT"
@@ -49,7 +51,8 @@ fail() { echo "PREFLIGHT FAIL: $1"; exit 1; }
 # ---------------------------------------------------------------- preflight
 echo "== preflight $(date -u +%FT%TZ)"
 mapfile -t PLAN < <("$PY" -m src.experiments.workloads.forecast_4c --config "$CONFIG")
-(( ${#PLAN[@]} == 10 )) || fail "plan has ${#PLAN[@]} runs, expected 10"
+EXPECTED=$("$PY" -c "import yaml,sys; c=yaml.safe_load(open(sys.argv[1])); print(len(c['seeds'])*len(c['forecast']['workloads']))" "$CONFIG")
+(( ${#PLAN[@]} == EXPECTED )) || fail "plan has ${#PLAN[@]} runs, expected ${EXPECTED}"
 if [[ "$DRY_RUN" -eq 1 ]]; then printf '%s\n' "${PLAN[@]}"; exit 0; fi
 [[ -f "$CAPACITY" && -f "$RUNS_CSV" ]] || fail "capacity-v5 not derived yet ($CAPACITY, $RUNS_CSV)"
 [[ "$(nproc)" == "8" ]] || fail "nproc is $(nproc), capacity-v5 was measured on 8 vCPU"
@@ -106,6 +109,7 @@ for line in "${PLAN[@]}"; do
     if sudo -E env PYTHONPATH="$PWD" "$PY" -m src.experiments.topologies.runtime_4c40s \
             --forecast "$workload" --seed "$seed" --repeat-index "$repeat" --run-id "$run_id" \
             --output-dir "$OUT" --git-commit "$GIT_COMMIT" --capacity-runs "$RUNS_CSV" \
+            --experiment-type "${EXPERIMENT_TYPE:-transfer-4c-forecast}" \
             --controller-capacity "$CAPACITY" "${EXP_ARGS[@]}"; then
         CONSECUTIVE=0; echo "PASS: $run_id"
     else

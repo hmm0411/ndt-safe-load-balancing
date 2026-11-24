@@ -1,0 +1,21 @@
+# 4C40S forecast training data (decided 24/11 by My after the transfer test failed:
+# evidence/week15/transfer_4c.json). Same design as the 2C collection (5 workloads x 5 repeats,
+# 180 s, every controller on the workload), probe off, U on the probe-off capacity.
+# Split fixed now, by repeat as in 2C: r01-r03 train, r04 validation (model choice, m_f),
+# r05 test; hot_switch never trains, tunes or calibrates (unseen workload).
+# Run with the Day 5 queue:
+#   PLAN_CONFIG=configs/experiments/forecast_collection_4c_v1.yaml OUT_NAME=forecast_4c \
+#   EXPERIMENT_TYPE=forecast-4c-collection RUNS_ROOT=... CAPACITY=... RUNS_CSV=... \
+#   CAPACITY_EXPERIMENTS=capacity-4c40s-noprobe-fine scripts/experiments/run_week15_day5_vm.sh
+schema_version: "1.0"
+topology: 4C40S
+controllers_config: configs/controllers_4c40s.yaml
+capacity: data/benchmarks/controller_capacity_v5_noprobe.json
+run_id_prefix: forecast4c-
+# New seeds: not 101-105 (2C forecast), 9701-9702 (transfer), 9801-9810 (evaluation),
+# 9901-9905 (4C outcome).
+seeds: [9921, 9922, 9923, 9924, 9925]
+forecast:
+  workloads: [stable, gradual, burst, oscillating, hot_switch]
+  duration_seconds: 180
+split: {train: [1, 2, 3], validation: [4], test: [5], unseen_workloads: [hot_switch]}

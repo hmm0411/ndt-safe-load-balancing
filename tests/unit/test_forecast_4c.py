@@ -42,6 +42,14 @@ class Forecast4CTest(unittest.TestCase):
         self.assertEqual(plan[-1].run_id, "transfer4c-hot-switch-r02-s9702")
         self.assertEqual(len({r.run_id for r in plan}), 10)
 
+    def test_collection_plan_uses_its_prefix_and_seeds(self) -> None:
+        config = yaml.safe_load((ROOT / "configs/experiments/forecast_collection_4c_v1.yaml")
+                                .read_text(encoding="utf-8"))
+        plan = f4c.transfer_plan(config)
+        self.assertEqual(len(plan), 25)
+        self.assertEqual(plan[0].run_id, "forecast4c-stable-r01-s9921")
+        self.assertEqual(plan[-1].run_id, "forecast4c-hot-switch-r05-s9925")
+
     def test_only_valid_fine_rows_are_kept(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             src, dst = Path(tmp) / "all.csv", Path(tmp) / "used.csv"
