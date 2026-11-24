@@ -1,0 +1,211 @@
+{
+  "config": "/home/tntvy112_gmail_com/w15-day5/configs/experiments/transfer_4c_v1.yaml",
+  "decision": {
+    "forecast_checks": {
+      "coverage_at_least_min": false,
+      "macro_rmse_ratio_below_max": false
+    },
+    "forecast_reuse": false,
+    "note": "reuse = keep the 2C model for the 4C campaign; otherwise retrain on 4C data. hot_switch is reported, never decides.",
+    "outcome_checks": {
+      "coverage_at_least_min": false,
+      "hybrid_beats_analytical": true
+    },
+    "outcome_reuse": false
+  },
+  "forecast": {
+    "coverage_seen": 0.5482784431137725,
+    "macro_rmse_ratio_seen": 1.025440948511911,
+    "margin": {
+      "controllers": {
+        "c1": 0.05764946424914519,
+        "c2": 0.05401681215273385
+      },
+      "global": 0.0558420757492224,
+      "source": "frozen 2C validation m_f"
+    },
+    "per_workload": {
+      "burst": {
+        "coverage": 0.655688622754491,
+        "n": 1336,
+        "overload": {
+          "actual_overload": 158.0,
+          "alarms": 109.0,
+          "false_alarm": 2.0,
+          "false_alarm_rate": 0.001697792869269949,
+          "missed_overload": 51.0,
+          "missed_overload_rate": 0.3227848101265823,
+          "samples": 1336.0
+        },
+        "rmse_model": 0.13988281852943554,
+        "rmse_persistence": 0.18958826948529015,
+        "rmse_ratio_vs_persistence": 0.7378242277816077,
+        "role": "decides"
+      },
+      "gradual": {
+        "coverage": 0.19161676646706588,
+        "n": 1336,
+        "overload": {
+          "actual_overload": 455.0,
+          "alarms": 15.0,
+          "false_alarm": 5.0,
+          "false_alarm_rate": 0.0056753688989784334,
+          "missed_overload": 445.0,
+          "missed_overload_rate": 0.978021978021978,
+          "samples": 1336.0
+        },
+        "rmse_model": 0.1367410466404689,
+        "rmse_persistence": 0.07300774365484022,
+        "rmse_ratio_vs_persistence": 1.8729663429531742,
+        "role": "decides"
+      },
+      "hot_switch": {
+        "coverage": 0.5658682634730539,
+        "n": 1336,
+        "overload": {
+          "actual_overload": 91.0,
+          "alarms": 16.0,
+          "false_alarm": 14.0,
+          "false_alarm_rate": 0.011244979919678716,
+          "missed_overload": 89.0,
+          "missed_overload_rate": 0.978021978021978,
+          "samples": 1336.0
+        },
+        "rmse_model": 0.09937717576306415,
+        "rmse_persistence": 0.08509866236056585,
+        "rmse_ratio_vs_persistence": 1.1677877537251968,
+        "role": "report_only"
+      },
+      "oscillating": {
+        "coverage": 0.5583832335329342,
+        "n": 1336,
+        "overload": {
+          "actual_overload": 63.0,
+          "alarms": 64.0,
+          "false_alarm": 33.0,
+          "false_alarm_rate": 0.025923016496465043,
+          "missed_overload": 32.0,
+          "missed_overload_rate": 0.5079365079365079,
+          "samples": 1336.0
+        },
+        "rmse_model": 0.09651895401494176,
+        "rmse_persistence": 0.161711777647238,
+        "rmse_ratio_vs_persistence": 0.5968579123871272,
+        "role": "decides"
+      },
+      "stable": {
+        "coverage": 0.7874251497005988,
+        "n": 1336,
+        "overload": {
+          "actual_overload": 0.0,
+          "alarms": 1.0,
+          "false_alarm": 1.0,
+          "false_alarm_rate": 0.0007485029940119761,
+          "missed_overload": 0.0,
+          "missed_overload_rate": NaN,
+          "samples": 1336.0
+        },
+        "rmse_model": 0.06485685095459266,
+        "rmse_persistence": 0.07253745703945304,
+        "rmse_ratio_vs_persistence": 0.8941153109257345,
+        "role": "decides"
+      }
+    },
+    "seen_workloads": [
+      "stable",
+      "gradual",
+      "burst",
+      "oscillating"
+    ],
+    "skill": "RMSE ratio model / persistence (< 1 = better than persistence)"
+  },
+  "generated_at": "2026-11-24T15:12:56.978302+00:00",
+  "inputs": {
+    "forecast_rows": "evidence/week15/transfer_4c_forecast_rows.jsonl",
+    "outcome_rows": "evidence/week15/transfer_4c_outcome_rows.jsonl"
+  },
+  "outcome": {
+    "coverage_by_workload": [
+      {
+        "coverage": 0.5766666666666667,
+        "covered": 173,
+        "group": "all",
+        "n": 300,
+        "value": "all"
+      },
+      {
+        "coverage": 0.6,
+        "covered": 36,
+        "group": "workload",
+        "n": 60,
+        "value": "burst"
+      },
+      {
+        "coverage": 0.6333333333333333,
+        "covered": 38,
+        "group": "workload",
+        "n": 60,
+        "value": "gradual"
+      },
+      {
+        "coverage": 0.7,
+        "covered": 42,
+        "group": "workload",
+        "n": 60,
+        "value": "hot_switch"
+      },
+      {
+        "coverage": 0.4666666666666667,
+        "covered": 28,
+        "group": "workload",
+        "n": 60,
+        "value": "oscillating"
+      },
+      {
+        "coverage": 0.48333333333333334,
+        "covered": 29,
+        "group": "workload",
+        "n": 60,
+        "value": "stable"
+      }
+    ],
+    "coverage_hot_switch": {
+      "coverage": 0.7,
+      "covered": 42,
+      "n": 60
+    },
+    "coverage_seen": {
+      "coverage": 0.5458333333333333,
+      "covered": 131,
+      "n": 240
+    },
+    "gate_confusion_seen": {
+      "false_alarm": 8,
+      "false_alarm_rate": 0.03418803418803419,
+      "flagged": 8,
+      "miss_rate": 1.0,
+      "missed_overload": 6,
+      "overload": 6,
+      "threshold": 1.0,
+      "true_negative": 226,
+      "true_positive": 0
+    },
+    "margin": {
+      "m_U": 0.036629233239997006,
+      "source": "frozen 2C validation m_U (hybrid_xgb)"
+    },
+    "n": 300,
+    "per_variant": {
+      "analytical": {
+        "rmse_u_dst_post": 0.13167753248402744
+      },
+      "direct_xgb": {
+        "rmse_u_dst_post": 0.13357661643885654
+      },
+      "hybrid_xgb": {
+        "rmse_u_dst_post": 0.1161593137485157
+      }
+    }
+  },
+  "schema_version": "1.0"
+}
