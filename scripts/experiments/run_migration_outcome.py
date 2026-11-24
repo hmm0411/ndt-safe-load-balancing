@@ -90,18 +90,7 @@ def build_parser() -> argparse.ArgumentParser:
                         "Needs --output-root; never the raw collection root.")
     p.add_argument("--capacity-json", default="data/benchmarks/controller_capacity.json")
     p.add_argument("--capacity-runs", default="data/benchmarks/capacity_runs.csv")
-    p.add_argument("--capacity-experiment", action="append", default=None,
-                   help="4C40S: capacity sweeps that map U to offered rate (repeatable)")
     return p
-
-
-def topology_of(controllers_config: Path) -> tuple[int, tuple[int, ...]]:
-    """(switch count, OpenFlow ports) from the controllers config."""
-    import yaml
-
-    data = yaml.safe_load(controllers_config.read_text(encoding="utf-8"))
-    ports = tuple(int(c["openflow_port"]) for c in data["controllers"].values())
-    return len(data["switches"]), ports
 
 
 def main(argv=None) -> int:
@@ -137,10 +126,6 @@ def main(argv=None) -> int:
         if problem:
             print(problem, file=sys.stderr)
             return 2
-    controllers_config = str(cfg(config, "controllers_config"))
-    # hot_switch_of() imports the hot-switch runner, whose host table follows this variable
-    os.environ["NDT_CONTROLLERS_CONFIG"] = controllers_config
-    switches, ports = topology_of(REPO_ROOT / controllers_config)
     settings = RunnerSettings(
         repo_root=REPO_ROOT,
         output_root=output_root if output_root.is_absolute() else REPO_ROOT / output_root,
@@ -154,9 +139,6 @@ def main(argv=None) -> int:
         required_window=int(cfg(config, "pre_window_valid_snapshots", "pre_window")),
         post_window_timeout_s=float(cfg(config, "post_window_timeout_s")),
         predict_url=args.predict_url,
-        expected_switches=switches,
-        openflow_ports=ports,
-        capacity_experiments=tuple(args.capacity_experiment or ()),
     )
 
     print(f"{len(plans)} attempt(s) -> {settings.output_root}")

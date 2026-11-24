@@ -72,34 +72,5 @@ class OutcomeConfigTest(unittest.TestCase):
                     validate_outcome_config({**good, key: value})
 
 
-class Outcome4CConfigTest(unittest.TestCase):
-    def test_stage1_matrix_is_balanced(self) -> None:
-        root = Path(__file__).resolve().parents[2]
-        plans = expand_attempts(load_outcome_config(
-            root / "configs/experiments/migration_outcome_4c_v1.yaml"))
-        self.assertEqual(len(plans), 50)
-        self.assertTrue(all(p.action_type == "MIGRATE" and p.source_controller == "c1"
-                            for p in plans))
-        targets = Counter(p.target_controller for p in plans)
-        self.assertEqual(sorted(targets), ["c2", "c3", "c4"])
-        self.assertLessEqual(max(targets.values()) - min(targets.values()), 1)
-        for workload in ("stable", "gradual", "burst", "oscillating", "hot_switch"):
-            phases = Counter(p.phase for p in plans if p.workload == workload)
-            self.assertEqual(len(phases), 3)
-            self.assertLessEqual(max(phases.values()) - min(phases.values()), 1)
-        self.assertEqual({p.seed for p in plans}, {9701, 9702, 9703, 9704, 9705})
-
-    def test_seeded_targets_and_directions_exclude_each_other(self) -> None:
-        root = Path(__file__).resolve().parents[2]
-        import yaml
-
-        data = yaml.safe_load((root / "configs/experiments/migration_outcome_4c_v1.yaml")
-                              .read_text(encoding="utf-8"))
-        with self.assertRaises(ValueError):
-            validate_outcome_config({**data, "directions": [["c1", "c2"]]})
-        with self.assertRaises(ValueError):
-            validate_outcome_config({**data, "no_op_controls": 10})
-
-
 if __name__ == "__main__":
     unittest.main()

@@ -40,13 +40,6 @@ class OutcomeConfig:
     repeats: dict[str, int]
     split: dict[str, tuple[str, ...]]
     no_op_controls: int
-    # Week 15 Day 6 (4C40S), both optional so the 2C20S configs load unchanged:
-    # seeded_targets = (source, (targets...)): instead of fixed directions, each
-    # (repeat, workload, level) migrates from `source` to one target, rotated with the seed;
-    # phase_policy "rotate_one" takes one phase per (repeat, workload, level), rotating so each
-    # phase gets an equal share, instead of all phases.
-    seeded_targets: tuple[str, tuple[str, ...]] | None = None
-    phase_policy: str = "all"
 
     def split_of(self, repeat: str) -> str:
         for name, repeats in self.split.items():
@@ -135,22 +128,8 @@ def validate_outcome_config(data: Mapping[str, Any]) -> OutcomeConfig:
     if len({dst_tag(x) for x in levels}) != len(levels):
         raise ValueError("destination_load_levels collide after rounding to a tag")
 
-    seeded_targets: tuple[str, tuple[str, ...]] | None = None
-    if "seeded_targets" in data:
-        if "directions" in data:
-            raise ValueError("give either 'directions' or 'seeded_targets', not both")
-        spec = dict(data["seeded_targets"])
-        src = str(spec["source"])
-        targets = tuple(str(t) for t in spec["targets"])
-        if not targets or src in targets or len(set(targets)) != len(targets):
-            raise ValueError(f"bad seeded_targets {spec}")
-        seeded_targets = (src, targets)
-    phase_policy = str(data.get("phase_policy", "all"))
-    if phase_policy not in ("all", "rotate_one"):
-        raise ValueError("phase_policy must be 'all' or 'rotate_one'")
-
     directions: list[tuple[str, str]] = []
-    for pair in (data.get("directions", []) if seeded_targets else need("directions")):
+    for pair in need("directions"):
         src, dst = (str(x) for x in pair)
         if src == dst or not _NAME.match(src) or not _NAME.match(dst):
             raise ValueError(f"bad direction {pair}")
@@ -172,8 +151,6 @@ def validate_outcome_config(data: Mapping[str, Any]) -> OutcomeConfig:
     no_op = int(need("no_op_controls"))
     if no_op < 0:
         raise ValueError("no_op_controls must be >= 0")
-    if no_op and (seeded_targets or phase_policy != "all"):
-        raise ValueError("no_op_controls need fixed directions and phase_policy 'all'")
 
     return OutcomeConfig(
         schema_version=SCHEMA_VERSION,
@@ -189,8 +166,6 @@ def validate_outcome_config(data: Mapping[str, Any]) -> OutcomeConfig:
         repeats=repeats,
         split=split,
         no_op_controls=no_op,
-        seeded_targets=seeded_targets,
-        phase_policy=phase_policy,
     )
 
 
@@ -204,32 +179,6 @@ def expand_attempts(config: OutcomeConfig) -> list[AttemptPlan]:
     """
     plans: list[AttemptPlan] = []
     repeat_ids = sorted(config.repeats)
-    if config.seeded_targets or config.phase_policy != "all":
-        levels = config.destination_load_levels
-        for r_index, repeat in enumerate(repeat_ids):
-            seed = config.repeats[repeat]
-            cell = 0
-            for workload, phases in config.workloads.items():
-                for l_index, level in enumerate(levels):
-                    turn = (r_index * len(levels) + l_index) % len(phases)
-                    chosen = ([phases[turn]] if config.phase_policy == "rotate_one"
-                              else list(phases))
-                    if config.seeded_targets:
-                        # targets rotate over the cells of a repeat, offset by the seed:
-                        # balanced over the collection, still fixed by the seed
-                        src, targets = config.seeded_targets
-                        pairs = [(src, targets[(cell + seed) % len(targets)])]
-                        cell += 1
-                    else:
-                        pairs = list(config.directions)
-                    for phase in chosen:
-                        for src, dst in pairs:
-                            plans.append(_plan("MIGRATE", config, workload, phase, level,
-                                               src, dst, repeat))
-        ids = [p.attempt_id for p in plans]
-        if len(set(ids)) != len(ids):
-            raise ValueError("expanded attempt ids are not unique")
-        return plans
     for repeat in repeat_ids:
         for workload, phases in config.workloads.items():
             for phase in phases:

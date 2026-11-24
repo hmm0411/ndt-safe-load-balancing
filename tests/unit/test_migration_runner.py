@@ -280,31 +280,6 @@ class WorkloadCommandTest(unittest.TestCase):
         self.assertNotIn("NDT_HOT_SWITCH_CHECK_LOAD=0", cmd)
 
 
-class WorkloadCommand4CTest(unittest.TestCase):
-    def test_4c_uses_runtime_4c40s_and_keeps_others_on_the_workload(self):
-        root = Path("/repo")
-        settings = runner.RunnerSettings(
-            repo_root=root, output_root=root / "out", work_root=root / "work",
-            config_path=root / "c.yaml", controllers_config="configs/controllers_4c40s.yaml",
-            capacity_json=root / "v6.json", capacity_runs=root / "runs.csv", python="python3",
-            topology="4C40S", expected_switches=40, openflow_ports=(6653, 6654, 6655, 6656),
-            capacity_experiments=("capacity-4c40s-coarse", "capacity-4c40s-noprobe-fine"))
-        plan = make_plan(target_controller="c3", attempt_id="mig-stable-early-dst45-c1-c3-r01")
-        cmd = runner.build_workload_command(plan, settings, Path("/w"), "rid", 120.0)
-        self.assertIn("src.experiments.topologies.runtime_4c40s", cmd)
-        self.assertEqual(cmd[cmd.index("--forecast") + 1], "stable")
-        profiles = [cmd[i + 1] for i, a in enumerate(cmd) if a == "--profile"]
-        self.assertEqual(profiles, ["c1=stable", "c3=constant:0.45"])  # c2, c4: workload
-        self.assertEqual(cmd.count("--capacity-experiment"), 2)
-        self.assertEqual(cmd[cmd.index("--controller-capacity") + 1], "/repo/v6.json")
-
-    def test_ready_needs_all_40_switches(self):
-        raw = {"controllers": [{"managed_switch_count": 10}] * 4,
-               "ownership": [{"switch_id": f"s{i}"} for i in range(1, 41)]}
-        self.assertTrue(runner.is_ready_state(object(), raw, 40))
-        self.assertFalse(runner.is_ready_state(object(), raw))
-
-
 class AttemptNameTest(unittest.TestCase):
     def test_failure_suffix(self):
         plan = make_plan()
