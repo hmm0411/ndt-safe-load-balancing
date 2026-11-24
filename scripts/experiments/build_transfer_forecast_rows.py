@@ -3,7 +3,7 @@
 
     python3 scripts/experiments/build_transfer_forecast_rows.py \
         --runs ~/w15-day34/data/experiment_runs/transfer_4c \
-        --capacity data/benchmarks/controller_capacity_v6.json
+        --capacity data/benchmarks/controller_capacity_v5_noprobe.json
 Then evaluate_transfer_4c.py --forecast-rows <out> --outcome-rows <...>.
 """
 from __future__ import annotations

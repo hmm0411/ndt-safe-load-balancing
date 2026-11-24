@@ -27,7 +27,7 @@ done
 CONFIG=configs/experiments/transfer_4c_v1.yaml
 # Capacity the runs are made with (20/11: Huong 2 -> the campaign runs with the probe off, so
 # the probe-off capacity, once derived). Override all three, e.g.
-#   CAPACITY=data/benchmarks/controller_capacity_v6.json \
+#   CAPACITY=data/benchmarks/controller_capacity_v5_noprobe.json \
 #   CAPACITY_EXPERIMENTS="capacity-4c40s-coarse capacity-4c40s-noprobe-fine" scripts/...
 CAPACITY="${CAPACITY:-data/benchmarks/controller_capacity_v5.json}"
 RUNS_CSV="${RUNS_CSV:-data/benchmarks/capacity_runs_4c40s.csv}"
