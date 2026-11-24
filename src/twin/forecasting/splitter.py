@@ -6,6 +6,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from src.twin.forecasting.versions import EXPERIMENT_CONFIG
+
 # Split names. UNSEEN is a held-out workload family, not a fourth random slice.
 TRAIN = "train"
 VALIDATION = "validation"
@@ -13,7 +15,10 @@ TEST = "test"
 UNSEEN = "unseen"
 SPLIT_NAMES = (TRAIN, VALIDATION, TEST, UNSEEN)
 
-# Run id contract: {workload}-r{NN}-s{seed}, e.g. stable-r01-s101.
+# Run id contract: [prefix]{workload}-r{NN}-s{seed}, e.g. stable-r01-s101 (2C) or
+# forecast4c-stable-r01-s9921 (4C). Only the known prefixes below are stripped, so a
+# misnamed run still fails instead of becoming a new "workload".
+RUN_ID_PREFIXES = ("forecast4c-",)
 # The workload may contain "-" (hot-switch), so the pattern is anchored on the
 # trailing "-rNN-sSEED" instead of splitting the id on every "-".
 _RUN_ID_PATTERN = re.compile(
@@ -34,7 +39,12 @@ def build_run_id(workload: str, repeat: int, seed: int) -> str:
 
 
 def parse_run_id(run_id: str) -> ParsedRunId:
-    match = _RUN_ID_PATTERN.match(run_id)
+    body = run_id
+    for prefix in RUN_ID_PREFIXES:
+        if body.startswith(prefix):
+            body = body[len(prefix):]
+            break
+    match = _RUN_ID_PATTERN.match(body)
     if match is None:
         raise ValueError(
             f"run_id {run_id!r} does not match {{workload}}-rNN-sSEED"
@@ -206,28 +216,37 @@ def split_frame(
 # collect_forecast_data.sh always agree on run ids ({workload}-rNN-sSEED).
 # ---------------------------------------------------------------------------
 
-_REPO_ROOT = Path(__file__).resolve().parents[3]
-DEFAULT_EXPERIMENT_CONFIG = (
-    _REPO_ROOT / "configs" / "experiments" / "forecast_dataset_2c20s.yaml"
-)
+# The plan of the active profile (NDT_FORECAST_PROFILE, versions.py).
+DEFAULT_EXPERIMENT_CONFIG = EXPERIMENT_CONFIG
 
 
 def planned_run_ids(
     config_path: Path = DEFAULT_EXPERIMENT_CONFIG,
 ) -> tuple[str, ...]:
-    """Official run ids: every workload x repeat, repeat N uses seeds[N-1]."""
+    """Official run ids: every workload x repeat, repeat N uses seeds[N-1].
+
+    Two config shapes: the 2C dataset config (workloads, repeats, seeds) and the 4C
+    collection config (forecast.workloads, seeds, run_id_prefix; hot_switch -> hot-switch,
+    as forecast_4c.transfer_plan names the run directories)."""
     import yaml
 
     config = yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}
-    workloads = [str(name) for name in config["workloads"]]
-    repeats = int(config["repeats"])
     seeds = [int(seed) for seed in config["seeds"]]
+    prefix = str(config.get("run_id_prefix", ""))
+    if prefix and prefix not in RUN_ID_PREFIXES:
+        raise ValueError(f"run_id_prefix {prefix!r} is not in RUN_ID_PREFIXES")
+    if "forecast" in config:
+        workloads = [str(n).replace("_", "-") for n in config["forecast"]["workloads"]]
+        repeats = len(seeds)
+    else:
+        workloads = [str(name) for name in config["workloads"]]
+        repeats = int(config["repeats"])
 
     if len(seeds) != repeats:
         raise ValueError("seeds must have exactly one entry per repeat")
 
     return tuple(
-        build_run_id(workload, repeat, seeds[repeat - 1])
+        prefix + build_run_id(workload, repeat, seeds[repeat - 1])
         for workload in workloads
         for repeat in range(1, repeats + 1)
     )

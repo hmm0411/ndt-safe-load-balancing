@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from src.twin.forecasting.versions import dataset_version
+from src.twin.forecasting.versions import PROFILE, dataset_version
 from src.twin.forecasting.splitter import (
     build_split_run_ids,
     split_records,
@@ -45,6 +45,27 @@ def load_csv(
         ]
 
 
+# 2C20S (v3): the frozen row counts are a regression check. Other profiles (4C40S, v4) have no
+# frozen counts yet: every processed row must land in exactly one split, and the run counts
+# must follow the plan (12 train / 4 validation / 4 test / 5 unseen).
+EXPECTED_ROWS_2C20S = {"train": 4008, "validation": 1336, "test": 1336, "unseen": 1670}
+EXPECTED_RUNS = {"train": 12, "validation": 4, "test": 4, "unseen": 5}
+
+
+def check_split_counts(split_counts: dict[str, int], run_counts: dict[str, int],
+                       processed_rows: int, profile: str = PROFILE.name) -> None:
+    if profile == "2c20s" and split_counts != EXPECTED_ROWS_2C20S:
+        raise RuntimeError(f"unexpected split row counts: {split_counts}")
+    if run_counts != EXPECTED_RUNS:
+        raise RuntimeError(f"unexpected split run counts: {run_counts}")
+    if sum(split_counts.values()) != processed_rows:
+        raise RuntimeError(
+            f"split rows {sum(split_counts.values())} != processed rows {processed_rows}")
+    empty = [name for name, n in split_counts.items() if n == 0]
+    if empty:
+        raise RuntimeError(f"empty splits: {empty}")
+
+
 def main() -> None:
     rows = load_csv(DATASET_PATH)
 
@@ -61,18 +82,11 @@ def main() -> None:
         )
     }
 
-    expected_counts = {
-        "train": 4008,
-        "validation": 1336,
-        "test": 1336,
-        "unseen": 1670,
-    }
-
-    if split_counts != expected_counts:
-        raise RuntimeError(
-            "unexpected split row counts: "
-            f"{split_counts}"
-        )
+    check_split_counts(
+        split_counts,
+        {name: len(ids) for name, ids in run_ids.items()},
+        int(json.loads(QUALITY_PATH.read_text(encoding="utf-8"))["processed_rows"]),
+    )
 
     names = list(run_ids)
 
