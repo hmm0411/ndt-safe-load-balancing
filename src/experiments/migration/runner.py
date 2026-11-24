@@ -98,6 +98,10 @@ class RunnerSettings:
     post_window_timeout_s: float = 60.0
     # Week 12 smoke: URL of POST /api/v1/twin/outcome/predict. None = no prediction (raw collection).
     predict_url: str | None = None
+    # Week 15 Day 6 (4C40S): the defaults keep the 2C20S collection exactly as it was.
+    expected_switches: int = EXPECTED_SWITCHES
+    openflow_ports: tuple[int, ...] = OPENFLOW_PORTS
+    capacity_experiments: tuple[str, ...] = ()
 
 
 @dataclass
@@ -430,6 +434,7 @@ class Context:
     clock: Callable[[], float] = time.monotonic
     # (switch, source, target) -> record for prediction.json; None = do not ask the predictor
     predict: Callable[[str, str, str], dict[str, Any]] | None = None
+    expected_switches: int = EXPECTED_SWITCHES
 
 
 @dataclass
@@ -462,7 +467,8 @@ def collect_attempt(
     skip: list[str] = []
 
     ready = wait_for(
-        lambda: next((s for s in ctx.samples if s.valid and is_ready_state(s.view, s.raw)), None),
+        lambda: next((s for s in ctx.samples
+                      if s.valid and is_ready_state(s.view, s.raw, ctx.expected_switches)), None),
         READY_TIMEOUT_S, alive=alive, **common,
     )
     if ready is None:
@@ -492,6 +498,7 @@ def collect_attempt(
         skip += check_preconditions(
             last.raw, plan, switch_id,
             workload_alive=alive(), capacity_exists=ctx.capacity_exists,
+            expected_switches=ctx.expected_switches,
         )
 
     is_migrate = plan.action_type == "MIGRATE"
@@ -615,12 +622,31 @@ def build_workload_command(
     run_id: str,
     duration: float,
 ) -> list[str]:
-    """runtime_2c20s.py with the source on the workload and the target held constant."""
+    """runtime_2c20s.py (or runtime_4c40s.py) with the source on the workload and the target
+    held constant. On 4C40S the two other controllers run the workload too (My, 24/11)."""
     env_pairs = [f"PYTHONPATH={settings.repo_root}", "PYTHONDONTWRITEBYTECODE=1"]
     if plan.workload == "hot_switch":
         env_pairs.append(f"NDT_HOT_SWITCH_LEVEL={plan.phase}")
         if plan.action_type == "MIGRATE":  # the migration moves load on purpose
             env_pairs.append("NDT_HOT_SWITCH_CHECK_LOAD=0")
+    if settings.topology == "4C40S":
+        experiments = [a for e in settings.capacity_experiments
+                       for a in ("--capacity-experiment", e)]
+        return [
+            "sudo", "-E", "env", *env_pairs, settings.python, "-m",
+            "src.experiments.topologies.runtime_4c40s",
+            "--controllers-config", settings.controllers_config,
+            "--forecast", plan.workload,
+            "--profile", f"{plan.source_controller}={plan.workload.replace('_', '-')}",
+            "--profile", f"{plan.target_controller}=constant:{plan.destination_load_level}",
+            "--capacity-runs", str(settings.capacity_runs), *experiments,
+            "--controller-capacity", str(settings.capacity_json),
+            "--output-dir", str(workload_out),
+            "--duration", str(duration),
+            "--run-id", run_id,
+            "--seed", str(plan.seed),
+            "--experiment-type", "migration-outcome-4c",
+        ]
     return [
         "sudo", "-E", "env", *env_pairs, settings.python,
         "src/experiments/topologies/runtime_2c20s.py", WORKLOAD_FLAGS[plan.workload],
@@ -658,7 +684,7 @@ def preflight(
 ) -> None:
     """Fail early and loudly; never repair anything silently."""
     problems: list[str] = []
-    for port in OPENFLOW_PORTS:
+    for port in settings.openflow_ports:
         if not port_open(port):
             problems.append(f"Ryu is not listening on port {port} (tb_up / ctl_restart)")
     orch_port = urlparse(settings.orchestrator_url).port or 9000
@@ -773,7 +799,10 @@ def run_attempt(
     url = settings.orchestrator_url.rstrip("/")
     orchestrator = ProcessGroup(
         ["./scripts/start_orchestrator.sh"], cwd=settings.repo_root,
-        env={**os.environ, "NDT_CONTROLLERS_CONFIG": settings.controllers_config, "RUN_ID": name},
+        env={**os.environ, "NDT_CONTROLLERS_CONFIG": settings.controllers_config, "RUN_ID": name,
+             # 4C40S: U on the capacity of the collection (2C20S keeps the orchestrator default)
+             **({"NDT_CAPACITY_FILE": str(settings.capacity_json)}
+                if settings.topology == "4C40S" else {})},
         log_path=work_dir / "orchestrator.log",
     )
     workload = ProcessGroup(
@@ -798,6 +827,7 @@ def run_attempt(
             send=lambda switch, target, fail: send_migration(url, switch, target, fail),
             workload_alive=workload.alive,
             capacity_exists=settings.capacity_json.is_file(),
+            expected_switches=settings.expected_switches,
             predict=(None if settings.predict_url is None else
                      lambda switch, src, dst: request_prediction(settings.predict_url or "", switch, src, dst)),
         )
