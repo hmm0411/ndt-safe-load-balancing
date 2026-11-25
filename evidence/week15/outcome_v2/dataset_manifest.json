@@ -1,0 +1,32 @@
+{
+  "dataset_version": "migration-outcome-processed-v2",
+  "source_dataset": "migration-outcome-4c-noprobe-v1",
+  "created_at": "2026-11-25T15:05:23.474288+00:00",
+  "required_window": 5,
+  "feature_schema": "outcome-features-v1",
+  "target_schema": "outcome-targets-v1",
+  "rows": 750,
+  "rows_by_split": {
+    "train": 450,
+    "validation": 150,
+    "test": 150
+  },
+  "noop_reference_rows": 100,
+  "files": {
+    "outcome_dataset.csv": "2b869d8a457d4b4f3ebb1675b81f586c2e281779fcb5052b6ed6a809451aab11",
+    "noop_reference.csv": "e4c56732fe0ec84650257c3cce6c5c13f2d7968d38a589bf47f53738676c90a2"
+  },
+  "raw_root": "/home/tntvy112_gmail_com/w15-day34/data/experiment_runs/migration-outcome-4c-noprobe-v1",
+  "split_source": "evidence/week15/split_manifest_4c.json",
+  "split_arm": "probe_off",
+  "capacity_version": "controller_capacity_v5_noprobe.json@sha256:f73111b4927d",
+  "capacity_sha256": "f73111b4927d2f98dc850b16b4aa48fb74e3eb22995a5a7eb13adcb138ebfcab",
+  "c_safe_pps": {
+    "c1": 921.5499077641138,
+    "c2": 921.5420037286942,
+    "c3": 920.6309762073231,
+    "c4": 927.2766747232412
+  },
+  "saturation_rule": "CPU p95 >= 95 % in the window (src/experiments/migration/saturation.py)",
+  "git_commit": "518140d2e5c454125c9f53da9a1fecc1195ac40f"
+}

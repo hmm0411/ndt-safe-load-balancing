@@ -1,0 +1,34 @@
+{
+  "controller_row_counts": {
+    "c1": 4175,
+    "c2": 4175,
+    "c3": 4175,
+    "c4": 4175
+  },
+  "controller_series_count": 100,
+  "dataset_version": "forecast-dataset-v4-h3-provisional",
+  "dropped_for_future_label": 300,
+  "dropped_for_history": 1000,
+  "feature_rows": 17000,
+  "future_label_cross_run": false,
+  "gap_break_count": 0,
+  "official_run_count": 25,
+  "processed_rows": 16700,
+  "random_shuffle": false,
+  "raw_data_imputed": false,
+  "raw_rows": 18000,
+  "run_overlap_detected": false,
+  "sequence_count": 100,
+  "test_rows": 2672,
+  "train_rows": 8016,
+  "unseen_rows": 3340,
+  "valid_raw_rows": 18000,
+  "validation_rows": 2672,
+  "workload_row_counts": {
+    "burst": 3340,
+    "gradual": 3340,
+    "hot-switch": 3340,
+    "oscillating": 3340,
+    "stable": 3340
+  }
+}

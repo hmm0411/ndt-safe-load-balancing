@@ -1,0 +1,71 @@
+{
+  "attempts_scanned": 850,
+  "rows": 750,
+  "noop_reference_rows": 100,
+  "excluded": 0,
+  "excluded_by_reason": {},
+  "excluded_attempts": {},
+  "rows_by_split": {
+    "train": 450,
+    "validation": 150,
+    "test": 150
+  },
+  "noop_by_split": {
+    "test": 20,
+    "train": 60,
+    "validation": 20
+  },
+  "rows_by_workload": {
+    "burst": 150,
+    "gradual": 150,
+    "hot_switch": 150,
+    "oscillating": 150,
+    "stable": 150
+  },
+  "rows_by_split_and_workload": {
+    "train": {
+      "burst": 90,
+      "gradual": 90,
+      "hot_switch": 90,
+      "oscillating": 90,
+      "stable": 90
+    },
+    "validation": {
+      "burst": 30,
+      "gradual": 30,
+      "hot_switch": 30,
+      "oscillating": 30,
+      "stable": 30
+    },
+    "test": {
+      "burst": 30,
+      "gradual": 30,
+      "hot_switch": 30,
+      "oscillating": 30,
+      "stable": 30
+    }
+  },
+  "saturated_before": 5,
+  "saturated_after": 21,
+  "overload_after": 296,
+  "overload_after_by_split": {
+    "train": 178,
+    "validation": 59,
+    "test": 59
+  },
+  "switch_share_groups": {
+    "high": 55,
+    "low": 415,
+    "medium": 280
+  },
+  "candidate_features": 29,
+  "model_features": 24,
+  "audit_only": {
+    "src_safe_capacity_pps": "by design: encodes the controller id",
+    "dst_safe_capacity_pps": "by design: encodes the controller id",
+    "capacity_ratio_dst_src": "by design: encodes the controller id",
+    "src_switch_count": "constant on train",
+    "dst_switch_count": "constant on train"
+  },
+  "one_row_per_attempt": true
+}

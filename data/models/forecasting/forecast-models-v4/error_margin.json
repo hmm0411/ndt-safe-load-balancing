@@ -1,0 +1,21 @@
+{
+  "alpha": 0.05,
+  "controllers": {
+    "c1": 0.09972377594702164,
+    "c2": 0.09775958145280417,
+    "c3": 0.09660485046359146,
+    "c4": 0.09321239571160922
+  },
+  "global": 0.0958439860338387,
+  "method": "validation_abs_error_finite_sample_q95",
+  "model_name": "xgboost",
+  "model_version": "forecast-models-v4",
+  "n_validation": 2672,
+  "n_validation_per_controller": {
+    "c1": 668,
+    "c2": 668,
+    "c3": 668,
+    "c4": 668
+  },
+  "one_sided_q95": 0.07463173079265495
+}

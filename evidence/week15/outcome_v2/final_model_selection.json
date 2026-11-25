@@ -1,0 +1,191 @@
+{
+  "created_at": "2026-11-25T15:07:37.125839+00:00",
+  "git": {
+    "commit": "518140d2e5c454125c9f53da9a1fecc1195ac40f",
+    "tracked_changes": false
+  },
+  "dataset": "data/outcome/processed/migration-outcome-processed-v2",
+  "rows": {
+    "train": 450,
+    "validation": 150
+  },
+  "frozen_sha256": "5f6210a4adf7e3cf913ba0697de98b9c13b385d3c58e69094343ce4dbe1352f0",
+  "frozen": {
+    "rule": "Best Direct / Best Hybrid = lowest validation S (selection weights without selection_exclude); ties keep the candidate order",
+    "selection_weights": {
+      "u_dst_post": 0.4666666666666666,
+      "u_src_post": 0.3333333333333333,
+      "i_post": 0.19999999999999998
+    },
+    "selection_exclude": [
+      "r95_post"
+    ],
+    "candidates": {
+      "direct": [
+        "direct_xgb",
+        "direct_rf"
+      ],
+      "hybrid": [
+        "hybrid_xgb",
+        "hybrid_rf"
+      ]
+    },
+    "validation_scores": {
+      "analytical": {
+        "S": 0.24865184604704632,
+        "S_plan": 0.49258754333352334
+      },
+      "direct_rf": {
+        "S": 0.1668061905180578,
+        "S_plan": 0.2307836798833939
+      },
+      "direct_xgb": {
+        "S": 0.16976965485920914,
+        "S_plan": 0.2342246513291037
+      },
+      "hybrid_rf": {
+        "S": 0.169111515545282,
+        "S_plan": 0.21738047058020302
+      },
+      "hybrid_xgb": {
+        "S": 0.17359769695849833,
+        "S_plan": 0.23418622802900696
+      }
+    },
+    "best_direct": "direct_rf",
+    "best_hybrid": "hybrid_rf",
+    "parameters": {
+      "direct_rf": {
+        "u_src_post": {
+          "n_jobs": -1,
+          "random_state": 42,
+          "n_estimators": 100,
+          "max_depth": null,
+          "min_samples_leaf": 2,
+          "max_features": 0.8
+        },
+        "u_dst_post": {
+          "n_jobs": -1,
+          "random_state": 42,
+          "n_estimators": 200,
+          "max_depth": null,
+          "min_samples_leaf": 5,
+          "max_features": 0.8
+        },
+        "r_src95_post": {
+          "n_jobs": -1,
+          "random_state": 42,
+          "n_estimators": 200,
+          "max_depth": null,
+          "min_samples_leaf": 2,
+          "max_features": 0.8
+        },
+        "r_dst95_post": {
+          "n_jobs": -1,
+          "random_state": 42,
+          "n_estimators": 200,
+          "max_depth": null,
+          "min_samples_leaf": 2,
+          "max_features": 0.8
+        }
+      },
+      "hybrid_rf": {
+        "u_src_post": {
+          "n_jobs": -1,
+          "random_state": 42,
+          "n_estimators": 100,
+          "max_depth": null,
+          "min_samples_leaf": 5,
+          "max_features": "sqrt"
+        },
+        "u_dst_post": {
+          "n_jobs": -1,
+          "random_state": 42,
+          "n_estimators": 200,
+          "max_depth": null,
+          "min_samples_leaf": 2,
+          "max_features": 0.8
+        },
+        "r_src95_post": {
+          "n_jobs": -1,
+          "random_state": 42,
+          "n_estimators": 200,
+          "max_depth": 8,
+          "min_samples_leaf": 5,
+          "max_features": 0.8
+        },
+        "r_dst95_post": {
+          "n_jobs": -1,
+          "random_state": 42,
+          "n_estimators": 200,
+          "max_depth": null,
+          "min_samples_leaf": 2,
+          "max_features": 0.8
+        }
+      }
+    },
+    "bootstrap": {
+      "resamples": 2000,
+      "seed": 20261031,
+      "confidence": 0.95
+    },
+    "ablation": {
+      "hybrid_no_temporal": {
+        "drop": [
+          "src_u_mean",
+          "src_u_std",
+          "src_u_slope",
+          "dst_u_mean",
+          "dst_u_std",
+          "dst_u_slope",
+          "switch_share_mean",
+          "switch_share_slope"
+        ],
+        "persistence_base": false
+      },
+      "hybrid_no_switch_features": {
+        "drop": [
+          "switch_control_load_share",
+          "switch_packet_in_rate",
+          "switch_share_mean",
+          "switch_share_slope"
+        ],
+        "persistence_base": false
+      },
+      "hybrid_no_switch": {
+        "drop": [
+          "switch_control_load_share",
+          "switch_packet_in_rate",
+          "switch_share_mean",
+          "switch_share_slope"
+        ],
+        "persistence_base": true
+      }
+    },
+    "sha256": {
+      "configs/dataset.yaml": "c965f80d20cecd38c76a6f216306ac53277d719b4ecb43cd2120c65088aa239a",
+      "configs/evaluation.yaml": "c559503df438875fd0acbfaadaa97faea7827a810b32b4debc9d8e12783961c2",
+      "configs/models.yaml": "2501af7ea1bc35c60774b94d4dd410cdf1a3a3314de365af9c868db388bf46d3",
+      "direct/hyperparameters.json": "362c5e5495b71a6196107694f3faf3344de17bc4f81200f48101fcc64fa5d778",
+      "feature_schema.json": "69f7350f64fdb98be573d4bf64bae8f2003cc357b6d05eef8816e07d0555e7b6",
+      "hybrid/hyperparameters.json": "bffc9a57f38668770ad3c3242278d148cce0ac1dae33e710c8602dfac1ca59a9",
+      "models/direct_rf_r_dst95_post.joblib": "79903310fcccd49c2024a3cd7e92f4f900226affac54011ced91829aa904818b",
+      "models/direct_rf_r_src95_post.joblib": "79dd33a3644b8e90619c340007513110d4867450cf87ae2646cf3b2773aedaa7",
+      "models/direct_rf_u_dst_post.joblib": "122ed39acf03698d6b487f29aa468d60ed44283f648d5bfc84b443fe35dc16ed",
+      "models/direct_rf_u_src_post.joblib": "8fd9c4fa2cc3d5e4b7992f62eb5a98bdb1a6e4067e990b5c902361aef965c268",
+      "models/direct_xgb_r_dst95_post.json": "d0727fe5907a3b4eebe677d31db2dadf380979d13651ba6a4b190bfb77c3ee13",
+      "models/direct_xgb_r_src95_post.json": "dbc86d29be76c985f3da50c71c53527b068907c9c266a331fe4bb9ac0ade8bc5",
+      "models/direct_xgb_u_dst_post.json": "eb857622bac4e714bf53ef9cd4e15fe05e2783485d0d837b2f3790258c72dfe1",
+      "models/direct_xgb_u_src_post.json": "0351e6bc91cf16d47bfba50789b0feafc44f57fd116d661e501d9977f021bc5a",
+      "models/residual_rf_r_dst95_post.joblib": "a68d4e4f4e0788d1c57050f06bd1cbe2d5670a71a8832a6169e8097813ce3ca3",
+      "models/residual_rf_r_src95_post.joblib": "a8d2dff54f49660cbd8d56cfbb4dedc9f11a433103f29f51a51986c196ed4153",
+      "models/residual_rf_u_dst_post.joblib": "2af39e65fe4e3eeb28e564dcb6115afa61c8fec2401b50376b595d4b1c94e097",
+      "models/residual_rf_u_src_post.joblib": "caa56b56f8cc77fe04d85bbeec96761ad46a8915fe288c74f0ca2570e5996cac",
+      "models/residual_xgb_r_dst95_post.json": "1b1170e8b774f7762ec27ecabc954db3b8ab60e44f95ae25e4f335f48f9fea23",
+      "models/residual_xgb_r_src95_post.json": "db9d9f2a4e5e6d18e01c55d4a61e405a78236d2cadca641811cd1dde5b36aa30",
+      "models/residual_xgb_u_dst_post.json": "ef0d08f7ac5c5874e1648fc2fbfda5c21c1f541f867121b1b2ba9c08167b24c4",
+      "models/residual_xgb_u_src_post.json": "4a01dc833bc438c35b033e7efa0d09e85d64f94aa5bf90e3bac1923765088e8d",
+      "outcome_dataset.csv": "2b869d8a457d4b4f3ebb1675b81f586c2e281779fcb5052b6ed6a809451aab11"
+    }
+  }
+}

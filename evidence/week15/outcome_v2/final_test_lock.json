@@ -1,0 +1,82 @@
+{
+  "status": "completed",
+  "selection_sha256": "5f6210a4adf7e3cf913ba0697de98b9c13b385d3c58e69094343ce4dbe1352f0",
+  "attempt": 1,
+  "opened_at": "2026-11-25T15:07:37.147644+00:00",
+  "rule": "test evaluated once; selection frozen before the test rows are read",
+  "completed_at": "2026-11-25T15:07:48.079319+00:00",
+  "outputs_sha256": {
+    "ablation.csv": "03ceee57d1b6bed84badd352b0183c3d430c718550eed9529c4eba7f48ee3509",
+    "bootstrap_ci.csv": "aa01f4484f64e8a116dc3643892a1d2d317a3dca7a94ad4ae28f7566e537e9e0",
+    "model_comparison.csv": "a37b5877cffd146d0fdce295f492ac1567cae60e09c28742768ca328ea7482b4",
+    "model_selection.json": "99520bd75500dacee42669a8f180b8979d2b4d4bef04dbe5e5e133ee0ed36b83",
+    "overload_cases.csv": "eee634b8003f0443b5649833c9489bcfe22e3e1b6981472c4a95e841e96ba78b",
+    "per_workload_metrics.csv": "4df287248a21880eec826d2c409ae86fa299edfd6ef58b84f28eac4e6e814351",
+    "saturation_sensitivity.csv": "b1e06a02195e1867cdb2865bcd8898cd39808356fcc661ead1a467fc7e0c5f51",
+    "test_metrics.csv": "8eece54fee9f11628aac68461a28372df0e2d37d7921636cb4e94e7aadc9138d",
+    "validation_metrics.csv": "4a7f69f950f7c7919e79d8b59462fd0a417b3fd6b80fd631ab8070bd184a5317"
+  },
+  "test_summary": {
+    "n_test": 150,
+    "best_direct": "direct_rf",
+    "best_hybrid": "hybrid_rf",
+    "test_S": {
+      "analytical": 0.27453630116384814,
+      "direct_rf": 0.17355300121320724,
+      "hybrid_rf": 0.1889240073590831
+    },
+    "test_rmse": {
+      "analytical": {
+        "u_src_post": 0.22791784999357448,
+        "u_dst_post": 0.14850996877874004,
+        "r_src95_post": 0.4316039176444594,
+        "r_dst95_post": 0.39372521265451826,
+        "r95_post": 0.5429866343123484,
+        "i_post": 0.07172042984844984
+      },
+      "direct_rf": {
+        "u_src_post": 0.14101411766223357,
+        "u_dst_post": 0.08267047878731165,
+        "r_src95_post": 0.1514855342122884,
+        "r_dst95_post": 0.11636802396736545,
+        "r95_post": 0.1466363987238173,
+        "i_post": 0.053792657607921734
+      },
+      "hybrid_rf": {
+        "u_src_post": 0.1503300802717731,
+        "u_dst_post": 0.08392071997579009,
+        "r_src95_post": 0.10882162248736192,
+        "r_dst95_post": 0.1098280450391151,
+        "r95_post": 0.12047728528933281,
+        "i_post": 0.06390090935888584
+      }
+    },
+    "ablation_S": {
+      "analytical": {
+        "validation": 0.24865184604704632,
+        "test": 0.27453630116384814
+      },
+      "direct_rf": {
+        "validation": 0.1668061905180578,
+        "test": 0.17355300121320724
+      },
+      "hybrid_full": {
+        "validation": 0.169111515545282,
+        "test": 0.1889240073590831
+      },
+      "hybrid_no_temporal": {
+        "validation": 0.18285740964032307,
+        "test": 0.20104226825871657
+      },
+      "hybrid_no_switch_features": {
+        "validation": 0.1721625391160327,
+        "test": 0.1925944036959672
+      },
+      "hybrid_no_switch": {
+        "validation": 0.21452351324881966,
+        "test": 0.21122920905026146
+      }
+    },
+    "refit_max_abs_diff": 4.440892098500626e-16
+  }
+}
