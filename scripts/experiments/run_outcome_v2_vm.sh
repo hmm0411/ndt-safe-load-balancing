@@ -8,8 +8,9 @@
 # Same grids (configs/outcome/models.yaml), selection rule (evaluation.yaml) and margin rule
 # (artifact rules) as v1. Waits while a Mininet network is up; stops at the first error;
 # never overwrites a dataset, report or artifact folder.
-#   RAW=~/w15-day34/data/experiment_runs/migration-outcome-4c-noprobe-v1 \
-#     tmux new -d -s v2 'scripts/experiments/run_outcome_v2_vm.sh; bash'
+# RAW goes inside the tmux command (a session started by a running tmux server does not see
+# variables set on the client's command line):
+#   tmux new -d -s v2 'RAW=$HOME/w15-day34/data/experiment_runs/migration-outcome-4c-noprobe-v1 scripts/experiments/run_outcome_v2_vm.sh; bash'
 set -uo pipefail
 cd "$(git rev-parse --show-toplevel)"
 # shellcheck disable=SC1090
