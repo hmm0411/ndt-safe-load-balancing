@@ -28,6 +28,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
+from sklearn.ensemble import RandomForestRegressor
+
 from src.experiments.migration.schema import MigrationAction
 from src.twin.outcome import analytical, hybrid, residual, trainer
 from src.twin.outcome.features import (
@@ -213,6 +215,12 @@ def _load_runtime(root: Path) -> _Runtime:
         features = tuple(residual.hybrid_features(model_features))
     else:
         raise ValueError(f"model_card.deployed_model {deployed!r}: Hybrid or Direct only")
+    # Runtime predicts one row at a time: a forest saved with n_jobs=-1 would start a thread
+    # pool on every call (25/11, VM: ~40 ms per forest, 169 ms per candidate for direct_rf).
+    # Serial prediction gives the same values up to float rounding (~1e-16).
+    for model in models.values():
+        if isinstance(model, RandomForestRegressor):
+            model.n_jobs = 1
     return _Runtime(
         model_version=version,
         deployed_model=deployed,

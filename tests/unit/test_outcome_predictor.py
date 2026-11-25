@@ -203,6 +203,8 @@ class NotReadyReasonTest(unittest.TestCase):
             self.assertEqual((pred.status, pred.model_version), (p.READY, "post-migration-v2"))
             self.assertAlmostEqual(pred.predicted_dst_utilization or -1, 0.42)
             self.assertAlmostEqual(pred.predicted_src_utilization or -1, 0.42)
+            runtime = p._load_runtime(root)
+            self.assertTrue(all(m.n_jobs == 1 for m in runtime.models.values()))
             card["direct_family"] = "lightgbm"
             (root / "model_card.json").write_text(json.dumps(card), encoding="utf-8")
             pred = _ready_predictor(root).predict(_states()[4], _action())
