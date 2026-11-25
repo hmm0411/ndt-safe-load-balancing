@@ -166,8 +166,7 @@ def main() -> None:
     probe_error = setup_probe_args_error(args)
     if probe_error:
         raise SystemExit(probe_error)
-    if args.forecast and args.setup_probe_dir is not None:
-        raise SystemExit("--forecast runs without the setup probe (the 2C models never saw it)")
+    # --forecast with --setup-probe-dir (Day 6 probe-ON set): the probe runs for --hold-seconds
     runner = None
     if args.forecast:
         # the runners build their host tables at import time: environment first
@@ -200,6 +199,13 @@ def main() -> None:
         if args.init_roles or runner is not None:
             initialize_runtime(config, args.orchestrator_url)
         if runner is not None:
+            if args.setup_probe_dir is not None:
+                probes = launch_setup_probes(
+                    net, parse_switches(args.setup_probe_switches, SWITCH_COUNT),
+                    args.setup_probe_dir, args.setup_probe_run_id, args.setup_probe_port,
+                    args.setup_probe_rate, args.hold_seconds, args.setup_probe_timeout, REPO_ROOT,
+                )
+                print(f"*** SETUP PROBE started: {len(probes.probes)} probes", flush=True)
             print(f"*** Starting {args.forecast} forecast workload on 4C40S", flush=True)
             run_dir = runner(net, **forecast_4c.runner_kwargs(
                 args.forecast, capacity_runs=args.capacity_runs,

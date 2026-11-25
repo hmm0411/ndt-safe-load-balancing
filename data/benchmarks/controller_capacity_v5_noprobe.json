@@ -1,0 +1,85 @@
+{
+  "schema_version": "1.0",
+  "method": {
+    "experiment": "capacity-4c40s-noprobe-fine",
+    "rules": "configs/experiments/capacity_v5_rules.yaml",
+    "repeats_per_rate": 5,
+    "safe_reference_rate_fps": 90.0,
+    "safe_definition": "one-sided 95% lower confidence bound at the highest rate healthy for every controller",
+    "student_t": 2.132
+  },
+  "controllers": {
+    "c1": {
+      "c_throughput_pps": 2037.8487259103647,
+      "c_setup_pps": 2037.8487259103647,
+      "c_response_pps": null,
+      "c_critical_pps": 2037.8487259103647,
+      "c_safe_pps": 921.5499077641138,
+      "setup_knee_rate_fps": 200.0,
+      "throughput_knee_rate_fps": 200.0,
+      "highest_healthy_rate_fps": 100.0,
+      "baseline_setup_p95_ms": 48.236098,
+      "safe_reference": {
+        "target_rate_fps": 90.0,
+        "processed_mean_pps": 931.9410049730534,
+        "processed_std_pps": 10.898311313319624,
+        "sample_count": 5,
+        "setup_p95_ms": 77.0319332
+      }
+    },
+    "c2": {
+      "c_throughput_pps": 1834.0993713432292,
+      "c_setup_pps": 1632.795276939223,
+      "c_response_pps": null,
+      "c_critical_pps": 1632.795276939223,
+      "c_safe_pps": 921.5420037286942,
+      "setup_knee_rate_fps": 160.0,
+      "throughput_knee_rate_fps": 180.0,
+      "highest_healthy_rate_fps": 110.0,
+      "baseline_setup_p95_ms": 45.278928,
+      "safe_reference": {
+        "target_rate_fps": 90.0,
+        "processed_mean_pps": 930.6699184366148,
+        "processed_std_pps": 9.573469877922387,
+        "sample_count": 5,
+        "setup_p95_ms": 65.3095358
+      }
+    },
+    "c3": {
+      "c_throughput_pps": 1795.4148885680709,
+      "c_setup_pps": 1795.4148885680709,
+      "c_response_pps": null,
+      "c_critical_pps": 1795.4148885680709,
+      "c_safe_pps": 920.6309762073231,
+      "setup_knee_rate_fps": 180.0,
+      "throughput_knee_rate_fps": 180.0,
+      "highest_healthy_rate_fps": 90.0,
+      "baseline_setup_p95_ms": 58.5701332,
+      "safe_reference": {
+        "target_rate_fps": 90.0,
+        "processed_mean_pps": 930.9113988581379,
+        "processed_std_pps": 10.782234467472067,
+        "sample_count": 5,
+        "setup_p95_ms": 108.54740460000001
+      }
+    },
+    "c4": {
+      "c_throughput_pps": 1833.4957040513223,
+      "c_setup_pps": 1833.4957040513223,
+      "c_response_pps": null,
+      "c_critical_pps": 1833.4957040513223,
+      "c_safe_pps": 927.2766747232412,
+      "setup_knee_rate_fps": 180.0,
+      "throughput_knee_rate_fps": 180.0,
+      "highest_healthy_rate_fps": 120.0,
+      "baseline_setup_p95_ms": 54.3703174,
+      "safe_reference": {
+        "target_rate_fps": 90.0,
+        "processed_mean_pps": 938.4356780798814,
+        "processed_std_pps": 11.703700781705402,
+        "sample_count": 5,
+        "setup_p95_ms": 84.2549488
+      }
+    }
+  }
+}

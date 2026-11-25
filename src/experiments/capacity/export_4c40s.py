@@ -17,7 +17,8 @@ from typing import Any
 from src.experiments.capacity.aggregator import in_window, parse_dt, read_jsonl
 
 EXPERIMENTS = ("probe-off-4c40s", "probe-sweep-4c40s",
-               "capacity-4c40s-coarse", "capacity-4c40s-fine")
+               "capacity-4c40s-coarse", "capacity-4c40s-fine",
+               "capacity-4c40s-noprobe-fine")
 CONTROLLERS = ("c1", "c2", "c3", "c4")
 SUMMARY_FIELDS = (
     "emitted_new_flow_rate_mean", "processed_packet_in_rate_mean",

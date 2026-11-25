@@ -12,6 +12,7 @@ Workload and phase names must not contain '-', so an id splits cleanly.
 from __future__ import annotations
 
 import hashlib
+import random
 import re
 from dataclasses import dataclass
 from pathlib import Path
@@ -40,6 +41,9 @@ class OutcomeConfig:
     repeats: dict[str, int]
     split: dict[str, tuple[str, ...]]
     no_op_controls: int
+    # (source, candidate destinations): one destination drawn per cell with the repeat seed
+    # (4C transfer test, source c1, destination among c2-c4). None = the `directions` matrix.
+    destination_draw: tuple[str, tuple[str, ...]] | None = None
 
     def split_of(self, repeat: str) -> str:
         for name, repeats in self.split.items():
@@ -129,13 +133,26 @@ def validate_outcome_config(data: Mapping[str, Any]) -> OutcomeConfig:
         raise ValueError("destination_load_levels collide after rounding to a tag")
 
     directions: list[tuple[str, str]] = []
-    for pair in need("directions"):
-        src, dst = (str(x) for x in pair)
-        if src == dst or not _NAME.match(src) or not _NAME.match(dst):
-            raise ValueError(f"bad direction {pair}")
-        directions.append((src, dst))
-    if len(set(directions)) != len(directions):
-        raise ValueError("duplicate directions")
+    destination_draw: tuple[str, tuple[str, ...]] | None = None
+    draw_raw = data.get("destination_draw")
+    if draw_raw is not None:
+        if "directions" in data:
+            raise ValueError("destination_draw and directions are exclusive")
+        draw_source = str(dict(draw_raw)["source"])
+        candidates = tuple(str(x) for x in dict(draw_raw)["candidates"])
+        if not candidates or len(set(candidates)) != len(candidates) or draw_source in candidates:
+            raise ValueError("destination_draw needs unique candidates that exclude the source")
+        if not all(_NAME.match(x) for x in (draw_source, *candidates)):
+            raise ValueError("destination_draw: bad controller name")
+        destination_draw = (draw_source, candidates)
+    else:
+        for pair in need("directions"):
+            src, dst = (str(x) for x in pair)
+            if src == dst or not _NAME.match(src) or not _NAME.match(dst):
+                raise ValueError(f"bad direction {pair}")
+            directions.append((src, dst))
+        if len(set(directions)) != len(directions):
+            raise ValueError("duplicate directions")
 
     repeats = {str(k): int(v) for k, v in dict(need("repeats")).items()}
     if not repeats or not all(_REPEAT.match(k) for k in repeats):
@@ -151,6 +168,8 @@ def validate_outcome_config(data: Mapping[str, Any]) -> OutcomeConfig:
     no_op = int(need("no_op_controls"))
     if no_op < 0:
         raise ValueError("no_op_controls must be >= 0")
+    if destination_draw is not None and no_op:
+        raise ValueError("no_op_controls needs the directions matrix, not destination_draw")
 
     return OutcomeConfig(
         schema_version=SCHEMA_VERSION,
@@ -166,6 +185,7 @@ def validate_outcome_config(data: Mapping[str, Any]) -> OutcomeConfig:
         repeats=repeats,
         split=split,
         no_op_controls=no_op,
+        destination_draw=destination_draw,
     )
 
 
@@ -183,7 +203,7 @@ def expand_attempts(config: OutcomeConfig) -> list[AttemptPlan]:
         for workload, phases in config.workloads.items():
             for phase in phases:
                 for level in config.destination_load_levels:
-                    for src, dst in config.directions:
+                    for src, dst in _directions(config, repeat, workload, phase, level):
                         plans.append(_plan("MIGRATE", config, workload, phase, level, src, dst, repeat))
 
     if config.no_op_controls:
@@ -209,6 +229,21 @@ def expand_attempts(config: OutcomeConfig) -> list[AttemptPlan]:
     if len(set(ids)) != len(ids):
         raise ValueError("expanded attempt ids are not unique")
     return plans
+
+
+def draw_destination(seed: int, workload: str, phase: str, level: float,
+                     candidates: tuple[str, ...]) -> str:
+    """Reproducible destination of one cell and repeat: seeded, no global state."""
+    rng = random.Random(f"{seed}:{workload}:{phase}:{dst_tag(level)}")
+    return rng.choice(candidates)
+
+
+def _directions(config: OutcomeConfig, repeat: str, workload: str, phase: str,
+                level: float) -> list[tuple[str, str]]:
+    if config.destination_draw is None:
+        return list(config.directions)
+    source, candidates = config.destination_draw
+    return [(source, draw_destination(config.repeats[repeat], workload, phase, level, candidates))]
 
 
 def _plan(
