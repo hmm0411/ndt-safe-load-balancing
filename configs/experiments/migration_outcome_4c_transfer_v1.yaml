@@ -1,0 +1,33 @@
+# Week 15 Day 5, outcome part of the 2C -> 4C transfer test (configs/experiments/transfer_4c_v1.yaml):
+# 5 workloads x 2 levels x 5 seeds = 50 MIGRATE attempts on 4C40S, probe OFF (the 2C models never
+# saw the setup probe). Source c1; the destination is drawn among c2-c4 with the seed of the
+# repeat (src/experiments/migration/config.py draw_destination), reproducible.
+# Same protocol as the 2C collection (migration_outcome_v2.yaml): windows, timeout, 120 s per
+# attempt, one attempt per workload run. One phase per workload: the middle one (the phase the
+# 2C NO_OP controls use). Controllers other than the source are held at the destination level.
+schema_version: migration-outcome-v1
+topology: 4C40S
+controllers_config: configs/controllers_4c40s.yaml
+output_root: data/experiment_runs/migration-outcome-4c-transfer-v1
+
+pre_window_valid_snapshots: 5
+post_window_valid_snapshots: 5
+post_window_timeout_s: 60
+
+workloads:
+  stable: [middle]
+  gradual: [u60]
+  burst: [burst_1]
+  oscillating: [peak]
+  hot_switch: [high]
+
+destination_load_levels: [0.45, 0.75]
+destination_draw:
+  source: c1
+  candidates: [c2, c3, c4]
+
+# Seeds of transfer_4c_v1.yaml (outcome.seeds); never change mid-collection.
+repeats: {r01: 9701, r02: 9702, r03: 9703, r04: 9704, r05: 9705}
+split: {train: [r01, r02, r03], validation: [r04], test: [r05]}
+
+no_op_controls: 0

@@ -32,6 +32,7 @@ declare -A CONFIG=(
     [probe_sweep]=configs/experiments/probe_sweep_4c40s.yaml
     [coarse]=configs/experiments/capacity_coarse_4c40s.yaml
     [fine]=configs/experiments/capacity_fine_4c40s.yaml
+    [fine_noprobe]=configs/experiments/capacity_fine_noprobe_4c40s.yaml
 )
 PY="$(command -v python3)"
 export PYTHONPATH="$PWD"

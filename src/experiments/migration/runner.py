@@ -37,11 +37,35 @@ from .schema import (
     MigrationTransactionView,
     StateSnapshotView,
 )
+from . import setup_probe_on as probe_on
 from .selection import select_switch
 from .writer import raw_transaction, transaction_from_raw, write_attempt
 
 EXPECTED_SWITCHES = 20
 OPENFLOW_PORTS = (6653, 6654)
+
+
+@dataclass(frozen=True)
+class TopologySpec:
+    """What differs between the 2C20S and the 4C40S collection (the protocol itself does not)."""
+
+    name: str
+    switches: int
+    openflow_ports: tuple[int, ...]
+    controllers: tuple[str, ...]
+
+
+TOPOLOGIES: dict[str, "TopologySpec"] = {
+    "2C20S": TopologySpec("2C20S", EXPECTED_SWITCHES, OPENFLOW_PORTS, ("c1", "c2")),
+    "4C40S": TopologySpec("4C40S", 40, (6653, 6654, 6655, 6656), ("c1", "c2", "c3", "c4")),
+}
+
+
+def topology_spec(name: str) -> TopologySpec:
+    try:
+        return TOPOLOGIES[name]
+    except KeyError:
+        raise RunnerError(f"unknown topology {name!r}; one of {sorted(TOPOLOGIES)}") from None
 POLL_INTERVAL_S = 1.0
 
 ORCH_START_TIMEOUT_S = 40.0
@@ -98,6 +122,9 @@ class RunnerSettings:
     post_window_timeout_s: float = 60.0
     # Week 12 smoke: URL of POST /api/v1/twin/outcome/predict. None = no prediction (raw collection).
     predict_url: str | None = None
+    # capacity-runs experiments feeding U (4C only); () = runtime default (probe-ON rows)
+    capacity_experiments: tuple[str, ...] = ()
+    setup_probe: bool = False  # Day 6 probe-ON set: probe on all switches + push loop
 
 
 @dataclass
@@ -308,8 +335,16 @@ def read_last_phase(path: Path) -> str | None:
 # --------------------------------------------------------------------------
 # switch choice and preconditions
 # --------------------------------------------------------------------------
-def hot_switch_of(source: str) -> str:
-    """Switch carrying the hot share when `source` runs the hot-switch workload."""
+def hot_switch_of(source: str, controllers_config: str | None = None) -> str:
+    """Switch carrying the hot share when `source` runs the hot-switch workload.
+
+    The host table is built when the 2C20S runner module is imported, from
+    NDT_CONTROLLERS_CONFIG: for another topology the variable is set first (once per process).
+    """
+    if controllers_config is not None:
+        from src.experiments.workloads import forecast_4c
+
+        os.environ.update(forecast_4c.runner_env(Path(controllers_config)))
     from scripts.experiments.run_forecast_hot_switch_2c20s import HOT_HOST
 
     return f"s{HOT_HOST[source]}"
@@ -331,11 +366,15 @@ def is_target_hot(plan: AttemptPlan) -> bool:
     return (int(plan.repeat[1:]) + offset) % 2 == 0
 
 
-def pick_switch(plan: AttemptPlan, ownership: Sequence[Any]) -> tuple[str, str, bool]:
+def pick_switch(
+    plan: AttemptPlan,
+    ownership: Sequence[Any],
+    hot_of: Callable[[str], str] = hot_switch_of,
+) -> tuple[str, str, bool]:
     """(switch_id, selection_rule, target_hot), reproducible from the plan."""
     rng = random.Random(f"{plan.seed}:{plan.attempt_id}")
     hot = is_target_hot(plan)
-    hot_id = hot_switch_of(plan.source_controller) if hot else None
+    hot_id = hot_of(plan.source_controller) if hot else None
     switch_id = select_switch(ownership, plan.source_controller, rng, hot_switch_id=hot_id)
     return switch_id, ("hot_switch_alternating" if hot else "seeded_random"), hot
 
@@ -430,6 +469,9 @@ class Context:
     clock: Callable[[], float] = time.monotonic
     # (switch, source, target) -> record for prediction.json; None = do not ask the predictor
     predict: Callable[[str, str, str], dict[str, Any]] | None = None
+    # topology of the collection (defaults = 2C20S, the Week 11-13 behaviour)
+    expected_switches: int = EXPECTED_SWITCHES
+    hot_of: Callable[[str], str] = hot_switch_of
 
 
 @dataclass
@@ -462,7 +504,8 @@ def collect_attempt(
     skip: list[str] = []
 
     ready = wait_for(
-        lambda: next((s for s in ctx.samples if s.valid and is_ready_state(s.view, s.raw)), None),
+        lambda: next((s for s in ctx.samples if s.valid
+                      and is_ready_state(s.view, s.raw, ctx.expected_switches)), None),
         READY_TIMEOUT_S, alive=alive, **common,
     )
     if ready is None:
@@ -487,11 +530,12 @@ def collect_attempt(
         raise RunnerError("no valid snapshot at all before the action")
 
     last = before[-1]
-    switch_id, rule, hot = pick_switch(plan, last.raw["ownership"])
+    switch_id, rule, hot = pick_switch(plan, last.raw["ownership"], ctx.hot_of)
     if not skip:
         skip += check_preconditions(
             last.raw, plan, switch_id,
             workload_alive=alive(), capacity_exists=ctx.capacity_exists,
+            expected_switches=ctx.expected_switches,
         )
 
     is_migrate = plan.action_type == "MIGRATE"
@@ -615,12 +659,38 @@ def build_workload_command(
     run_id: str,
     duration: float,
 ) -> list[str]:
-    """runtime_2c20s.py with the source on the workload and the target held constant."""
+    """The topology runtime with the source on the workload and the others held constant.
+
+    2C20S: the source follows the workload, the target is held at the destination level.
+    4C40S: same rule, extended to every controller that is not the source (the target and
+    the others sit at the same constant level), through the unchanged 2C20S workload runners.
+    """
     env_pairs = [f"PYTHONPATH={settings.repo_root}", "PYTHONDONTWRITEBYTECODE=1"]
     if plan.workload == "hot_switch":
         env_pairs.append(f"NDT_HOT_SWITCH_LEVEL={plan.phase}")
         if plan.action_type == "MIGRATE":  # the migration moves load on purpose
             env_pairs.append("NDT_HOT_SWITCH_CHECK_LOAD=0")
+    spec = topology_spec(settings.topology)
+    if spec.name != "2C20S":
+        held = [c for c in spec.controllers if c != plan.source_controller]
+        profiles: list[str] = ["--profile", f"{plan.source_controller}={plan.workload.replace('_', '-')}"]
+        for controller in held:
+            profiles += ["--profile", f"{controller}=constant:{plan.destination_load_level}"]
+        return [
+            "sudo", "-E", "env", *env_pairs, settings.python,
+            "src/experiments/topologies/runtime_4c40s.py", "--forecast", plan.workload,
+            "--controllers-config", settings.controllers_config,
+            *profiles,
+            "--capacity-runs", str(settings.capacity_runs),
+            "--controller-capacity", str(settings.capacity_json),
+            *[a for e in settings.capacity_experiments for a in ("--capacity-experiment", e)],
+            "--output-dir", str(workload_out),
+            "--duration", str(duration),
+            "--run-id", run_id,
+            "--seed", str(plan.seed),
+            "--experiment-type", "migration-outcome-4c",
+            *probe_on.workload_args(settings.setup_probe, workload_out, run_id, duration),
+        ]
     return [
         "sudo", "-E", "env", *env_pairs, settings.python,
         "src/experiments/topologies/runtime_2c20s.py", WORKLOAD_FLAGS[plan.workload],
@@ -658,7 +728,7 @@ def preflight(
 ) -> None:
     """Fail early and loudly; never repair anything silently."""
     problems: list[str] = []
-    for port in OPENFLOW_PORTS:
+    for port in topology_spec(settings.topology).openflow_ports:
         if not port_open(port):
             problems.append(f"Ryu is not listening on port {port} (tb_up / ctl_restart)")
     orch_port = urlparse(settings.orchestrator_url).port or 9000
@@ -756,6 +826,8 @@ def run_attempt(
     started_at = now_iso()
     duration = float(duration or DEFAULT_DURATION_S[plan.workload])
     window = settings.required_window
+    if settings.setup_probe and settings.topology == "2C20S":
+        raise RunnerError("the setup probe set is 4C only")
 
     preflight(settings)
     commit, dirty = git_state(settings.repo_root)
@@ -773,7 +845,8 @@ def run_attempt(
     url = settings.orchestrator_url.rstrip("/")
     orchestrator = ProcessGroup(
         ["./scripts/start_orchestrator.sh"], cwd=settings.repo_root,
-        env={**os.environ, "NDT_CONTROLLERS_CONFIG": settings.controllers_config, "RUN_ID": name},
+        env={**os.environ, "NDT_CONTROLLERS_CONFIG": settings.controllers_config,
+             "RUN_ID": f"on-{name}" if settings.setup_probe else name},
         log_path=work_dir / "orchestrator.log",
     )
     workload = ProcessGroup(
@@ -781,6 +854,16 @@ def run_attempt(
         cwd=settings.repo_root, env=dict(os.environ),
         log_path=work_dir / "workload.log", use_sudo_to_signal=True,
     )
+    push = None
+    if settings.setup_probe:
+        (work_dir / "setup_probe.json").write_text(
+            json.dumps(probe_on.parameters(), indent=2), encoding="utf-8")
+        push = ProcessGroup(
+            probe_on.push_command(settings.python, probe_on.probe_dir(workload_out), url,
+                                  duration, settings.post_window_timeout_s),
+            cwd=settings.repo_root, env={**os.environ, "PYTHONPATH": str(settings.repo_root)},
+            log_path=work_dir / "setup_probe_push.log",
+        )
     poller = StatePoller(lambda: http_get_json(f"{url}/api/v1/twin/state"),
                          lambda: http_get_json(f"{url}/api/v1/twin/forecast"))
     try:
@@ -791,6 +874,8 @@ def run_attempt(
         log(f"[{name}] starting workload ({plan.workload}, {duration:.0f} s)")
         workload.start()
         poller.start()
+        if push is not None:
+            push.start()
 
         ctx = Context(
             samples=poller.samples, forecasts=poller.forecasts,
@@ -800,9 +885,19 @@ def run_attempt(
             capacity_exists=settings.capacity_json.is_file(),
             predict=(None if settings.predict_url is None else
                      lambda switch, src, dst: request_prediction(settings.predict_url or "", switch, src, dst)),
+            expected_switches=topology_spec(settings.topology).switches,
+            hot_of=(hot_switch_of if settings.topology == "2C20S" else
+                    lambda source: hot_switch_of(source, settings.controllers_config)),
         )
         collected = collect_attempt(plan, ctx, failure=failure, duration=duration,
                                     window=window, post_timeout=settings.post_window_timeout_s)
+        if push is not None:
+            if not push.alive():
+                raise RunnerError("the setup probe push loop stopped early (see setup_probe_push.log)")
+            expected = topology_spec(settings.topology).switches
+            found = probe_on.written_files(probe_on.probe_dir(workload_out))
+            if found != expected:
+                raise RunnerError(f"the setup probe wrote {found} sample files, expected {expected}")
         poller.stop()
         log(f"[{name}] waiting for the workload to finish")
         code = workload.wait(duration + WORKLOAD_EXIT_MARGIN_S)
@@ -835,11 +930,15 @@ def run_attempt(
             written.validation.get("valid"))
     except BaseException as exc:
         poller.stop()
+        if push is not None:
+            push.stop()
         dest = quarantine(settings, name, work_dir, exc)
         log(f"[{name}] FAILED, moved to {dest}")
         raise
     finally:
         poller.stop()
+        if push is not None:
+            push.stop()
         workload.stop()  # signals only if still alive; always closes the log
         orchestrator.stop()
 

@@ -1,0 +1,32 @@
+# Week 15 Day 6: State-Action-Outcome collection on 4C40S, setup probe OFF.
+# Same design as the 2C collection (migration_outcome_v2.yaml): 5 workloads x 3 phases x
+# destination levels x 2 directions x 5 repeats MIGRATE attempts + NO_OP controls at the middle
+# phase (2 per cell), same windows, timeout, 120 s per attempt and split. What differs is the
+# plan's: 5 destination levels (0.45/0.75/0.85/0.92/0.98) instead of 2, 4 controllers (the
+# controllers that are neither source nor destination are held at the destination level).
+# The probe-ON collection is migration_outcome_4c_v1.yaml (same seeds, paired).
+schema_version: migration-outcome-v1
+topology: 4C40S
+controllers_config: configs/controllers_4c40s.yaml
+output_root: data/experiment_runs/migration-outcome-4c-noprobe-v1
+
+pre_window_valid_snapshots: 5
+post_window_valid_snapshots: 5
+post_window_timeout_s: 60
+
+workloads:
+  stable: [early, middle, late]
+  gradual: [u40, u60, u95]
+  burst: [baseline_1, burst_1, recovery]
+  oscillating: [rising, peak, falling]
+  hot_switch: [moderate, high, peak]
+
+destination_load_levels: [0.45, 0.75, 0.85, 0.92, 0.98]
+directions: [[c1, c2], [c2, c1]]
+
+# New seeds (2C used 9201-9205, forecast 101-105 and 9701-9702, transfer outcome 9701-9705;
+# 9801-9810 are reserved for the closed-loop evaluation, docs/evaluation-protocol-v1.md).
+repeats: {r01: 9901, r02: 9902, r03: 9903, r04: 9904, r05: 9905}
+split: {train: [r01, r02, r03], validation: [r04], test: [r05]}
+
+no_op_controls: 100
