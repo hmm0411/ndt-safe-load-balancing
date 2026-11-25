@@ -125,8 +125,16 @@ def capacity_info(path: Path) -> dict[str, Any]:
             "capacity_version": f"{path.name}@sha256:{digest[:12]}", "c_safe_pps": capacities}
 
 
-def load_split_map(path: Path) -> dict[str, str]:
+def load_split_map(path: Path, arm: str | None = None) -> dict[str, str]:
+    """attempt_id -> split. The 4C manifest (evidence/week15/split_manifest_4c.json, Vy)
+    holds one split per collection arm under "arms"; then the arm must be named."""
     data = json.loads(path.read_text(encoding="utf-8"))
+    if "arms" in data:
+        if arm not in data["arms"]:
+            raise ValueError(f"{path}: name the arm, one of {sorted(data['arms'])}")
+        data = data["arms"][arm]
+    elif arm is not None:
+        raise ValueError(f"{path} has no arms, but arm {arm!r} was given")
     mapping: dict[str, str] = {}
     for name, entry in data["splits"].items():
         for attempt_id in entry["attempts"]:

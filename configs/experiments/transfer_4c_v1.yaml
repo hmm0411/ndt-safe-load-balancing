@@ -1,11 +1,12 @@
 # Week 15 Day 5: does a model trained on 2C20S still work on 4C40S, or must it be retrained?
 # Declared BEFORE any 4C run of this test. Owner: My (writes), Vy (reviews, runs on the VM).
 # Nothing is retrained in this test. U: revised 20/11, before any run was scored: probe off in
-# the campaign (Huong 2, CPU-pinning pilot failed), so the probe-off capacity (capacity-v6).
+# the campaign (Huong 2, CPU-pinning pilot failed), so the probe-off capacity. Vy derived it
+# as controller_capacity_v5_noprobe.json (20/11, c_safe 920.6-927.3 pps), not "v6".
 schema_version: "1.0"
 topology: 4C40S
 controllers_config: configs/controllers_4c40s.yaml
-capacity: data/benchmarks/controller_capacity_v6.json   # probe-off sweep; derived by Vy
+capacity: data/benchmarks/controller_capacity_v5_noprobe.json   # probe-off sweep (Vy)
 
 # New seeds: not 101-105 (forecast), 9201-9205 (outcome), 9501, 9601 (closed loop 2C).
 seeds: [9701, 9702]            # forecast runs; the outcome attempts list their own seeds
@@ -23,10 +24,15 @@ outcome:
   workloads: [stable, gradual, burst, oscillating, hot_switch]
   # Revised 18/11, before any 4C run: 2 -> 5 seeds. With 2 seeds only 16 attempts were on seen
   # workloads and coverage >= 0.95 allowed no miss at all (15/16 = 0.9375).
-  seeds: [9701, 9702, 9703, 9704, 9705]
-  # 5 workloads x 2 levels x 5 seeds = 50 MIGRATE attempts (40 on seen workloads: coverage
-  # >= 0.95 <=> at most 2 misses), source c1, destination drawn among c2-c4 with the seed
-  # (the 2C models never saw a choice of destination). Still below 0.95 -> retrain.
+  # Revised 24/11 (My), before any outcome row was scored: the attempts are the MIGRATE rows
+  # at 0.45 / 0.75 of Vy's probe-off collection migration-outcome-4c-noprobe-v1 (seeds
+  # 9901-9905, 340 attempts at these levels incl. NO_OP), not the separate 50 attempts
+  # (migration-outcome-4c-transfer-v1, seeds 9701-9705), which ran with the probe-ON capacity
+  # (U ~9 % above the campaign scale). Reasons: same U scale as the probe-off campaign and as
+  # the forecast part; ~6x more attempts; no leakage (only frozen 2C models are scored).
+  # Other controllers are held at the destination level in that collection (Vy's runner).
+  source: migration-outcome-4c-noprobe-v1
+  seeds: [9901, 9902, 9903, 9904, 9905]
 
 # Decision rule, fixed now. Reuse = keep the 2C model for the 4C campaign; otherwise retrain
 # in 23/11-01/12 on 4C data (outcome: the Day 6 collection).

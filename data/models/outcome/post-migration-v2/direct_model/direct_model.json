@@ -1,0 +1,65 @@
+{
+  "model": "direct_rf",
+  "family": "random_forest",
+  "features": [
+    "src_utilization",
+    "src_packet_in_rate",
+    "src_flow_mod_rate",
+    "src_cpu_percent",
+    "src_memory_rss_mb",
+    "src_response_p95_ms",
+    "dst_utilization",
+    "dst_packet_in_rate",
+    "dst_flow_mod_rate",
+    "dst_cpu_percent",
+    "dst_memory_rss_mb",
+    "dst_response_p95_ms",
+    "switch_control_load_share",
+    "switch_packet_in_rate",
+    "src_u_mean",
+    "src_u_std",
+    "src_u_slope",
+    "dst_u_mean",
+    "dst_u_std",
+    "dst_u_slope",
+    "switch_share_mean",
+    "switch_share_slope",
+    "imbalance_before",
+    "max_u_before"
+  ],
+  "parameters": {
+    "u_src_post": {
+      "n_jobs": -1,
+      "random_state": 42,
+      "n_estimators": 100,
+      "max_depth": null,
+      "min_samples_leaf": 2,
+      "max_features": 0.8
+    },
+    "u_dst_post": {
+      "n_jobs": -1,
+      "random_state": 42,
+      "n_estimators": 200,
+      "max_depth": null,
+      "min_samples_leaf": 5,
+      "max_features": 0.8
+    },
+    "r_src95_post": {
+      "n_jobs": -1,
+      "random_state": 42,
+      "n_estimators": 200,
+      "max_depth": null,
+      "min_samples_leaf": 2,
+      "max_features": 0.8
+    },
+    "r_dst95_post": {
+      "n_jobs": -1,
+      "random_state": 42,
+      "n_estimators": 200,
+      "max_depth": null,
+      "min_samples_leaf": 2,
+      "max_features": 0.8
+    }
+  },
+  "role": "deployed"
+}

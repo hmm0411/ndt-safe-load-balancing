@@ -18,7 +18,7 @@ if str(REPO_ROOT) not in sys.path:
 
 
 from src.twin.forecasting.splitter import planned_run_ids  # noqa: E402
-from src.twin.forecasting.versions import dataset_version  # noqa: E402
+from src.twin.forecasting.versions import PROFILE, dataset_version  # noqa: E402
 from src.twin.forecasting.dataset import assign_sequence_ids  # noqa: E402
 from src.twin.forecasting.features import (  # noqa: E402
     build_features,
@@ -43,6 +43,8 @@ WORKLOADS = (
 REPEATS = range(1, 6)
 
 MAX_GAP_SECONDS = 2.5
+# 2c20s keeps the name it was built with (the v3 manifest); 4c40s = the 24/11 collection.
+SOURCE_DATASET = {"2c20s": "forecast-raw-v1", "4c40s": "forecast-4c-raw-v1"}
 HISTORY_STEPS = 10
 
 FORECAST_CONFIG = Path(
@@ -404,8 +406,8 @@ def main() -> None:
     manifest = {
         "schema_version": "1.0",
         "dataset_version": DATASET_VERSION,
-        "source_dataset":
-            "forecast-raw-v1",
+        "source_dataset": SOURCE_DATASET[PROFILE.name],
+        "forecast_profile": PROFILE.name,
         "source_root": str(args.raw_root),
         "processed_dataset":
             str(dataset_path),

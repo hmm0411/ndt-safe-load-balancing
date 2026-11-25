@@ -1,0 +1,279 @@
+== start 2026-11-24T17:48:06Z git 12f2e42 w15/day5-6
+== ci 17:48:06
+   ci exit 0 (Ran 1122 tests in 71.517s OK )
+== versions 17:49:22
+   forecast-models-v4 forecast-dataset-v4-h3-provisional
+   exit 0
+== train 17:49:22
+     moving_average_w3      MAE=0.030795 RMSE=0.059654 R2=0.004532 P95=0.144760
+     linear_regression      MAE=0.037399 RMSE=0.063377 R2=-0.123610 P95=0.133027
+     random_forest          MAE=0.096016 RMSE=0.107327 R2=-2.222328 P95=0.160282
+     xgboost                MAE=0.103166 RMSE=0.116123 R2=-2.772162 P95=0.162013
+   
+   Artifacts: data/models/forecasting/forecast-models-v4
+   exit 0
+== margin 17:52:51
+   model=xgboost  m_f global=0.0958  controllers={'c1': 0.0997, 'c2': 0.0978, 'c3': 0.0966, 'c4': 0.0932}  n=2672  one_sided_q95=0.0746
+   split          cov  cov+gate   D_OOD     RMSE  RMSE+gate  persist
+   validation   0.952     0.952   0.000   0.0557     0.0557   0.1349
+   test         0.881     0.811   0.269   0.0797     0.1029   0.1392
+   unseen       0.386     0.841   0.988   0.1161     0.0758   0.0748
+   exit 0
+== export 17:52:53
+   OK data/models/forecasting/forecast-models-v4: xgboost, run None, registered ndt-forecast-xgboost vNone
+   exit 0
+== summary 2026-11-24T17:52:53Z
+--- model_selection.json
+{
+  "baseline": "persistence",
+  "latency_cap_ms": 1000.0,
+  "latency_repeats": 200,
+  "latency_warmup": 50,
+  "method": "selection_score_validation",
+  "models": [
+    {
+      "inference_p50_ms": 0.5227550000000001,
+      "inference_p95_ms": 0.6123125000000001,
+      "mae": 0.02624367461166195,
+      "model": "xgboost",
+      "p95_absolute_error": 0.0956300743206522,
+      "rmse": 0.055705930260152914,
+      "rmse_ratio_vs_persistence": 0.41308663844755744,
+      "selection_score": 0.3504110059849739
+    },
+    {
+      "inference_p50_ms": 25.916148,
+      "inference_p95_ms": 27.616892,
+      "mae": 0.025616534663602645,
+      "model": "random_forest",
+      "p95_absolute_error": 0.09941071569663394,
+      "rmse": 0.05632489487580908,
+      "rmse_ratio_vs_persistence": 0.41767656291709426,
+      "selection_score": 0.35841082550999515
+    },
+    {
+      "inference_p50_ms": 0.1243695,
+      "inference_p95_ms": 0.15381700000000004,
+      "mae": 0.06096952235661307,
+      "model": "linear_regression",
+      "p95_absolute_error": 0.1919061295045858,
+      "rmse": 0.09753700755313546,
+      "rmse_ratio_vs_persistence": 0.7232844759291189,
+      "selection_score": 0.6718292998481766
+    },
+    {
+      "inference_p50_ms": 0.0003,
+      "inference_p95_ms": 0.00032,
+      "mae": 0.07640951019673338,
+      "model": "persistence",
+      "p95_absolute_error": 0.25401629442777895,
+      "rmse": 0.13485289785577256,
+      "rmse_ratio_vs_persistence": 1.0,
+      "selection_score": 0.900000032
+    },
+    {
+      "inference_p50_ms": 0.00688,
+      "inference_p95_ms": 0.00712,
+      "mae": 0.0837293379032355,
+      "model": "moving_average_w3",
+      "p95_absolute_error": 0.26991458059751505,
+      "rmse": 0.1502610812263236,
+      "rmse_ratio_vs_persistence": 1.1142591936513693,
+      "selection_score": 0.9845632487317685
+    }
+  ],
+  "ranking": [
+    "xgboost",
+    "random_forest",
+    "linear_regression",
+    "persistence",
+    "moving_average_w3"
+  ],
+  "selected": "xgboost",
+  "split": "validation",
+  "test_used_for_selection": false,
+  "tie_tolerance": 0.01,
+  "tree_gap": 0.007999819525021268,
+  "tree_near_tie": true,
+  "unseen_used_for_selection": false,
+  "weights": {
+    "latency": 0.1,
+    "mae": 0.15,
+    "p95": 0.3,
+    "rmse": 0.45
+  }
+}
+--- skill_vs_persistence.json
+{
+  "test": {
+    "burst": {
+      "linear_regression": 0.8187887695991217,
+      "moving_average_w3": 1.0707174798142893,
+      "random_forest": 0.5634762418388349,
+      "xgboost": 0.5394449880849806
+    },
+    "gradual": {
+      "linear_regression": 0.9856739450026744,
+      "moving_average_w3": 0.9262289052884851,
+      "random_forest": 0.6523911801060923,
+      "xgboost": 0.6490736445038088
+    },
+    "oscillating": {
+      "linear_regression": 0.6636978020347933,
+      "moving_average_w3": 1.1988775683630963,
+      "random_forest": 0.5341839956117163,
+      "xgboost": 0.5960543594229955
+    },
+    "stable": {
+      "linear_regression": 0.7951473818149943,
+      "moving_average_w3": 0.8157468769188464,
+      "random_forest": 0.5767418427954184,
+      "xgboost": 0.5652515439516443
+    }
+  },
+  "unseen": {
+    "hot-switch": {
+      "linear_regression": 0.8475541679192896,
+      "moving_average_w3": 0.7977620832976086,
+      "random_forest": 1.4353064266549513,
+      "xgboost": 1.552940895520836
+    }
+  }
+}
+--- error_margin.json
+{
+  "alpha": 0.05,
+  "controllers": {
+    "c1": 0.09972377594702164,
+    "c2": 0.09775958145280417,
+    "c3": 0.09660485046359146,
+    "c4": 0.09321239571160922
+  },
+  "global": 0.0958439860338387,
+  "method": "validation_abs_error_finite_sample_q95",
+  "model_name": "xgboost",
+  "model_version": "forecast-models-v4",
+  "n_validation": 2672,
+  "n_validation_per_controller": {
+    "c1": 668,
+    "c2": 668,
+    "c3": 668,
+    "c4": 668
+  },
+  "one_sided_q95": 0.07463173079265495
+}
+--- files (sha256)
+be138f96f98677962d002cd5c82eda4a58aa1aee86c688bfadbd951f3ebed14c  coverage.json
+0af71ab21a808856651ccf7f6083fef19195f492ec36e2e59ac05342c320da5e  error_margin.json
+5cc6d496cec67399bb03e7b2af5154c79a7876594651f10cb907038f2b0868c0  feature_importance.json
+f8c0cacfba65344ce615bcff5b1b50a270d6886d67a38ea4784001bb72fbbde3  feature_ranges.json
+4e79448aeaa7e7337e2b9f6962f7e00886d0da3883f179a35e2f68dbaa29c8f6  feature_schema.json
+122dd2a29a1c964e31cec34828e6ed9b1cc8637d8b21acacc4ffc46b21df2463  feature_shift_report.json
+00cd7f48b301d5df2071380b170ba7abc3fd6d756fc4d4f88d5087a379bb1e27  hyperparameter_search.json
+a4049d609590c1a1731bea09ae864986f404b172c915a370f81ec155f46724eb  linear_regression.joblib
+789965df61dd753b062eeb9cca171b9297da331aeb0767527fec0c657a439720  metrics.json
+9104ec572b0a444b54c40874f29551f9828334644cc52ca8642290137a11e0e6  model_card.json
+aeba1938fcb6fff9faf0fd7cecbc23f16bb1d0721088b3c0eb703d337e54b92a  model_selection.json
+bc456b45f958d7e16763c46373e40ef6c5139be32d18ef1ea36720fc64aaae64  ood_degradation.json
+8de5dc78745a78810215f8abee6143c341046986bb6c8ef0e5cdccd471929b18  per_workload_metrics.json
+c5ce5d6bb19aa30396b5d9f1582e67b04efd34321d82a28c26d7c621ee935f4c  random_forest.joblib
+79e758670ace75f12899360ce9f4ddf6c54c8db68f9a145a4e1b363714fa7992  scaler.joblib
+9d5ea99639d6abfccccb0ffb0171d9655dfe36d3e695dc9fec53336bc15140e7  skill_vs_persistence.json
+a3bd2fa338528a504f5b97e6e480261e84668629e296a1d8cb90afc4cecfcce6  split_manifest.json
+f1a8f46e3e7a2284e29590677fb8fe8d9e984f7984443a6f9e64de8c8a7bff2b  test_metrics.json
+6b872f53b09bdc01ad96f8f68a747c0b470d07574be85c8787e36eb4b225ca97  training_manifest.json
+aee069cc124a0f793e275073de2442e363803e514f9a3a71664153bde39a4fab  unseen_metrics.json
+0ab3c1f899fdfb7297e9dac7044117ff97d417d2e1a9d7f2b9bfffbd80acfdfa  validation_metrics.json
+d5aca9f989556d7929fc1a4ec20eda35d188e433cbc8baaa95e38a8461aab660  xgboost.json
+--- dataset (sha256)
+f52aeff0a1421e31b78cb1f690c614e0c2c4c4fede39d3c08ee1351a12acb90b  dataset_quality_report.json
+c9856a724af17c35eec3c13e8ca67a4a91f3c80249dde586bc4140e831f9b9a2  forecast_dataset_manifest.json
+a3bd2fa338528a504f5b97e6e480261e84668629e296a1d8cb90afc4cecfcce6  split_manifest.json
+--- capacity v5_noprobe (to commit it: same sha in every copy, else ask Vy)
+f73111b4927d2f98dc850b16b4aa48fb74e3eb22995a5a7eb13adcb138ebfcab  /home/tntvy112_gmail_com/w15-day34/data/benchmarks/controller_capacity_v5_noprobe.json
+{
+  "schema_version": "1.0",
+  "method": {
+    "experiment": "capacity-4c40s-noprobe-fine",
+    "rules": "configs/experiments/capacity_v5_rules.yaml",
+    "repeats_per_rate": 5,
+    "safe_reference_rate_fps": 90.0,
+    "safe_definition": "one-sided 95% lower confidence bound at the highest rate healthy for every controller",
+    "student_t": 2.132
+  },
+  "controllers": {
+    "c1": {
+      "c_throughput_pps": 2037.8487259103647,
+      "c_setup_pps": 2037.8487259103647,
+      "c_response_pps": null,
+      "c_critical_pps": 2037.8487259103647,
+      "c_safe_pps": 921.5499077641138,
+      "setup_knee_rate_fps": 200.0,
+      "throughput_knee_rate_fps": 200.0,
+      "highest_healthy_rate_fps": 100.0,
+      "baseline_setup_p95_ms": 48.236098,
+      "safe_reference": {
+        "target_rate_fps": 90.0,
+        "processed_mean_pps": 931.9410049730534,
+        "processed_std_pps": 10.898311313319624,
+        "sample_count": 5,
+        "setup_p95_ms": 77.0319332
+      }
+    },
+    "c2": {
+      "c_throughput_pps": 1834.0993713432292,
+      "c_setup_pps": 1632.795276939223,
+      "c_response_pps": null,
+      "c_critical_pps": 1632.795276939223,
+      "c_safe_pps": 921.5420037286942,
+      "setup_knee_rate_fps": 160.0,
+      "throughput_knee_rate_fps": 180.0,
+      "highest_healthy_rate_fps": 110.0,
+      "baseline_setup_p95_ms": 45.278928,
+      "safe_reference": {
+        "target_rate_fps": 90.0,
+        "processed_mean_pps": 930.6699184366148,
+        "processed_std_pps": 9.573469877922387,
+        "sample_count": 5,
+        "setup_p95_ms": 65.3095358
+      }
+    },
+    "c3": {
+      "c_throughput_pps": 1795.4148885680709,
+      "c_setup_pps": 1795.4148885680709,
+      "c_response_pps": null,
+      "c_critical_pps": 1795.4148885680709,
+      "c_safe_pps": 920.6309762073231,
+      "setup_knee_rate_fps": 180.0,
+      "throughput_knee_rate_fps": 180.0,
+      "highest_healthy_rate_fps": 90.0,
+      "baseline_setup_p95_ms": 58.5701332,
+      "safe_reference": {
+        "target_rate_fps": 90.0,
+        "processed_mean_pps": 930.9113988581379,
+        "processed_std_pps": 10.782234467472067,
+        "sample_count": 5,
+        "setup_p95_ms": 108.54740460000001
+      }
+    },
+    "c4": {
+      "c_throughput_pps": 1833.4957040513223,
+      "c_setup_pps": 1833.4957040513223,
+      "c_response_pps": null,
+      "c_critical_pps": 1833.4957040513223,
+      "c_safe_pps": 927.2766747232412,
+      "setup_knee_rate_fps": 180.0,
+      "throughput_knee_rate_fps": 180.0,
+      "highest_healthy_rate_fps": 120.0,
+      "baseline_setup_p95_ms": 54.3703174,
+      "safe_reference": {
+        "target_rate_fps": 90.0,
+        "processed_mean_pps": 938.4356780798814,
+        "processed_std_pps": 11.703700781705402,
+        "sample_count": 5,
+        "setup_p95_ms": 84.2549488
+      }
+    }
+  }
+}
+== done 2026-11-24T17:52:54Z: all steps exit 0

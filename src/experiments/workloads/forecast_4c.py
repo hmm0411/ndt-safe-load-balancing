@@ -92,7 +92,8 @@ class ForecastRun:
 
 
 def transfer_plan(config: Mapping[str, Any]) -> list[ForecastRun]:
-    """One run per workload and seed, in the order of the config (seed-major)."""
+    """One run per workload and seed, in the order of the config (seed-major).
+    The run ids start with config["run_id_prefix"] (default transfer4c-)."""
     workloads = [str(w) for w in config["forecast"]["workloads"]]
     unknown = [w for w in workloads if w not in RUNNERS]
     if unknown:
@@ -100,7 +101,8 @@ def transfer_plan(config: Mapping[str, Any]) -> list[ForecastRun]:
     seeds = [int(s) for s in config["seeds"]]
     if len(set(seeds)) != len(seeds):
         raise ValueError("forecast seeds repeat")
-    return [ForecastRun(w, seed, k, f"transfer4c-{w.replace('_', '-')}-r{k:02d}-s{seed}")
+    prefix = str(config.get("run_id_prefix", "transfer4c-"))
+    return [ForecastRun(w, seed, k, f"{prefix}{w.replace('_', '-')}-r{k:02d}-s{seed}")
             for k, seed in enumerate(seeds, start=1) for w in workloads]
 
 

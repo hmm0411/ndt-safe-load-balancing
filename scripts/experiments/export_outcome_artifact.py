@@ -46,6 +46,15 @@ from src.twin.outcome.frozen import (  # noqa: E402
 from src.twin.outcome.targets import BASE_TARGETS, target_schema  # noqa: E402
 
 
+# First limitation of the model card, per artifact version.
+TOPOLOGY_NOTE = {
+    "post-migration-v1": "trained on the 2-controller topology (2C20S) only",
+    "post-migration-v2": "trained on 4C40S (probe-off capacity) with c1<->c2 migrations only; "
+                         "i_post is predicted from source and destination only (the other "
+                         "controllers' post-action U is not modelled)",
+}
+
+
 def _git() -> dict[str, Any]:
     def run(*cmd: str) -> str:
         result = subprocess.run(["git", *cmd], cwd=ROOT, capture_output=True, text=True,
@@ -68,7 +77,7 @@ def check(artifact_dir: Path, capacity_file: Path) -> int:
             return 1
         print(f"artifact {artifact_dir}: READY for the runtime predictor "
               f"(capacity {running}, m_U {runtime.m_u:.4f}, m_R {runtime.m_r:.4f} ms, "
-              f"{len(runtime.hybrid_features)} hybrid features)")
+              f"deployed {runtime.deployed_model}, {len(runtime.features)} features)")
         return 0
     print(f"artifact {artifact_dir}: {problem}" + (f"; missing {missing}" if missing else ""))
     if missing == [art.LATENCY_FILE]:
@@ -109,9 +118,10 @@ def main() -> int:
 
 
 def export(args: argparse.Namespace, config: art.ArtifactConfig, artifact_dir: Path) -> int:
-    if config.model_version != predictor.MODEL_VERSION:
-        raise ValueError(f"artifact.yaml model_version {config.model_version} != predictor "
-                         f"{predictor.MODEL_VERSION}")
+    if config.model_version not in predictor.SUPPORTED_MODEL_VERSIONS:
+        raise ValueError(f"artifact.yaml model_version {config.model_version} is not in "
+                         f"predictor.SUPPORTED_MODEL_VERSIONS "
+                         f"{predictor.SUPPORTED_MODEL_VERSIONS}")
     if artifact_dir.exists():
         raise FileExistsError(f"{artifact_dir} exists: an artifact is frozen once written; "
                               "bump model_version instead of overwriting it")
@@ -178,13 +188,16 @@ def export(args: argparse.Namespace, config: art.ArtifactConfig, artifact_dir: P
     art.write_json(args.final_dir / "coverage_metrics.json", coverage_out)
 
     # 3. artifact ---------------------------------------------------------------------
-    if not deployed.startswith("hybrid_"):
-        print(f"\ndeployed model is {deployed}, but the runtime predictor (predictor.py) "
-              "only serves a Hybrid artifact: margins and coverage are written, the artifact "
-              "is NOT; agree with Vy on the predictor before exporting")
+    # The runtime serves a Hybrid or a Direct artifact (25/11: on 4C40S the rule chose
+    # direct_rf); an Analytical-only artifact has no models to serve.
+    if not deployed.startswith(("hybrid_", "direct_")):
+        print(f"\ndeployed model is {deployed}: the runtime predictor serves a Hybrid or a "
+              "Direct artifact only; margins and coverage are written, the artifact is NOT")
         _report(names, margin_table, coverage_out, deployed)
         return 1
-    family = family_of(deployed)
+    # residual_models always hold the Best Hybrid and direct_model the Best Direct; the
+    # model card says which one is deployed.
+    family = family_of(frozen.best_hybrid)
     short = trainer.SHORT_NAMES[family]
     direct_family = family_of(frozen.best_direct)
     dshort = trainer.SHORT_NAMES[direct_family]
@@ -202,6 +215,9 @@ def export(args: argparse.Namespace, config: art.ArtifactConfig, artifact_dir: P
         shutil.copy2(args.direct_dir / "models" / f"direct_{dshort}_{t}{dsuffix}",
                      tmp / "direct_model" / f"direct_{dshort}_{t}{dsuffix}")
 
+    n_saturated = sum(1 for r in rows if r["saturated_before"] or r["saturated_after"])
+    n_overload = sum(1 for r in rows if r["overload_after"])
+    n_overload_test = sum(1 for r in split["test"] if r["overload_after"])
     dmanifest = json.loads((args.dataset / "dataset_manifest.json").read_text(encoding="utf-8"))
     schema = json.loads((args.dataset / "feature_schema.json").read_text(encoding="utf-8"))
     split_manifest = json.loads((args.dataset / "split_manifest.json").read_text(
@@ -224,9 +240,10 @@ def export(args: argparse.Namespace, config: art.ArtifactConfig, artifact_dir: P
     art.write_json(tmp / "direct_model" / "direct_model.json", {
         "model": frozen.best_direct, "family": direct_family,
         "features": models.model_features, "parameters": params[frozen.best_direct],
-        "role": "comparison only; the runtime serves the Hybrid model"})
+        "role": "deployed" if deployed == frozen.best_direct else "comparison only"})
     art.write_json(tmp / "hybrid_model" / "hybrid_model.json", {
-        "model": deployed, "family": family,
+        "model": frozen.best_hybrid, "family": family,
+        "role": "deployed" if deployed == frozen.best_hybrid else "comparison only",
         "prediction": "max(0, analytical + residual) per base target; r95_post = max of the "
                       "two responses; i_post = |u_src_post - u_dst_post| / 2",
         "residual_models": "../residual_models", "features": models.hybrid_features,
@@ -237,6 +254,8 @@ def export(args: argparse.Namespace, config: art.ArtifactConfig, artifact_dir: P
     art.write_json(tmp / "target_schema.json", target_schema())
     art.write_json(tmp / "hyperparameters.json", {
         "deployed": {"model": deployed, "parameters": params[deployed]},
+        "best_hybrid": {"model": frozen.best_hybrid,
+                        "parameters": params[frozen.best_hybrid]},
         "best_direct": {"model": frozen.best_direct, "parameters": params[frozen.best_direct]},
         "grids": yaml.safe_load(args.models_config.read_text(encoding="utf-8")),
         "selection": frozen.frozen["rule"]})
@@ -256,7 +275,7 @@ def export(args: argparse.Namespace, config: art.ArtifactConfig, artifact_dir: P
         "model_name": predictor.MODEL_NAME, "model_version": config.model_version,
         "purpose": "predict the controller state after one switch migration (what-if)",
         "supported_action": "single switch ownership migration between two controllers",
-        "hybrid_family": family, "deployed_model": deployed,
+        "hybrid_family": family, "direct_family": direct_family, "deployed_model": deployed,
         "outputs": ["u_src_post", "u_dst_post", "r_src95_post", "r_dst95_post", "r95_post",
                     "i_post", "m_U", "m_R"],
         "selection": {"rule": "Best Direct / Best Hybrid by lowest validation S; deployed = "
@@ -266,7 +285,7 @@ def export(args: argparse.Namespace, config: art.ArtifactConfig, artifact_dir: P
         "test_rmse": lock_summary.get("test_rmse"),
         "margins": {"m_U": uncertainty["m_U"], "m_R": uncertainty["m_R"], "level": level},
         "limitations": [
-            "trained on the 2-controller topology (2C20S) only",
+            TOPOLOGY_NOTE.get(config.model_version, "topology: see the source dataset"),
             "requires a valid TwinState and 5 consecutive valid snapshots",
             "does not authorize migration: no safe field, the Safety Gate decides (Week 13)",
             "trained on COMMITTED migrations only; rollback and NO_OP are not regression "
@@ -274,9 +293,9 @@ def export(args: argparse.Namespace, config: art.ArtifactConfig, artifact_dir: P
             "response_p95_ms is controller processing time and does not rise with overload "
             "on this testbed",
             "U is a lower bound of the offered load when a controller saturates "
-            "(14 saturated attempts kept in the data)",
-            "few overload examples (10 in total, 1 in test): coverage near U = 1 is weakly "
-            "supported",
+            f"({n_saturated} saturated attempts kept in the data)",
+            f"overload examples (overload_after): {n_overload} in total, {n_overload_test} in "
+            "test; coverage near U = 1 rests on these",
             f"valid only for capacity {dmanifest['capacity_version']}",
         ]})
     art.write_manifest_files(tmp, {
@@ -291,14 +310,20 @@ def export(args: argparse.Namespace, config: art.ArtifactConfig, artifact_dir: P
         "validation_runs": split_manifest["splits"]["validation"],
         "test_runs": split_manifest["splits"]["test"],
         "deployed_model": deployed, "hybrid_family": family, "best_direct": frozen.best_direct,
+        "best_hybrid": frozen.best_hybrid, "direct_family": direct_family,
         "model_selection_sha256": frozen.selection["frozen_sha256"],
         "test_evaluated_at": frozen.lock.get("completed_at"),
         "git": _git(), "created_at": datetime.now(timezone.utc).isoformat(),
         "pending": [art.LATENCY_FILE]})
 
-    # reload check: the copied residual models give the Day 4 predictions
-    loaded = hybrid.load(tmp / "residual_models", family)
-    again = hybrid.predict(loaded, split["validation"], models.hybrid_features)
+    # reload check: the copied models give the Day 4 predictions of the deployed model
+    if deployed.startswith("direct_"):
+        loaded = trainer.load_models(tmp / "direct_model", direct_family, BASE_TARGETS,
+                                     prefix="direct")
+        again = trainer.predict_targets(loaded, split["validation"], models.model_features)
+    else:
+        loaded = hybrid.load(tmp / "residual_models", family)
+        again = hybrid.predict(loaded, split["validation"], models.hybrid_features)
     diff = max(abs(a - b) for t in BASE_TARGETS
                for a, b in zip(again[t], pred["validation"][deployed][t]))
     if diff > 1e-9:

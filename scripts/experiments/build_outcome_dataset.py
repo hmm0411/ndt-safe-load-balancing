@@ -48,6 +48,8 @@ def main() -> int:
     parser.add_argument("--raw-root", type=Path, required=True)
     parser.add_argument("--split", type=Path, required=True,
                         help="split_manifest.json of the raw collection")
+    parser.add_argument("--split-arm",
+                        help="arm of a multi-arm manifest (4C: probe_off or probe_on)")
     parser.add_argument("--capacity", type=Path,
                         default=Path("data/benchmarks/controller_capacity.json"))
     parser.add_argument("--saturation", type=Path,
@@ -60,7 +62,7 @@ def main() -> int:
     try:
         config = load_dataset_config(args.config)
         capacity = capacity_info(args.capacity)
-        split_map = load_split_map(args.split)
+        split_map = load_split_map(args.split, args.split_arm)
         flags = saturation_flags(args.raw_root.expanduser())
         if args.saturation is not None:
             committed = load_saturation_csv(args.saturation)
@@ -75,6 +77,7 @@ def main() -> int:
             provenance={
                 "raw_root": str(args.raw_root),
                 "split_source": str(args.split),
+                "split_arm": args.split_arm,
                 "capacity_version": capacity["capacity_version"],
                 "capacity_sha256": capacity["sha256"],
                 "c_safe_pps": capacity["c_safe_pps"],

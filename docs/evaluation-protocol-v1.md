@@ -77,10 +77,14 @@ Random / Greedy chỉ là baseline phụ, không vào bảng chính.
 
 ## 5. Quy trình
 
-- Mỗi episode khởi động lại controller, mapping, flow table, twin, buffer; bỏ warm-up theo quy tắc khai
-  báo trước (đến khi snapshot hợp lệ đầu tiên + cửa sổ twinning đầy).
+- Mỗi episode khởi động lại controller, mapping, flow table, twin, buffer. **Warm-up (chốt 24/11,
+  My): bỏ 30 s đầu cố định** của mỗi episode, tính từ lúc workload bắt đầu; mọi chỉ số chỉ tính
+  sau mốc này. 30 s đủ cho lịch sử dự báo 10 s và cửa sổ outcome 5 bước, và khai báo được trước.
+- **Ngưỡng của baseline Threshold (chốt 24/11, My): U đo được ≥ 0.8.** Mức này chừa khoảng trống
+  tương tự biên của Full; ngưỡng 1.0 chỉ phản ứng khi đã quá tải nên dễ bị coi là baseline yếu.
 - 10 seed đánh giá (chốt 20/11): **9801–9810**, khác mọi seed đã dùng để sinh dữ liệu train / validation / calibration / tune
-  (forecast 101–105, outcome 9201–9205, closed loop 2C 9501 và 9601, thử chuyển giao 4C 9701–9705).
+  (forecast 101–105, outcome 9201–9205, closed loop 2C 9501 và 9601, thử chuyển giao 4C 9701–9705,
+  outcome 4C 9901–9905, forecast 4C 9921–9925).
 - Xáo trộn thứ tự chạy giữa các phương pháp; ghi tải host.
 - Pilot đo thời gian một episode trước khi chốt độ dài và số seed.
 

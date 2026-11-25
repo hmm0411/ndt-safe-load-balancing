@@ -28,6 +28,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
+from sklearn.ensemble import RandomForestRegressor
+
 from src.experiments.migration.schema import MigrationAction
 from src.twin.outcome import analytical, hybrid, residual, trainer
 from src.twin.outcome.features import (
@@ -44,6 +46,11 @@ NOT_READY = "NOT_READY"
 
 MODEL_NAME = "post-migration-outcome"
 MODEL_VERSION = "post-migration-v1"
+# Artifacts this runtime accepts (same feature and target schemas, one per testbed):
+# post-migration-v1 = 2C20S (capacity-v4), post-migration-v2 = 4C40S retrain (25/11,
+# migration-outcome-4c-noprobe-v1, capacity v5_noprobe). Which one runs is set by the
+# artifact_dir of the orchestrator's outcome runtime config (NDT_OUTCOME_CONFIG).
+SUPPORTED_MODEL_VERSIONS: tuple[str, ...] = ("post-migration-v1", "post-migration-v2")
 FEATURE_SCHEMA = "outcome-features-v1"
 TARGET_SCHEMA = "outcome-targets-v1"
 
@@ -135,7 +142,7 @@ def artifact_problem(
         return ARTIFACT_SCHEMA_MISMATCH
     if (
         not isinstance(manifest, dict)
-        or manifest.get("model_version") != MODEL_VERSION
+        or manifest.get("model_version") not in SUPPORTED_MODEL_VERSIONS
         or manifest.get("feature_schema") != FEATURE_SCHEMA
         or manifest.get("target_schema") != TARGET_SCHEMA
     ):
@@ -148,10 +155,17 @@ def artifact_problem(
 
 @dataclass(frozen=True)
 class _Runtime:
+    model_version: str
+    deployed_model: str          # hybrid_<rf|xgb> or direct_<rf|xgb> (model_card)
     models: dict[str, Any]
-    hybrid_features: tuple[str, ...]
+    features: tuple[str, ...]    # Hybrid features, or the model features for Direct
     m_u: float
     m_r: float
+
+    def predict(self, rows: Sequence[Mapping[str, Any]]) -> dict[str, list[float]]:
+        if self.deployed_model.startswith("direct_"):
+            return trainer.predict_targets(self.models, rows, list(self.features))
+        return hybrid.predict(self.models, rows, list(self.features))
 
 
 def _read_json(path: Path) -> dict[str, Any]:
@@ -177,13 +191,41 @@ def _load_runtime(root: Path) -> _Runtime:
     bad = [n for n in model_features if n not in CANDIDATE_FEATURES or is_forbidden(n)]
     if bad:
         raise ValueError(f"model features that build_features does not produce: {bad}")
-    family = _read_json(root / "model_card.json").get("hybrid_family")
+    card = _read_json(root / "model_card.json")
+    family = card.get("hybrid_family")
     if family not in trainer.FAMILIES:
         raise ValueError(f"model_card.hybrid_family must be one of {list(trainer.FAMILIES)}")
+    # v1 artifacts deploy the Hybrid; post-migration-v2 (4C) deploys direct_rf, the lowest
+    # validation S under the rule fixed before the test (25/11).
+    deployed = str(card.get("deployed_model") or f"hybrid_{trainer.SHORT_NAMES[family]}")
     margin = _read_json(root / "uncertainty_margin.json")
+    version = str(_read_json(root / "training_manifest.json")["model_version"])
+    if version not in SUPPORTED_MODEL_VERSIONS:
+        raise ValueError(f"training_manifest.model_version {version!r} is not supported")
+    if deployed.startswith("direct_"):
+        direct_family = card.get("direct_family")
+        if direct_family not in trainer.FAMILIES:
+            raise ValueError("model_card.direct_family must be one of "
+                             f"{list(trainer.FAMILIES)} for a Direct artifact")
+        models = trainer.load_models(root / "direct_model", str(direct_family), BASE_TARGETS,
+                                     prefix="direct")
+        features = tuple(model_features)
+    elif deployed.startswith("hybrid_"):
+        models = hybrid.load(root / "residual_models", str(family))
+        features = tuple(residual.hybrid_features(model_features))
+    else:
+        raise ValueError(f"model_card.deployed_model {deployed!r}: Hybrid or Direct only")
+    # Runtime predicts one row at a time: a forest saved with n_jobs=-1 would start a thread
+    # pool on every call (25/11, VM: ~40 ms per forest, 169 ms per candidate for direct_rf).
+    # Serial prediction gives the same values up to float rounding (~1e-16).
+    for model in models.values():
+        if isinstance(model, RandomForestRegressor):
+            model.n_jobs = 1
     return _Runtime(
-        models=hybrid.load(root / "residual_models", str(family)),
-        hybrid_features=tuple(residual.hybrid_features(model_features)),
+        model_version=version,
+        deployed_model=deployed,
+        models=models,
+        features=features,
         m_u=_margin(margin, "m_U"),
         m_r=_margin(margin, "m_R"),
     )
@@ -322,7 +364,7 @@ class PostMigrationOutcomePredictor:
                 results[i] = self._not_ready(twin_state, action, MISSING_FEATURE)
         if ready and runtime is not None:
             try:
-                out = hybrid.predict(runtime.models, rows, list(runtime.hybrid_features))
+                out = runtime.predict(rows)
             except (ValueError, KeyError) as exc:
                 self.last_error = str(exc)
                 out = None
@@ -360,7 +402,7 @@ class PostMigrationOutcomePredictor:
         start = time.perf_counter_ns()
         try:
             row = self._row(self.history.window(), action, switch_id)
-            out = hybrid.predict(runtime.models, [row], list(runtime.hybrid_features))
+            out = runtime.predict([row])
             values = {name: float(series[0]) for name, series in out.items()}
         except (ValueError, KeyError) as exc:
             self.last_error = str(exc)
@@ -387,7 +429,7 @@ class PostMigrationOutcomePredictor:
             source_controller=action.source_controller,
             target_controller=action.target_controller,
             model_name=MODEL_NAME,
-            model_version=MODEL_VERSION,
+            model_version=runtime.model_version,
             predicted_src_utilization=values["u_src_post"],
             predicted_dst_utilization=values["u_dst_post"],
             predicted_src_response_p95_ms=values["r_src95_post"],

@@ -84,5 +84,18 @@ class TransferTest(unittest.TestCase):
         self.assertAlmostEqual(report["outcome"]["margin"]["m_U"], 0.036629233239997006)
 
 
+class ForecastOnlyTest(unittest.TestCase):
+    def test_forecast_part_alone(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            f_path = Path(tmp) / "f.jsonl"
+            f_path.write_text("\n".join(json.dumps(r) for r in forecast_rows(0.02)))
+            out = Path(tmp) / "t.json"
+            self.assertEqual(cli.main(["--forecast-rows", str(f_path), "--out", str(out)]), 0)
+            report = json.loads(out.read_text(encoding="utf-8"))
+        self.assertTrue(report["decision"]["forecast_reuse"])
+        self.assertIsNone(report["decision"]["outcome_reuse"])
+        self.assertIsNone(report["outcome"])
+
+
 if __name__ == "__main__":
     unittest.main()

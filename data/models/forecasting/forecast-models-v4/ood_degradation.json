@@ -1,0 +1,71 @@
+{
+  "gate": {
+    "consecutive_steps": 3,
+    "method": "train_min_max",
+    "monitor_only_features": [
+      "managed_switch_count",
+      "max_switch_control_load_share"
+    ],
+    "tolerance_fraction": 0.1
+  },
+  "model_name": "xgboost",
+  "model_version": "forecast-models-v4",
+  "ood_to_id_rmse_ratio": 1.4568886928668188,
+  "splits": {
+    "test": {
+      "d_ood": 0.2694610778443114,
+      "d_ood_by_workload": {
+        "burst": 0.2470059880239521,
+        "gradual": 0.06736526946107785,
+        "oscillating": 0.7634730538922155,
+        "stable": 0.0
+      },
+      "out_of_range_by_feature": {
+        "cpu_mean_5": 0.0014970059880239522,
+        "flow_mod_rate": 0.0007485029940119761,
+        "max_switch_control_load_share": 0.004116766467065869,
+        "process_cpu_percent": 0.0007485029940119761,
+        "process_memory_rss_mb": 0.14109281437125748,
+        "response_mean_5": 0.17627245508982037,
+        "response_p95_ms": 0.007110778443113772
+      },
+      "out_of_range_rate": 0.2773203592814371,
+      "rmse_persistence": 0.13918506890377375,
+      "rmse_with_gate": 0.10294652021741552,
+      "rmse_without_gate": 0.07970607942964418,
+      "samples": 2672
+    },
+    "unseen": {
+      "d_ood": 0.9880239520958084,
+      "d_ood_by_workload": {
+        "hot-switch": 0.9880239520958084
+      },
+      "out_of_range_by_feature": {
+        "max_switch_control_load_share": 1.0,
+        "process_memory_rss_mb": 0.1
+      },
+      "out_of_range_rate": 1.0,
+      "rmse_persistence": 0.07477611428015556,
+      "rmse_with_gate": 0.07578318285684081,
+      "rmse_without_gate": 0.11612288587379314,
+      "samples": 3340
+    },
+    "validation": {
+      "d_ood": 0.00037425149700598805,
+      "d_ood_by_workload": {
+        "burst": 0.0,
+        "gradual": 0.0,
+        "oscillating": 0.0,
+        "stable": 0.0014970059880239522
+      },
+      "out_of_range_by_feature": {
+        "response_mean_5": 0.001122754491017964
+      },
+      "out_of_range_rate": 0.001122754491017964,
+      "rmse_persistence": 0.13485289785577256,
+      "rmse_with_gate": 0.0556973928740503,
+      "rmse_without_gate": 0.055705930260152914,
+      "samples": 2672
+    }
+  }
+}

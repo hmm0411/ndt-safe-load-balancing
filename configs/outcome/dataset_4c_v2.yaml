@@ -1,0 +1,30 @@
+# Week 15 Day 6: processed 4C40S dataset for post-migration-v2 (My, 25/11).
+# Identical to dataset.yaml (windows, thresholds, bins, selection weights and the r95_post
+# exclusion decided 30/10) except the version and the raw collection: Vy's probe-off 4C
+# collection, 850 attempts, seeds 9901-9905, split r01-r03 / r04 / r05 declared and the test
+# set locked in evidence/week15/split_manifest_4c.json (arm probe_off) before any model run.
+# All five destination levels (0.45-0.98) are used (v1 had 0.45 and 0.75).
+dataset_version: migration-outcome-processed-v2
+source_dataset: migration-outcome-4c-noprobe-v1   # raw collection (Vy, 24/11)
+required_window: 5                            # Hard-Gate-valid snapshots before / after
+overload_threshold: 1.0                       # overload_after = u_dst_post >= this
+capacity_tolerance_pps: 0.01                  # raw safe_capacity_pps vs the capacity file
+# switch_share_group: low < 0.10 <= medium < 0.25 <= high (fixed before any test result)
+switch_share_bins: [0.10, 0.25]
+# Validation selection score (plan section 35); weights must sum to 1.
+selection_weights:
+  u_dst_post: 0.35
+  u_src_post: 0.25
+  r95_post: 0.25
+  i_post: 0.15
+selection_epsilon: 1.0e-9
+# Decision 2026-10-30 (Vy, My), fixed BEFORE Day 4, i.e. before the test split is opened:
+# Best Direct and Best Hybrid are chosen with S WITHOUT r95_post (option b); the remaining
+# weights are renormalized (u_dst 0.35/0.75, u_src 0.25/0.75, i 0.15/0.75). r95_post is
+# still predicted, and reported in its own metric table and as S_plan (plan weights).
+# Why: response_p95_ms is controller processing time, about 0.78 ms with P95 - P5 of a few
+# hundredths of a ms, and it does not rise with overload on this testbed (capacity benchmark:
+# 0.77 ms healthy, 0.59 ms saturated). Normalizing by that tiny spread made n_r95_post 1.26 for
+# Analytical on validation against 0.15-0.36 for the other terms, so S would rank models by
+# noise in a quantity that carries no safety information.
+selection_exclude: [r95_post]

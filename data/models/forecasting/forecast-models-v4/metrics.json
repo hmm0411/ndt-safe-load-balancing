@@ -1,0 +1,29 @@
+{
+  "model_name": "xgboost",
+  "splits": {
+    "test": {
+      "coverage95": 0.8809880239520959,
+      "coverage95_with_ood_gate": 0.811377245508982,
+      "mae": 0.040846963922941626,
+      "p95_absolute_error": 0.17532823849467435,
+      "rmse": 0.07970607942964418,
+      "rmse_ratio_vs_persistence": 0.5726625711896537
+    },
+    "unseen": {
+      "coverage95": 0.38562874251497004,
+      "coverage95_with_ood_gate": 0.8413173652694611,
+      "mae": 0.10316644816483439,
+      "p95_absolute_error": 0.16201302365349854,
+      "rmse": 0.11612288587379314,
+      "rmse_ratio_vs_persistence": 1.552940895520836
+    },
+    "validation": {
+      "coverage95": 0.9520958083832335,
+      "coverage95_with_ood_gate": 0.9520958083832335,
+      "mae": 0.02624367461166195,
+      "p95_absolute_error": 0.0956300743206522,
+      "rmse": 0.055705930260152914,
+      "rmse_ratio_vs_persistence": 0.41308663844755744
+    }
+  }
+}

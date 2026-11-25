@@ -1,0 +1,57 @@
+{
+  "dataset_version": "forecast-dataset-v4-h3-provisional",
+  "random_shuffle": false,
+  "run_overlap_detected": false,
+  "schema_version": "1.0",
+  "split_strategy": "explicit_run_level_temporal_holdout",
+  "test": {
+    "row_count": 2672,
+    "run_count": 4,
+    "run_ids": [
+      "forecast4c-burst-r05-s9925",
+      "forecast4c-gradual-r05-s9925",
+      "forecast4c-oscillating-r05-s9925",
+      "forecast4c-stable-r05-s9925"
+    ]
+  },
+  "train": {
+    "row_count": 8016,
+    "run_count": 12,
+    "run_ids": [
+      "forecast4c-burst-r01-s9921",
+      "forecast4c-burst-r02-s9922",
+      "forecast4c-burst-r03-s9923",
+      "forecast4c-gradual-r01-s9921",
+      "forecast4c-gradual-r02-s9922",
+      "forecast4c-gradual-r03-s9923",
+      "forecast4c-oscillating-r01-s9921",
+      "forecast4c-oscillating-r02-s9922",
+      "forecast4c-oscillating-r03-s9923",
+      "forecast4c-stable-r01-s9921",
+      "forecast4c-stable-r02-s9922",
+      "forecast4c-stable-r03-s9923"
+    ]
+  },
+  "unseen": {
+    "purpose": "unseen_hot_switch_generalization",
+    "row_count": 3340,
+    "run_count": 5,
+    "run_ids": [
+      "forecast4c-hot-switch-r01-s9921",
+      "forecast4c-hot-switch-r02-s9922",
+      "forecast4c-hot-switch-r03-s9923",
+      "forecast4c-hot-switch-r04-s9924",
+      "forecast4c-hot-switch-r05-s9925"
+    ]
+  },
+  "validation": {
+    "row_count": 2672,
+    "run_count": 4,
+    "run_ids": [
+      "forecast4c-burst-r04-s9924",
+      "forecast4c-gradual-r04-s9924",
+      "forecast4c-oscillating-r04-s9924",
+      "forecast4c-stable-r04-s9924"
+    ]
+  }
+}

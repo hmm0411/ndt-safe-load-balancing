@@ -1,0 +1,481 @@
+== start 2026-11-25T15:04:57Z git 518140d w15/day5-6
+   raw /home/tntvy112_gmail_com/w15-day34/data/experiment_runs/migration-outcome-4c-noprobe-v1
+== test_lock_check 15:04:57
+   test set sha256 OK b9bf1e3628d4 planned 850 on disk 850
+   exit 0
+== dataset 15:04:57
+   750 rows (train 450, validation 150, test 150), NO_OP reference 100, excluded 0 {}
+   capacity controller_capacity_v5_noprobe.json@sha256:f73111b4927d c_safe_pps {'c1': 921.5499077641138, 'c2': 921.5420037286942, 'c3': 920.6309762073231, 'c4': 927.2766747232412}
+   saturated_before 5, saturated_after 21, overload_after 296 {'train': 178, 'validation': 59, 'test': 59}
+   29 candidate features, 24 model features; audit_only: {"src_safe_capacity_pps": "by design: encodes the controller id", "dst_safe_capacity_pps": "by design: encodes the controller id", "capacity_ratio_dst_src": "by design: encodes the controller id", "src_switch_count": "constant on train", "dst_switch_count": "constant on train"}
+   one row per attempt: True; leakage check OK
+   wrote data/outcome/processed/migration-outcome-processed-v2
+   exit 0
+== analytical 15:05:23
+   Analytical on validation (n = 150)
+   target              MAE     RMSE   P95|e|     bias      R2
+   u_src_post       0.1383   0.2085   0.4381  -0.0132  -0.263
+   u_dst_post       0.1134   0.1473   0.2884  -0.0346   0.577
+   r_src95_post     0.1380   0.3121   0.5761   0.0628  -9.526
+   r_dst95_post     0.1309   0.2591   0.6660   0.0825  -5.420
+   r95_post         0.1661   0.3597   0.6969   0.1110 -13.202
+   i_post           0.0527   0.0669   0.1278   0.0209   0.206
+   selection score S = 0.2487 (without r95_post; used to choose models)
+   plan score S_plan = 0.4926 (n_u_dst_post 0.188, n_u_src_post 0.316, n_r95_post 1.224, n_i_post 0.278)
+   wrote data/outcome/reports/4c-v2/analytical_validation_metrics.csv
+   exit 0
+== direct 15:05:23
+   train 450, validation 150, test rows dropped 150; 24 model features
+   candidates per target: {'random_forest': 24, 'xgboost': 32}, fitted 224
+   
+   validation RMSE (n = 150)
+   model           u_src_post    u_dst_post  r_src95_post  r_dst95_post      r95_post        i_post        S   S_plan
+   analytical          0.2085        0.1473        0.3121        0.2591        0.3597        0.0669    0.249    0.493
+   direct_rf           0.1366        0.0795        0.1274        0.1003        0.1242        0.0608    0.167    0.231
+   direct_xgb          0.1414        0.0786        0.1272        0.0870        0.1256        0.0621    0.170    0.234
+   S = selection score without r95_post (chooses models); S_plan = plan weights
+   
+   save/load identical: True
+   wrote data/outcome/reports/4c-v2/direct
+   exit 0
+== hybrid 15:06:10
+   direct_xgb          0.1414        0.0786        0.1272        0.0870        0.1256        0.0621    0.170    0.234
+   hybrid_rf           0.1396        0.0781        0.0953        0.0934        0.1064        0.0627    0.169    0.217
+   hybrid_xgb          0.1411        0.0769        0.1185        0.0829        0.1222        0.0681    0.174    0.234
+   S = selection score without r95_post (chooses models); S_plan = plan weights
+   
+   lowest validation S: Direct direct_rf 0.167, Hybrid hybrid_rf 0.169 -> Hybrid NOT lower
+   u_src_post RMSE: analytical 0.2085, direct_rf 0.1366, hybrid_rf 0.1396
+   (validation only; Best Direct / Best Hybrid are fixed and tested on Day 4)
+   values floored at 0: 1
+   
+   save/load identical: True
+   wrote data/outcome/reports/4c-v2/hybrid
+   exit 0
+== select_and_test 15:07:33
+   
+   ablation S (validation / test)
+     analytical                     0 features  base analytical    0.249   0.275
+     direct_rf                     24 features  base none          0.167   0.174
+     hybrid_full                   28 features  base analytical    0.169   0.189
+     hybrid_no_temporal            20 features  base analytical    0.183   0.201
+     hybrid_no_switch_features     24 features  base analytical    0.172   0.193
+     hybrid_no_switch              24 features  base persistence   0.215   0.211
+     refit of the full Hybrid vs saved models: max |diff| 4.44e-16
+   
+   test_lock: completed at 2026-11-25T15:07:48.079319+00:00
+   wrote data/outcome/reports/4c-v2/final
+   exit 0
+== export 15:07:48
+     destination_load_level  0.75           26/30  0.87
+     destination_load_level  0.85           30/30  1.00
+     destination_load_level  0.92           30/30  1.00
+     destination_load_level  0.98           28/30  0.93
+     direction               c1->c2         71/75  0.95
+     direction               c2->c1         71/75  0.95
+     switch_share_group      high            8/8   1.00
+     switch_share_group      low            75/79  0.95
+     switch_share_group      medium         59/63  0.94
+     saturated               False         142/150 0.95
+     overload_after          False          87/91  0.96
+     overload_after          True           55/59  0.93
+   exit 1
+!! export failed: STOP (full log /home/tntvy112_gmail_com/v2_outcome/export.log)
+== start 2026-11-25T15:33:20Z git 9dbd446 w15/day5-6
+   raw /home/tntvy112_gmail_com/w15-day34/data/experiment_runs/migration-outcome-4c-noprobe-v1
+== test_lock_check 15:33:20
+   test set sha256 OK b9bf1e3628d4 planned 850 on disk 850
+   exit 0
+== export 15:33:20
+     direction               c2->c1         71/75  0.95
+     switch_share_group      high            8/8   1.00
+     switch_share_group      low            75/79  0.95
+     switch_share_group      medium         59/63  0.94
+     saturated               False         142/150 0.95
+     overload_after          False          87/91  0.96
+     overload_after          True           55/59  0.93
+   
+   artifact written to data/models/outcome/post-migration-v2 (reload check max |diff| 6.7e-16)
+   artifact data/models/outcome/post-migration-v2: ARTIFACT_SCHEMA_MISMATCH; missing ['inference_latency.json']
+   only inference_latency.json is missing: it is written by the runtime side (Vy, Day 5 inference benchmark)
+   wrote data/outcome/reports/4c-v2/final/uncertainty_margin.json, data/outcome/reports/4c-v2/final/coverage_metrics.json
+   exit 0
+== latency 15:33:23
+     1 candidate(s): mean=169.0936 ms  p50=169.4586 ms  p95=192.3623 ms  p99=213.3905 ms  (169.0936 ms per candidate)
+    10 candidate(s): mean=1777.1173 ms  p50=1770.1077 ms  p95=1988.7759 ms  p99=2145.5854 ms  (177.7117 ms per candidate)
+   Wrote /home/tntvy112_gmail_com/v2_outcome/inference_latency.json
+   exit 0
+== check 16:07:22
+   artifact data/models/outcome/post-migration-v2: READY for the runtime predictor (capacity controller_capacity_v5_noprobe.json@sha256:f73111b4927d, m_U 0.1386, m_R 0.0483 ms, deployed direct_rf, 24 features)
+   exit 0
+== summary 2026-11-25T16:07:24Z
+--- final_model_selection.json
+{
+  "created_at": "2026-11-25T15:07:37.125839+00:00",
+  "git": {
+    "commit": "518140d2e5c454125c9f53da9a1fecc1195ac40f",
+    "tracked_changes": false
+  },
+  "dataset": "data/outcome/processed/migration-outcome-processed-v2",
+  "rows": {
+    "train": 450,
+    "validation": 150
+  },
+  "frozen_sha256": "5f6210a4adf7e3cf913ba0697de98b9c13b385d3c58e69094343ce4dbe1352f0",
+  "frozen": {
+    "rule": "Best Direct / Best Hybrid = lowest validation S (selection weights without selection_exclude); ties keep the candidate order",
+    "selection_weights": {
+      "u_dst_post": 0.4666666666666666,
+      "u_src_post": 0.3333333333333333,
+      "i_post": 0.19999999999999998
+    },
+    "selection_exclude": [
+      "r95_post"
+    ],
+    "candidates": {
+      "direct": [
+        "direct_xgb",
+        "direct_rf"
+      ],
+      "hybrid": [
+        "hybrid_xgb",
+        "hybrid_rf"
+      ]
+    },
+    "validation_scores": {
+      "analytical": {
+        "S": 0.24865184604704632,
+        "S_plan": 0.49258754333352334
+      },
+      "direct_rf": {
+        "S": 0.1668061905180578,
+        "S_plan": 0.2307836798833939
+      },
+      "direct_xgb": {
+        "S": 0.16976965485920914,
+        "S_plan": 0.2342246513291037
+      },
+      "hybrid_rf": {
+        "S": 0.169111515545282,
+        "S_plan": 0.21738047058020302
+      },
+      "hybrid_xgb": {
+        "S": 0.17359769695849833,
+        "S_plan": 0.23418622802900696
+      }
+    },
+    "best_direct": "direct_rf",
+    "best_hybrid": "hybrid_rf",
+    "parameters": {
+      "direct_rf": {
+        "u_src_post": {
+          "n_jobs": -1,
+          "random_state": 42,
+          "n_estimators": 100,
+          "max_depth": null,
+          "min_samples_leaf": 2,
+          "max_features": 0.8
+        },
+        "u_dst_post": {
+          "n_jobs": -1,
+          "random_state": 42,
+          "n_estimators": 200,
+          "max_depth": null,
+          "min_samples_leaf": 5,
+          "max_features": 0.8
+        },
+        "r_src95_post": {
+          "n_jobs": -1,
+          "random_state": 42,
+          "n_estimators": 200,
+          "max_depth": null,
+          "min_samples_leaf": 2,
+          "max_features": 0.8
+        },
+        "r_dst95_post": {
+          "n_jobs": -1,
+          "random_state": 42,
+          "n_estimators": 200,
+          "max_depth": null,
+          "min_samples_leaf": 2,
+          "max_features": 0.8
+        }
+      },
+      "hybrid_rf": {
+        "u_src_post": {
+          "n_jobs": -1,
+          "random_state": 42,
+          "n_estimators": 100,
+          "max_depth": null,
+          "min_samples_leaf": 5,
+          "max_features": "sqrt"
+        },
+        "u_dst_post": {
+          "n_jobs": -1,
+          "random_state": 42,
+          "n_estimators": 200,
+          "max_depth": null,
+          "min_samples_leaf": 2,
+          "max_features": 0.8
+        },
+        "r_src95_post": {
+          "n_jobs": -1,
+          "random_state": 42,
+          "n_estimators": 200,
+          "max_depth": 8,
+          "min_samples_leaf": 5,
+          "max_features": 0.8
+        },
+        "r_dst95_post": {
+          "n_jobs": -1,
+          "random_state": 42,
+          "n_estimators": 200,
+          "max_depth": null,
+          "min_samples_leaf": 2,
+          "max_features": 0.8
+        }
+      }
+    },
+    "bootstrap": {
+      "resamples": 2000,
+      "seed": 20261031,
+      "confidence": 0.95
+    },
+    "ablation": {
+      "hybrid_no_temporal": {
+        "drop": [
+          "src_u_mean",
+          "src_u_std",
+          "src_u_slope",
+          "dst_u_mean",
+          "dst_u_std",
+          "dst_u_slope",
+          "switch_share_mean",
+          "switch_share_slope"
+        ],
+        "persistence_base": false
+      },
+      "hybrid_no_switch_features": {
+        "drop": [
+          "switch_control_load_share",
+          "switch_packet_in_rate",
+          "switch_share_mean",
+          "switch_share_slope"
+        ],
+        "persistence_base": false
+      },
+      "hybrid_no_switch": {
+        "drop": [
+
+--- final_uncertainty_margin.json
+{
+  "model_version": "post-migration-v2",
+  "deployed_model": "direct_rf",
+  "m_U": 0.13860323509560712,
+  "m_R": 0.04826759320833318,
+  "units": {
+    "m_U": "utilization (pps / c_safe_pps)",
+    "m_R": "ms"
+  },
+  "split": "validation",
+  "level": 0.95,
+  "by_model": {
+    "analytical": {
+      "m_U": {
+        "value": 0.2843255101902358,
+        "n": 150,
+        "rank": 144,
+        "level": 0.95,
+        "under_predicted": 80,
+        "max_under_error": 0.3897557323994423,
+        "method": "split conformal, one-sided: element ceil((n + 1) * level) of the sorted max(0, actual - predicted) on validation",
+        "target": "u_dst_post"
+      },
+      "m_R": {
+        "value": 0.15890000000000004,
+        "n": 150,
+        "rank": 144,
+        "level": 0.95,
+        "under_predicted": 77,
+        "max_under_error": 0.1926698,
+        "method": "split conformal, one-sided: element ceil((n + 1) * level) of the sorted max(0, actual - predicted) on validation",
+        "target": "r95_post"
+      }
+    },
+    "direct_rf": {
+      "m_U": {
+        "value": 0.13860323509560712,
+        "n": 150,
+        "rank": 144,
+        "level": 0.95,
+        "under_predicted": 65,
+        "max_under_error": 0.21175008888709868,
+        "method": "split conformal, one-sided: element ceil((n + 1) * level) of the sorted max(0, actual - predicted) on validation",
+        "target": "u_dst_post"
+      },
+      "m_R": {
+        "value": 0.04826759320833318,
+        "n": 150,
+        "rank": 144,
+        "level": 0.95,
+        "under_predicted": 32,
+        "max_under_error": 0.15461878538690477,
+        "method": "split conformal, one-sided: element ceil((n + 1) * level) of the sorted max(0, actual - predicted) on validation",
+        "target": "r95_post"
+      }
+    },
+    "hybrid_rf": {
+      "m_U": {
+        "value": 0.17088113535775817,
+        "n": 150,
+        "rank": 144,
+        "level": 0.95,
+        "under_predicted": 75,
+        "max_under_error": 0.21535489330266389,
+        "method": "split conformal, one-sided: element ceil((n + 1) * level) of the sorted max(0, actual - predicted) on validation",
+        "target": "u_dst_post"
+      },
+      "m_R": {
+        "value": 0.03657903625125358,
+        "n": 150,
+        "rank": 144,
+        "level": 0.95,
+        "under_predicted": 37,
+        "max_under_error": 0.12567784992957032,
+        "method": "split conformal, one-sided: element ceil((n + 1) * level) of the sorted max(0, actual - predicted) on validation",
+        "target": "r95_post"
+      }
+    }
+  },
+  "rule": "fixed on validation before any coverage is computed; not re-tuned on test"
+}
+
+--- final_test_lock.json
+{
+  "status": "completed",
+  "selection_sha256": "5f6210a4adf7e3cf913ba0697de98b9c13b385d3c58e69094343ce4dbe1352f0",
+  "attempt": 1,
+  "opened_at": "2026-11-25T15:07:37.147644+00:00",
+  "rule": "test evaluated once; selection frozen before the test rows are read",
+  "completed_at": "2026-11-25T15:07:48.079319+00:00",
+  "outputs_sha256": {
+    "ablation.csv": "03ceee57d1b6bed84badd352b0183c3d430c718550eed9529c4eba7f48ee3509",
+    "bootstrap_ci.csv": "aa01f4484f64e8a116dc3643892a1d2d317a3dca7a94ad4ae28f7566e537e9e0",
+    "model_comparison.csv": "a37b5877cffd146d0fdce295f492ac1567cae60e09c28742768ca328ea7482b4",
+    "model_selection.json": "99520bd75500dacee42669a8f180b8979d2b4d4bef04dbe5e5e133ee0ed36b83",
+    "overload_cases.csv": "eee634b8003f0443b5649833c9489bcfe22e3e1b6981472c4a95e841e96ba78b",
+    "per_workload_metrics.csv": "4df287248a21880eec826d2c409ae86fa299edfd6ef58b84f28eac4e6e814351",
+    "saturation_sensitivity.csv": "b1e06a02195e1867cdb2865bcd8898cd39808356fcc661ead1a467fc7e0c5f51",
+    "test_metrics.csv": "8eece54fee9f11628aac68461a28372df0e2d37d7921636cb4e94e7aadc9138d",
+    "validation_metrics.csv": "4a7f69f950f7c7919e79d8b59462fd0a417b3fd6b80fd631ab8070bd184a5317"
+  },
+  "test_summary": {
+    "n_test": 150,
+    "best_direct": "direct_rf",
+    "best_hybrid": "hybrid_rf",
+    "test_S": {
+      "analytical": 0.27453630116384814,
+      "direct_rf": 0.17355300121320724,
+      "hybrid_rf": 0.1889240073590831
+    },
+    "test_rmse": {
+      "analytical": {
+        "u_src_post": 0.22791784999357448,
+        "u_dst_post": 0.14850996877874004,
+        "r_src95_post": 0.4316039176444594,
+        "r_dst95_post": 0.39372521265451826,
+        "r95_post": 0.5429866343123484,
+        "i_post": 0.07172042984844984
+      },
+      "direct_rf": {
+        "u_src_post": 0.14101411766223357,
+        "u_dst_post": 0.08267047878731165,
+        "r_src95_post": 0.1514855342122884,
+        "r_dst95_post": 0.11636802396736545,
+        "r95_post": 0.1466363987238173,
+        "i_post": 0.053792657607921734
+      },
+      "hybrid_rf": {
+        "u_src_post": 0.1503300802717731,
+        "u_dst_post": 0.08392071997579009,
+        "r_src95_post": 0.10882162248736192,
+        "r_dst95_post": 0.1098280450391151,
+        "r95_post": 0.12047728528933281,
+        "i_post": 0.06390090935888584
+      }
+    },
+    "ablation_S": {
+      "analytical": {
+        "validation": 0.24865184604704632,
+        "test": 0.27453630116384814
+      },
+      "direct_rf": {
+        "validation": 0.1668061905180578,
+        "test": 0.17355300121320724
+      },
+      "hybrid_full": {
+        "validation": 0.169111515545282,
+        "test": 0.1889240073590831
+      },
+      "hybrid_no_temporal": {
+        "validation": 0.18285740964032307,
+        "test": 0.20104226825871657
+      },
+      "hybrid_no_switch_features": {
+        "validation": 0.1721625391160327,
+        "test": 0.1925944036959672
+      },
+      "hybrid_no_switch": {
+        "validation": 0.21452351324881966,
+        "test": 0.21122920905026146
+      }
+    },
+    "refit_max_abs_diff": 4.440892098500626e-16
+  }
+}
+
+--- final_test_metrics.csv
+model,split,target,n,mae,rmse,p95_abs_error,bias,r2
+analytical,test,u_src_post,150.0,0.15479998328070171,0.22791784999357448,0.5810260054354917,-0.016934178321428586,-0.4268357951323698
+analytical,test,u_dst_post,150.0,0.11493407812810737,0.14850996877874004,0.28618727150323836,-0.02944367907782187,0.5247008412992797
+analytical,test,r_src95_post,150.0,0.16531279466666668,0.4316039176444594,0.7346280299999978,0.09972968266666671,-118.45411987654333
+analytical,test,r_dst95_post,150.0,0.14693731066666665,0.39372521265451826,0.696834909999999,0.1172552226666667,-60.70916622723286
+analytical,test,r95_post,150.0,0.2154661586666666,0.5429866343123484,1.0918015099999954,0.16754286000000002,-232.51967843911626
+analytical,test,i_post,150.0,0.05364864751291926,0.07172042984844984,0.16211271189551726,0.01908158587719,-0.07775540607856479
+direct_rf,test,u_src_post,150.0,0.08721991366488342,0.14101411766223357,0.39616262100158495,-0.01926612757728022,0.45381155794662487
+direct_rf,test,u_dst_post,150.0,0.07047711484052518,0.08267047878731165,0.15871989509610349,-0.0027227001933720703,0.8527156041239043
+direct_rf,test,r_src95_post,150.0,0.14709124642326696,0.1514855342122884,0.20085989952541644,0.14709124642326696,-13.715421361609815
+direct_rf,test,r_dst95_post,150.0,0.11017695078807689,0.11636802396736545,0.17123328494462303,0.11017695078807689,-4.390518556871166
+direct_rf,test,r95_post,150.0,0.14256006852918568,0.1466363987238173,0.19183673925245984,0.14256006852918568,-16.030554060678686
+direct_rf,test,i_post,150.0,0.0441949437988875,0.053792657607921734,0.11160810234933083,0.027469217051886492,0.39370994526526415
+hybrid_rf,test,u_src_post,150.0,0.09767317374677686,0.1503300802717731,0.3809798000023683,-0.008520090855671389,0.3792609091271849
+hybrid_rf,test,u_dst_post,150.0,0.06180126439568667,0.08392071997579009,0.1819935272622723,-0.008569575846358455,0.8482270993884962
+hybrid_rf,test,r_src95_post,150.0,0.08438758419151891,0.10882162248736192,0.2396750809983927,0.08310159233509372,-6.593828245119533
+hybrid_rf,test,r_dst95_post,150.0,0.08871298760418381,0.1098280450391151,0.20411855929531736,0.08446363611380812,-3.801641507973434
+hybrid_rf,test,r95_post,150.0,0.09792231851987777,0.12047728528933281,0.24253141631333336,0.09710217579210649,-10.496232833365713
+hybrid_rf,test,i_post,150.0,0.04847543601867844,0.06390090935888584,0.1381992920442667,0.022957276081628772,0.14444384606799465
+--- artifact (sha256)
+87779349310a45260ab4a56d729d1eba63e33220975766263fbdc67a54be6562  ./analytical_config.json
+c18cda2d26450dc4700ae6e8d33eb2bc32fc678f9a85bec0338bac72f789996a  ./direct_model/direct_model.json
+79903310fcccd49c2024a3cd7e92f4f900226affac54011ced91829aa904818b  ./direct_model/direct_rf_r_dst95_post.joblib
+79dd33a3644b8e90619c340007513110d4867450cf87ae2646cf3b2773aedaa7  ./direct_model/direct_rf_r_src95_post.joblib
+122ed39acf03698d6b487f29aa468d60ed44283f648d5bfc84b443fe35dc16ed  ./direct_model/direct_rf_u_dst_post.joblib
+8fd9c4fa2cc3d5e4b7992f62eb5a98bdb1a6e4067e990b5c902361aef965c268  ./direct_model/direct_rf_u_src_post.joblib
+377af2f4dc7dde5388f90fe880a9edd3b041462b881c1176fbafddcb07403510  ./feature_schema.json
+e8724bd10fb1bf8ed2df4c65a6b7f5fea2083b59757cbf0d521065cf64814e7b  ./hybrid_model/hybrid_model.json
+9babb40c73b52409d851476cc4a2f83d5f4fb14fb864a36ef2d6449943b88e11  ./hyperparameters.json
+1c0f8259bbe7cbcc63419514a19243103e770353fa31bb0e15a8b647eab51c47  ./inference_latency.json
+268ac620af870a8499ae9e2d534fceb483ef99ce7389c49740958c026b828efd  ./model_card.json
+715969abd5493e3fdfeefcb1c27a5d9582a9384485aa948c6153025b0872b8e9  ./per_workload_metrics.json
+a68d4e4f4e0788d1c57050f06bd1cbe2d5670a71a8832a6169e8097813ce3ca3  ./residual_models/residual_rf_r_dst95_post.joblib
+a8d2dff54f49660cbd8d56cfbb4dedc9f11a433103f29f51a51986c196ed4153  ./residual_models/residual_rf_r_src95_post.joblib
+2af39e65fe4e3eeb28e564dcb6115afa61c8fec2401b50376b595d4b1c94e097  ./residual_models/residual_rf_u_dst_post.joblib
+caa56b56f8cc77fe04d85bbeec96761ad46a8915fe288c74f0ca2570e5996cac  ./residual_models/residual_rf_u_src_post.joblib
+4ddcade688908561e614e2f932b3311f2ae281ff4e4fe5f0f20ea05689f156ed  ./target_schema.json
+4ea0ffabec1ff50e13c9404f2b02a921525e874c302dab4a7ac36680447d3034  ./test_metrics.json
+1d2a467f6c481e95897f6e62e26e405ab2ae6b476c50c862f9716fe4709a56ad  ./training_manifest.json
+0e4818c06d35d7772c670c15e8541a79b6e72e62ab7b2e495e50c9fb6694f680  ./uncertainty_margin.json
+32cd7f6791ded3455b7a92856f7dfea2c45a24e43d5d6ef696c36ff599cf1003  ./validation_metrics.json
+19M	data/models/outcome/post-migration-v2
+464K	evidence/week15/outcome_v2
+== done 2026-11-25T16:07:24Z: all steps exit 0

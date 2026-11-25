@@ -48,7 +48,8 @@ def _action(switch: str = "s1") -> MigrationAction:
 
 
 def _write_artifact(
-    root: Path, capacity_version: str = CAP, constant: float = 0.0, family: str = "random_forest"
+    root: Path, capacity_version: str = CAP, constant: float = 0.0, family: str = "random_forest",
+    model_version: str = p.MODEL_VERSION,
 ) -> Path:
     for entry in p.ARTIFACT_ENTRIES:
         path = root / entry
@@ -57,7 +58,7 @@ def _write_artifact(
         else:
             path.mkdir()
     manifest = {
-        "model_version": p.MODEL_VERSION,
+        "model_version": model_version,
         "feature_schema": p.FEATURE_SCHEMA,
         "target_schema": p.TARGET_SCHEMA,
         "capacity_version": capacity_version,
@@ -176,6 +177,47 @@ class NotReadyReasonTest(unittest.TestCase):
             manifest = json.loads((root / "training_manifest.json").read_text(encoding="utf-8"))
             manifest["feature_schema"] = "outcome-features-v0"
             (root / "training_manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+            predictor = p.PostMigrationOutcomePredictor(root, CAP)
+            self.assertEqual(self._reason(_states()[4], predictor=predictor),
+                             p.ARTIFACT_SCHEMA_MISMATCH)
+
+    def test_4c_artifact_version_is_accepted_and_reported(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = _write_artifact(Path(tmp), model_version="post-migration-v2")
+            pred = _ready_predictor(root).predict(_states()[4], _action())
+            self.assertEqual((pred.status, pred.model_version), (p.READY, "post-migration-v2"))
+
+    def test_direct_deployed_artifact_serves_the_direct_models(self) -> None:
+        """post-migration-v2 (4C): the rule fixed before the test chose direct_rf (25/11)."""
+        with tempfile.TemporaryDirectory() as tmp:
+            root = _write_artifact(Path(tmp), model_version="post-migration-v2")
+            x = np.zeros((4, len(MODEL_FEATURES)))
+            for target in BASE_TARGETS:
+                model = RandomForestRegressor(n_estimators=2, random_state=0)
+                model.fit(x, np.full(4, 0.42))
+                random_forest.save(model, root / "direct_model" / f"direct_rf_{target}")
+            card = {"hybrid_family": "random_forest", "direct_family": "random_forest",
+                    "deployed_model": "direct_rf"}
+            (root / "model_card.json").write_text(json.dumps(card), encoding="utf-8")
+            pred = _ready_predictor(root).predict(_states()[4], _action())
+            self.assertEqual((pred.status, pred.model_version), (p.READY, "post-migration-v2"))
+            self.assertAlmostEqual(pred.predicted_dst_utilization or -1, 0.42)
+            self.assertAlmostEqual(pred.predicted_src_utilization or -1, 0.42)
+            runtime = p._load_runtime(root)
+            self.assertTrue(all(m.n_jobs == 1 for m in runtime.models.values()))
+            card["direct_family"] = "lightgbm"
+            (root / "model_card.json").write_text(json.dumps(card), encoding="utf-8")
+            pred = _ready_predictor(root).predict(_states()[4], _action())
+            self.assertEqual((pred.status, pred.reason), (p.NOT_READY, p.ARTIFACT_SCHEMA_MISMATCH))
+
+    def test_committed_v1_artifact_still_deploys_its_hybrid(self) -> None:
+        runtime = p._load_runtime(Path("data/models/outcome/post-migration-v1"))
+        self.assertEqual((runtime.model_version, runtime.deployed_model),
+                         ("post-migration-v1", "hybrid_xgb"))
+
+    def test_unknown_artifact_version_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = _write_artifact(Path(tmp), model_version="post-migration-v9")
             predictor = p.PostMigrationOutcomePredictor(root, CAP)
             self.assertEqual(self._reason(_states()[4], predictor=predictor),
                              p.ARTIFACT_SCHEMA_MISMATCH)

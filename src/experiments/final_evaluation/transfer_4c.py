@@ -145,12 +145,21 @@ def outcome_transfer(rows: Sequence[Mapping[str, Any]], m_u: float,
             "margin": {"source": "frozen 2C validation m_U (hybrid_xgb)", "m_U": m_u}}
 
 
-def decide(forecast: Mapping[str, Any], outcome: Mapping[str, Any],
+def decide(forecast: Mapping[str, Any], outcome: Mapping[str, Any] | None,
            rules: Rules) -> dict[str, Any]:
+    """outcome None = forecast part only (the outcome attempts come with Day 6)."""
     f_ratio = float(forecast["macro_rmse_ratio_seen"])
     f_cov = float(forecast["coverage_seen"])
     f_checks = {"macro_rmse_ratio_below_max": f_ratio < rules.rmse_ratio_max,
                 "coverage_at_least_min": f_cov >= rules.forecast_coverage_min}
+    result: dict[str, Any] = {
+        "forecast_reuse": all(f_checks.values()), "forecast_checks": f_checks,
+        "outcome_reuse": None, "outcome_checks": None,
+        "note": "reuse = keep the 2C model for the 4C campaign; otherwise retrain on 4C "
+                "data. hot_switch is reported, never decides."}
+    if outcome is None:
+        result["note"] += " Outcome part pending (Day 6 attempts)."
+        return result
     seen_cov = outcome["coverage_seen"]
     if seen_cov is None:
         raise ValueError("no outcome attempt on a seen workload: the rule cannot be applied")
@@ -160,7 +169,5 @@ def decide(forecast: Mapping[str, Any], outcome: Mapping[str, Any],
     if rules.hybrid_beats_analytical:
         o_checks["hybrid_beats_analytical"] = (per["hybrid_xgb"]["rmse_u_dst_post"]
                                                < per["analytical"]["rmse_u_dst_post"])
-    return {"forecast_reuse": all(f_checks.values()), "forecast_checks": f_checks,
-            "outcome_reuse": all(o_checks.values()), "outcome_checks": o_checks,
-            "note": "reuse = keep the 2C model for the 4C campaign; otherwise retrain on 4C "
-                    "data in 23/11-01/12. hot_switch is reported, never decides."}
+    result.update(outcome_reuse=all(o_checks.values()), outcome_checks=o_checks)
+    return result
