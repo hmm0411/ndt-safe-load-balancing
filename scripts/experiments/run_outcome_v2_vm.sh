@@ -17,6 +17,9 @@ cd "$(git rev-parse --show-toplevel)"
 source ~/ndt-venv/bin/activate
 export PYTHONPATH="$PWD"
 RAW="${RAW:?set RAW to the migration-outcome-4c-noprobe-v1 attempt root}"
+# FROM=export resumes after a completed select-and-test (25/11: the first run stopped at the
+# export, which then served Hybrid artifacts only); the test split is never opened again.
+FROM="${FROM:-start}"
 OUT="${OUT:-$HOME/v2_outcome}"
 mkdir -p "$OUT"
 exec > >(tee -a "$OUT/run.log") 2>&1
@@ -51,7 +54,13 @@ step() {
     (( rc == 0 )) || { echo "!! $name failed: STOP (full log $OUT/$name.log)"; exit 1; }
 }
 
-for d in "$DATA" "$REP" "$ART" "$EVI"; do
+if [[ "$FROM" == "export" ]]; then
+    MUST_BE_NEW=("$ART" "$EVI")
+    [[ -f "$REP/final/test_lock.json" ]] || { echo "!! no completed $REP/final: STOP"; exit 1; }
+else
+    MUST_BE_NEW=("$DATA" "$REP" "$ART" "$EVI")
+fi
+for d in "${MUST_BE_NEW[@]}"; do
     [[ -e "$d" ]] && { echo "!! $d exists, never overwrite: STOP"; exit 1; }
 done
 [[ -d "$RAW" && -f "$CAP" && -f "$SPLIT" ]] || { echo "!! missing raw root, $CAP or $SPLIT: STOP"; exit 1; }
@@ -62,6 +71,7 @@ test = '\n'.join(arm['splits']['test']['attempts'])
 assert hashlib.sha256(test.encode()).hexdigest() == arm['test_set_sha256'], 'test set changed'
 print('test set sha256 OK', arm['test_set_sha256'][:12], 'planned', arm['planned'],
       'on disk', arm['measured_on_disk'])"
+if [[ "$FROM" != "export" ]]; then
 step dataset python3 scripts/experiments/build_outcome_dataset.py --config "$CFG" \
     --raw-root "$RAW" --split "$SPLIT" --split-arm probe_off --capacity "$CAP" --out "$DATA"
 step analytical python3 scripts/experiments/evaluate_outcome_analytical.py --dataset "$DATA" \
@@ -72,9 +82,19 @@ step hybrid python3 scripts/experiments/train_outcome_models.py --stage hybrid "
     --out "$REP/hybrid"
 step select_and_test python3 scripts/experiments/train_outcome_models.py \
     --stage select-and-test "${COMMON[@]}" --out "$REP/final"
+fi
+rm -rf "$ART.tmp"   # left by a failed export, never a finished artifact
 step export python3 scripts/experiments/export_outcome_artifact.py "${COMMON[@]}" \
     --final-dir "$REP/final" --artifact-config "$ART_CFG" --capacity-file "$CAP" \
     --artifact-dir "$ART"
+# inference latency: the predictor is READY only with all 14 entries, so the benchmark runs on a
+# copy with a placeholder latency file; the measured file then goes into the artifact (v1 did
+# the same by hand, 02/11). Input: the benchmark's synthetic 2C state (fixed computation size).
+rm -rf "$OUT/latency_copy"; cp -r "$ART" "$OUT/latency_copy"
+echo '{"note": "placeholder, benchmark copy only"}' > "$OUT/latency_copy/inference_latency.json"
+step latency python3 scripts/experiments/benchmark_outcome_inference.py \
+    --artifact-dir "$OUT/latency_copy" --capacity-file "$CAP" --output "$OUT/inference_latency.json"
+cp "$OUT/inference_latency.json" "$ART/inference_latency.json"
 step check python3 scripts/experiments/export_outcome_artifact.py --check \
     --artifact-config "$ART_CFG" --capacity-file "$CAP" --artifact-dir "$ART"
 

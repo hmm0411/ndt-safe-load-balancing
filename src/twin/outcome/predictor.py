@@ -154,10 +154,16 @@ def artifact_problem(
 @dataclass(frozen=True)
 class _Runtime:
     model_version: str
+    deployed_model: str          # hybrid_<rf|xgb> or direct_<rf|xgb> (model_card)
     models: dict[str, Any]
-    hybrid_features: tuple[str, ...]
+    features: tuple[str, ...]    # Hybrid features, or the model features for Direct
     m_u: float
     m_r: float
+
+    def predict(self, rows: Sequence[Mapping[str, Any]]) -> dict[str, list[float]]:
+        if self.deployed_model.startswith("direct_"):
+            return trainer.predict_targets(self.models, rows, list(self.features))
+        return hybrid.predict(self.models, rows, list(self.features))
 
 
 def _read_json(path: Path) -> dict[str, Any]:
@@ -183,17 +189,35 @@ def _load_runtime(root: Path) -> _Runtime:
     bad = [n for n in model_features if n not in CANDIDATE_FEATURES or is_forbidden(n)]
     if bad:
         raise ValueError(f"model features that build_features does not produce: {bad}")
-    family = _read_json(root / "model_card.json").get("hybrid_family")
+    card = _read_json(root / "model_card.json")
+    family = card.get("hybrid_family")
     if family not in trainer.FAMILIES:
         raise ValueError(f"model_card.hybrid_family must be one of {list(trainer.FAMILIES)}")
+    # v1 artifacts deploy the Hybrid; post-migration-v2 (4C) deploys direct_rf, the lowest
+    # validation S under the rule fixed before the test (25/11).
+    deployed = str(card.get("deployed_model") or f"hybrid_{trainer.SHORT_NAMES[family]}")
     margin = _read_json(root / "uncertainty_margin.json")
     version = str(_read_json(root / "training_manifest.json")["model_version"])
     if version not in SUPPORTED_MODEL_VERSIONS:
         raise ValueError(f"training_manifest.model_version {version!r} is not supported")
+    if deployed.startswith("direct_"):
+        direct_family = card.get("direct_family")
+        if direct_family not in trainer.FAMILIES:
+            raise ValueError("model_card.direct_family must be one of "
+                             f"{list(trainer.FAMILIES)} for a Direct artifact")
+        models = trainer.load_models(root / "direct_model", str(direct_family), BASE_TARGETS,
+                                     prefix="direct")
+        features = tuple(model_features)
+    elif deployed.startswith("hybrid_"):
+        models = hybrid.load(root / "residual_models", str(family))
+        features = tuple(residual.hybrid_features(model_features))
+    else:
+        raise ValueError(f"model_card.deployed_model {deployed!r}: Hybrid or Direct only")
     return _Runtime(
         model_version=version,
-        models=hybrid.load(root / "residual_models", str(family)),
-        hybrid_features=tuple(residual.hybrid_features(model_features)),
+        deployed_model=deployed,
+        models=models,
+        features=features,
         m_u=_margin(margin, "m_U"),
         m_r=_margin(margin, "m_R"),
     )
@@ -332,7 +356,7 @@ class PostMigrationOutcomePredictor:
                 results[i] = self._not_ready(twin_state, action, MISSING_FEATURE)
         if ready and runtime is not None:
             try:
-                out = hybrid.predict(runtime.models, rows, list(runtime.hybrid_features))
+                out = runtime.predict(rows)
             except (ValueError, KeyError) as exc:
                 self.last_error = str(exc)
                 out = None
@@ -370,7 +394,7 @@ class PostMigrationOutcomePredictor:
         start = time.perf_counter_ns()
         try:
             row = self._row(self.history.window(), action, switch_id)
-            out = hybrid.predict(runtime.models, [row], list(runtime.hybrid_features))
+            out = runtime.predict([row])
             values = {name: float(series[0]) for name, series in out.items()}
         except (ValueError, KeyError) as exc:
             self.last_error = str(exc)
