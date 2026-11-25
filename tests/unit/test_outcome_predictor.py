@@ -48,7 +48,8 @@ def _action(switch: str = "s1") -> MigrationAction:
 
 
 def _write_artifact(
-    root: Path, capacity_version: str = CAP, constant: float = 0.0, family: str = "random_forest"
+    root: Path, capacity_version: str = CAP, constant: float = 0.0, family: str = "random_forest",
+    model_version: str = p.MODEL_VERSION,
 ) -> Path:
     for entry in p.ARTIFACT_ENTRIES:
         path = root / entry
@@ -57,7 +58,7 @@ def _write_artifact(
         else:
             path.mkdir()
     manifest = {
-        "model_version": p.MODEL_VERSION,
+        "model_version": model_version,
         "feature_schema": p.FEATURE_SCHEMA,
         "target_schema": p.TARGET_SCHEMA,
         "capacity_version": capacity_version,
@@ -176,6 +177,19 @@ class NotReadyReasonTest(unittest.TestCase):
             manifest = json.loads((root / "training_manifest.json").read_text(encoding="utf-8"))
             manifest["feature_schema"] = "outcome-features-v0"
             (root / "training_manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+            predictor = p.PostMigrationOutcomePredictor(root, CAP)
+            self.assertEqual(self._reason(_states()[4], predictor=predictor),
+                             p.ARTIFACT_SCHEMA_MISMATCH)
+
+    def test_4c_artifact_version_is_accepted_and_reported(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = _write_artifact(Path(tmp), model_version="post-migration-v2")
+            pred = _ready_predictor(root).predict(_states()[4], _action())
+            self.assertEqual((pred.status, pred.model_version), (p.READY, "post-migration-v2"))
+
+    def test_unknown_artifact_version_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = _write_artifact(Path(tmp), model_version="post-migration-v9")
             predictor = p.PostMigrationOutcomePredictor(root, CAP)
             self.assertEqual(self._reason(_states()[4], predictor=predictor),
                              p.ARTIFACT_SCHEMA_MISMATCH)

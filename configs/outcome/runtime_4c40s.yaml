@@ -1,0 +1,6 @@
+# Outcome runtime of the 4C40S orchestrator (NDT_OUTCOME_CONFIG=configs/outcome/runtime_4c40s.yaml).
+# Until data/models/outcome/post-migration-v2 is committed the endpoint answers NOT_READY /
+# ARTIFACT_MISSING (fail-closed). 2C20S keeps configs/outcome/runtime.yaml (v1).
+artifact_dir: data/models/outcome/post-migration-v2
+# The artifact must have been trained on this capacity file (manifest.capacity_version).
+capacity_file: data/benchmarks/controller_capacity_v5_noprobe.json

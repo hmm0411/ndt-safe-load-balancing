@@ -109,9 +109,10 @@ def main() -> int:
 
 
 def export(args: argparse.Namespace, config: art.ArtifactConfig, artifact_dir: Path) -> int:
-    if config.model_version != predictor.MODEL_VERSION:
-        raise ValueError(f"artifact.yaml model_version {config.model_version} != predictor "
-                         f"{predictor.MODEL_VERSION}")
+    if config.model_version not in predictor.SUPPORTED_MODEL_VERSIONS:
+        raise ValueError(f"artifact.yaml model_version {config.model_version} is not in "
+                         f"predictor.SUPPORTED_MODEL_VERSIONS "
+                         f"{predictor.SUPPORTED_MODEL_VERSIONS}")
     if artifact_dir.exists():
         raise FileExistsError(f"{artifact_dir} exists: an artifact is frozen once written; "
                               "bump model_version instead of overwriting it")

@@ -44,6 +44,11 @@ NOT_READY = "NOT_READY"
 
 MODEL_NAME = "post-migration-outcome"
 MODEL_VERSION = "post-migration-v1"
+# Artifacts this runtime accepts (same feature and target schemas, one per testbed):
+# post-migration-v1 = 2C20S (capacity-v4), post-migration-v2 = 4C40S retrain (25/11,
+# migration-outcome-4c-noprobe-v1, capacity v5_noprobe). Which one runs is set by the
+# artifact_dir of the orchestrator's outcome runtime config (NDT_OUTCOME_CONFIG).
+SUPPORTED_MODEL_VERSIONS: tuple[str, ...] = ("post-migration-v1", "post-migration-v2")
 FEATURE_SCHEMA = "outcome-features-v1"
 TARGET_SCHEMA = "outcome-targets-v1"
 
@@ -135,7 +140,7 @@ def artifact_problem(
         return ARTIFACT_SCHEMA_MISMATCH
     if (
         not isinstance(manifest, dict)
-        or manifest.get("model_version") != MODEL_VERSION
+        or manifest.get("model_version") not in SUPPORTED_MODEL_VERSIONS
         or manifest.get("feature_schema") != FEATURE_SCHEMA
         or manifest.get("target_schema") != TARGET_SCHEMA
     ):
@@ -148,6 +153,7 @@ def artifact_problem(
 
 @dataclass(frozen=True)
 class _Runtime:
+    model_version: str
     models: dict[str, Any]
     hybrid_features: tuple[str, ...]
     m_u: float
@@ -181,7 +187,11 @@ def _load_runtime(root: Path) -> _Runtime:
     if family not in trainer.FAMILIES:
         raise ValueError(f"model_card.hybrid_family must be one of {list(trainer.FAMILIES)}")
     margin = _read_json(root / "uncertainty_margin.json")
+    version = str(_read_json(root / "training_manifest.json")["model_version"])
+    if version not in SUPPORTED_MODEL_VERSIONS:
+        raise ValueError(f"training_manifest.model_version {version!r} is not supported")
     return _Runtime(
+        model_version=version,
         models=hybrid.load(root / "residual_models", str(family)),
         hybrid_features=tuple(residual.hybrid_features(model_features)),
         m_u=_margin(margin, "m_U"),
@@ -387,7 +397,7 @@ class PostMigrationOutcomePredictor:
             source_controller=action.source_controller,
             target_controller=action.target_controller,
             model_name=MODEL_NAME,
-            model_version=MODEL_VERSION,
+            model_version=runtime.model_version,
             predicted_src_utilization=values["u_src_post"],
             predicted_dst_utilization=values["u_dst_post"],
             predicted_src_response_p95_ms=values["r_src95_post"],

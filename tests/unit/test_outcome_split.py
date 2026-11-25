@@ -51,6 +51,32 @@ class SplitTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             ds.load_split_map(write_split(self.tmp / "split.json", splits))
 
+    def test_multi_arm_manifest_needs_the_arm(self) -> None:
+        """evidence/week15/split_manifest_4c.json keeps one split per arm (Vy, 24/11)."""
+        single = json.loads(write_split(self.tmp / "one.json", self.splits).read_text())
+        other = {k: [a.replace("-r0", "-x0") for a in v] for k, v in self.splits.items()}
+        two = {"rule": "by repeat", "arms": {
+            "probe_off": single,
+            "probe_on": json.loads(write_split(self.tmp / "on.json", other).read_text())}}
+        path = self.tmp / "arms.json"
+        path.write_text(json.dumps(two), encoding="utf-8")
+        self.assertEqual(ds.load_split_map(path, "probe_off"),
+                         ds.load_split_map(self.tmp / "one.json"))
+        with self.assertRaises(ValueError):
+            ds.load_split_map(path)
+        with self.assertRaises(ValueError):
+            ds.load_split_map(path, "probe_maybe")
+        with self.assertRaises(ValueError):
+            ds.load_split_map(self.tmp / "one.json", "probe_off")
+
+    def test_committed_4c_manifest_is_clean(self) -> None:
+        split = ds.load_split_map(Path("evidence/week15/split_manifest_4c.json"), "probe_off")
+        self.assertEqual(len(split), 850)
+        self.assertEqual({k: sum(v == k for v in split.values())
+                          for k in ("train", "validation", "test")},
+                         {"train": 510, "validation": 170, "test": 170})
+        self.assertTrue(all(a.endswith("-r05") for a, s in split.items() if s == "test"))
+
 
 if __name__ == "__main__":
     unittest.main()
