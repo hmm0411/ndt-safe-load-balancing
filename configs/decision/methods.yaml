@@ -1,0 +1,40 @@
+# Decision methods of the closed-loop campaign (docs/evaluation-protocol-v1.md, sections 3-4).
+# The orchestrator runs ONE method, chosen at start: NDT_DECISION_METHOD=<name> (default
+# ndt_no_feedback = the decision pipeline as it was before this file). Every method shares
+# the executor (role request, barrier, verification, rollback), one migration at a time and
+# the same telemetry; only the fields below differ. Owner: My (writes), Vy (reviews).
+#
+# trigger:  none (never migrate) | measured (U >= trigger_utilization) | forecast (U_hat + m_f >= 1 or U >= 1)
+# selector: heuristic (heaviest switch of the most loaded source -> least loaded destination,
+#           simple room check U_dst + moved load <= room_limit, no what-if, no Safety Gate)
+#           | pipeline (candidates, outcome model, Safety Gate, ranking)
+# outcome:  model (deployed artifact) | analytical (ablation: no learned part, its own m_U)
+# margins:  fixed (validation margins) | adaptive (feedback: online quantile tracking) | zero
+# ranking:  policy | random (uniform among the safe candidates, seeded per episode)
+# cooldown_seconds: null = the safety policy's value; 0 = ablation
+version: decision-methods-v1
+
+# Feedback (Full): configs fixed before the campaign. alpha = the margins' miscoverage
+# level (0.05, as on validation). gamma: m_f gets one update per controller and second
+# (about 150 per episode), m_U one per committed migration (a few per episode), so m_U
+# takes the larger step.
+feedback:
+  alpha: 0.05
+  gamma_forecast: 0.005
+  gamma_outcome: 0.02
+
+defaults:
+  trigger_utilization: 0.8     # Threshold baseline (protocol 5, chosen 24/11)
+  room_limit: 1.0              # heuristic destinations: predicted U_dst <= 1.0
+
+methods:
+  static:           {trigger: none,     selector: heuristic, outcome: model,      margins: fixed,    ranking: policy, cooldown_seconds: null}
+  threshold:        {trigger: measured, selector: heuristic, outcome: model,      margins: fixed,    ranking: policy, cooldown_seconds: null}
+  forecast_only:    {trigger: forecast, selector: heuristic, outcome: model,      margins: fixed,    ranking: policy, cooldown_seconds: null}
+  ndt_no_feedback:  {trigger: forecast, selector: pipeline,  outcome: model,      margins: fixed,    ranking: policy, cooldown_seconds: null}
+  full:             {trigger: forecast, selector: pipeline,  outcome: model,      margins: adaptive, ranking: policy, cooldown_seconds: null}
+  # Ablations of Full (protocol 4.C): each removes one part with a version that still runs.
+  full_analytical:  {trigger: forecast, selector: pipeline,  outcome: analytical, margins: adaptive, ranking: policy, cooldown_seconds: null}
+  full_zero_margin: {trigger: forecast, selector: pipeline,  outcome: model,      margins: zero,     ranking: policy, cooldown_seconds: null}
+  full_random_rank: {trigger: forecast, selector: pipeline,  outcome: model,      margins: adaptive, ranking: random, cooldown_seconds: null}
+  full_no_cooldown: {trigger: forecast, selector: pipeline,  outcome: model,      margins: adaptive, ranking: policy, cooldown_seconds: 0}

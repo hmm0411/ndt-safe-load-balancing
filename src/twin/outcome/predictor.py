@@ -163,6 +163,8 @@ class _Runtime:
     m_r: float
 
     def predict(self, rows: Sequence[Mapping[str, Any]]) -> dict[str, list[float]]:
+        if self.deployed_model == ANALYTICAL:
+            return trainer.with_derived(hybrid.analytical_base(rows))
         if self.deployed_model.startswith("direct_"):
             return trainer.predict_targets(self.models, rows, list(self.features))
         return hybrid.predict(self.models, rows, list(self.features))
@@ -182,8 +184,13 @@ def _margin(data: Mapping[str, Any], key: str) -> float:
     return float(value)
 
 
-def _load_runtime(root: Path) -> _Runtime:
-    """Models and margins of a usable artifact; ValueError/OSError/KeyError when broken."""
+ANALYTICAL = "analytical"
+
+
+def _load_runtime(root: Path, override: str | None = None) -> _Runtime:
+    """Models and margins of a usable artifact; ValueError/OSError/KeyError when broken.
+    ``override="analytical"`` (campaign ablation "no learned part"): the Analytical model of
+    the same artifact, with the margins calibrated for it on validation (by_model)."""
     schema = _read_json(root / "feature_schema.json")
     if schema.get("feature_schema") != FEATURE_SCHEMA:
         raise ValueError("feature_schema.json has another feature schema")
@@ -199,10 +206,19 @@ def _load_runtime(root: Path) -> _Runtime:
     # validation S under the rule fixed before the test (25/11).
     deployed = str(card.get("deployed_model") or f"hybrid_{trainer.SHORT_NAMES[family]}")
     margin = _read_json(root / "uncertainty_margin.json")
+    if override is not None:
+        if override != ANALYTICAL:
+            raise ValueError(f"unknown outcome override {override!r}")
+        deployed = ANALYTICAL
+        margin = {key: margin["by_model"][ANALYTICAL][key]["value"] for key in ("m_U", "m_R")}
     version = str(_read_json(root / "training_manifest.json")["model_version"])
     if version not in SUPPORTED_MODEL_VERSIONS:
         raise ValueError(f"training_manifest.model_version {version!r} is not supported")
-    if deployed.startswith("direct_"):
+    models: dict[str, Any] = {}
+    features: tuple[str, ...] = ()
+    if deployed == ANALYTICAL:
+        pass
+    elif deployed.startswith("direct_"):
         direct_family = card.get("direct_family")
         if direct_family not in trainer.FAMILIES:
             raise ValueError("model_card.direct_family must be one of "
@@ -237,7 +253,9 @@ class PostMigrationOutcomePredictor:
         artifact_dir: Path | str | None = None,
         running_capacity_version: str | None = None,
         history: OutcomeHistory | None = None,
+        override: str | None = None,
     ) -> None:
+        self.override = override  # "analytical" = campaign ablation (methods.yaml)
         self.artifact_dir = artifact_dir
         self.running_capacity_version = running_capacity_version
         self.history = history if history is not None else OutcomeHistory()
@@ -314,7 +332,7 @@ class PostMigrationOutcomePredictor:
         if reason is not None:
             return None, reason
         try:
-            self._runtime = _load_runtime(Path(str(self.artifact_dir)))
+            self._runtime = _load_runtime(Path(str(self.artifact_dir)), self.override)
         except (OSError, ValueError, KeyError, TypeError):
             return None, ARTIFACT_SCHEMA_MISMATCH
         return self._runtime, None

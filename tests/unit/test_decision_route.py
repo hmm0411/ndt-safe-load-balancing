@@ -39,7 +39,9 @@ class DecisionRouteTest(unittest.TestCase):
     def test_service_is_wired_to_the_live_components(self) -> None:
         service = orchestrator.decision_service
         self.assertIs(service.store, orchestrator.store)
-        self.assertIs(service.predictor, orchestrator.outcome_service.predictor)
+        # the decision sees the outcome predictor through the campaign's margin wrapper
+        self.assertIs(service.outcome_margin.predictor, orchestrator.outcome_service.predictor)
+        self.assertIs(service.predictor, service.outcome_margin)
         self.assertIs(service.transactions, orchestrator.transaction_manager)
 
     def test_route_has_no_side_effects(self) -> None:

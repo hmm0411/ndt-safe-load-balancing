@@ -19,6 +19,8 @@ from src.execution.verification import MigrationVerifier
 from src.orchestrator.current_state import CurrentStateStore
 from src.orchestrator.decision_service import DecisionService
 from src.orchestrator.forecast_service import ForecastService
+from src.twin.calibration.online_margin import TrackerConfig
+from src.twin.decision.methods import load_method
 from src.orchestrator.outcome_service import OutcomeService
 from src.orchestrator.ownership_manager import OwnershipManager
 from src.orchestrator.transaction_manager import TransactionConflict, TransactionManager
@@ -114,9 +116,20 @@ setup_probe_store = SetupProbeStore(float(telemetry_cfg["freshness_max_age_ms"])
 writer = JsonlWriter()
 forecast_service = ForecastService.from_config(forecast_cfg, ROOT, store, writer)
 outcome_service = OutcomeService.from_config(outcome_cfg, ROOT, store)
+# Campaign method (NDT_DECISION_METHOD, configs/decision/methods.yaml); default
+# ndt_no_feedback = the decision pipeline as before. The method also sets the m_f mode of
+# the forecaster and, for the "no learned part" ablation, the outcome model.
+decision_method = load_method()
+forecast_service.configure_margins(
+    decision_method.margins,
+    TrackerConfig(decision_method.feedback.alpha, decision_method.feedback.gamma_forecast))
+if decision_method.outcome == "analytical":
+    outcome_service.predictor.override = "analytical"
 decision_service = DecisionService(
-    store, forecast_service.payload, outcome_service.predictor, transaction_manager
+    store, forecast_service.payload, outcome_service.predictor, transaction_manager,
+    method=decision_method,
 )
+print(f"[decision] method={decision_method.name} ({decision_method.version})", flush=True)
 # Decision records of plan/execute: one directory per decision (gitignored data).
 decision_service.record_root = ROOT / decision_service.loop_config.record_dir
 stop_event = threading.Event()

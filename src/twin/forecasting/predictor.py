@@ -113,6 +113,8 @@ class RuntimeForecaster:
         self.on_features = on_features
         self.horizon_seconds = float(self.card.get("horizon_seconds") or 0.0) or None
         self._reset_reason: dict[str, str] = {}
+        # controller id -> m_f, set by ForecastService for the campaign's margin modes
+        self.margin_override: Callable[[str], float] | None = None
 
     @property
     def model_name(self) -> str:
@@ -123,6 +125,8 @@ class RuntimeForecaster:
         return str(self.card["model_version"])
 
     def margin_for(self, controller_id: str) -> float:
+        if self.margin_override is not None:  # campaign: feedback or zero margin
+            return float(self.margin_override(controller_id))
         return float(self.margin["controllers"].get(controller_id, self.margin["global"]))
 
     # ------------------------------------------------------------------
