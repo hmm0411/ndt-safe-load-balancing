@@ -1,0 +1,16 @@
+# Closed-loop campaign on 4C40S (docs/evaluation-protocol-v1.md, scenarios B and C).
+# Fixed before any campaign episode runs; a change after results = section "Thay doi".
+version: campaign-4c-v1
+topology: 4C40S
+controllers_config: configs/controllers_4c40s.yaml
+capacity: data/benchmarks/controller_capacity_v5_noprobe.json
+forecast_config: configs/forecasting/runtime_4c40s.yaml
+outcome_config: configs/outcome/runtime_4c40s.yaml
+seeds: [9801, 9802, 9803, 9804, 9805, 9806, 9807, 9808, 9809, 9810]   # protocol 5
+order_seed: 20261202          # shuffles the run order (protocol 5), declared here
+warmup_s: 30                  # protocol 5 (24/11)
+duration_s: null              # set from the pilot (protocol 7.5), before episode 1
+workloads: [stable, gradual, burst, oscillating, hot_switch]
+scenarios:
+  B: [static, threshold, forecast_only, ndt_no_feedback, full]                 # 250 episodes
+  C: [full_analytical, full_zero_margin, full_random_rank, full_no_cooldown]  # 200 episodes
