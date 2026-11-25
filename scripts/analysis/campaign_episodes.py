@@ -68,6 +68,9 @@ def cmd_collect(args: argparse.Namespace) -> int:
     for meta_path in sorted(args.runs.glob("*/meta.json")):
         run = meta_path.parent
         meta = json.loads(meta_path.read_text(encoding="utf-8"))
+        if meta.get("status", "OK") != "OK":
+            problems.append(f"{run.name}: episode status {meta.get('status')} (not collected)")
+            continue
         ep = cp.PlannedEpisode(int(meta["order"]), str(meta["episode_id"]), str(meta["method"]),
                                str(meta["workload"]), int(meta["seed"]))
         try:
