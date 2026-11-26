@@ -1,0 +1,65 @@
+# Safety Policy for 4C40S (26/11, before the campaign). Read by safety_policy.py when
+# NDT_SAFETY_POLICY points here (configs/experiments/campaign_4c_v1.yaml does).
+# Same rules as safety_policy_v1.yaml; what changes, and why:
+#   - the outcome model and its margins: post-migration-v2 (4C retrain) instead of v1;
+#   - U is measured against capacity v5_noprobe (the 4C testbed).
+# The pilot of 26/11 found every v2 prediction treated as NOT_READY under v1 (the policy
+# pins the model version): that is the reason for this file, not a result of the campaign.
+version: safety-policy-4c-v1
+boundary: inclusive   # value + margin <= limit passes (CLAUDE.md section 1)
+
+state:
+  require_valid_snapshot: true   # Hard Gate; the Quality Score never replaces it
+  minimum_quality_score:
+    value: null
+    reason: >-
+      quality-score-v1 (configs/quality.yaml) has no calibrated minimum; the score is
+      logged with every decision and studied in the ablation
+
+destination:
+  require_connected: true
+  reject_if_forecast_risk: true  # needs the retrained forecaster; offline -> NOT_AVAILABLE
+  utilization_safe_limit:
+    value: 1.0
+    source: >-
+      U = processed Packet-In rate / c_safe (capacity v5_noprobe,
+      data/benchmarks/controller_capacity_v5_noprobe.json): U = 1 is the safe capacity
+  response_p95_max_ms:
+    value: null
+    reason: >-
+      capacity-v4 has c_response_pps = null for c1 and c2 (response never limited
+      capacity) and response_p95_ms does not rise with overload on this testbed
+      (configs/outcome/dataset.yaml). Kept null in v1 (documented limitation): flow-setup
+      latency (reference P95 44.23 ms, c2 49.55 ms) is not predicted by
+      post-migration-v1; a v2 policy sets the limit once the predictor covers it
+
+uncertainty:
+  outcome_model_version: post-migration-v2
+  margins_file: data/models/outcome/post-migration-v2/uncertainty_margin.json
+
+migration:
+  max_concurrent_transactions: 1  # one migration per cycle (CLAUDE.md section 1)
+  cooldown_scope: global          # the Hard Gate blocks the whole twin after a migration
+  cooldown_seconds:
+    value: 37
+    source: >-
+      ceil of the finite-sample P95 of transaction_s + settle_s over the 300 committed
+      raw-v2 migrations (36.94 s; evidence/week13/safety_policy_inputs.json); a lower
+      bound, calibrated again with the oscillating runs
+
+improvement:
+  # Relief = load the action moves off the source (switch share x U_src). Not
+  # U_src_before - predicted U_src_after: that difference carries the workload, and the
+  # source rose after 57/300 committed raw-v2 migrations (gradual u40/u60, burst).
+  require_positive_source_relief: true
+  minimum_source_relief:
+    value: 0.036629233
+    source: >-
+      Kept at the v1 value (My, 26/11): the relief is measured (switch share x U_src), not
+      predicted by the outcome model, so the m_U of v2 (0.1386, a U_dst prediction error)
+      is not its noise scale; with 0.1386 a single 4C switch (relief ~0.06-0.12 at U_src
+      1.0-1.2) could never pass. v1 reason, unchanged:
+      m_U of post-migration-v1 (uncertainty_margin.json): a predicted relief below the
+      model noise floor cannot be told from zero. A principled floor, not tuned: on the
+      60 validation rows it rejected 1 safe migration and no extra unsafe one
+      (evidence/week13/safety_replay_validation.json)

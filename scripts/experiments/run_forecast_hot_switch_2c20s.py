@@ -24,6 +24,7 @@ from src.experiments.runners.forecast_data_runner import (
 )
 from src.twin.capacity.model import CapacityModel
 from src.experiments.workloads.constant import ConstantProfile
+from src.experiments.workloads.scale import scale_for
 from src.experiments.workloads.hot_switch import (
     HOT_SWITCH_LEVELS,
     HotSwitchWorkload,
@@ -337,8 +338,8 @@ def run_forecast_hot_switch(
     modes = hot_switch_controller_modes(profiles)
     targets = {
         controller_id: (
-            TARGET_UTILIZATION if mode is None else mode
-        )
+            TARGET_UTILIZATION * scale_for(controller_id) if mode is None else mode
+        )   # campaign load scale (NDT_WORKLOAD_SCALE); 1.0 when unset
         for controller_id, mode in modes.items()
     }
 

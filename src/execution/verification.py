@@ -1,5 +1,11 @@
 import time
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
+
+import requests
+
+# A controller that cannot be reached at all: its process is dead (connection refused) or
+# hung (no HTTP answer). Not a reply timeout of the switch, which is a ControllerAPIError.
+UNREACHABLE = (requests.exceptions.ConnectionError, requests.exceptions.Timeout)
 
 
 @dataclass(frozen=True)
@@ -12,6 +18,7 @@ class VerificationResult:
     packet_in_verified: bool
     flow_mod_verified: bool
     reasons: list[str]
+    warnings: list[str] = field(default_factory=list)
 
     def to_dict(self):
         return asdict(self)
@@ -132,23 +139,33 @@ class MigrationVerifier:
         )
 
     def verify_rollback(self, dpid, restored_controller, other_controller):
+        """The source is MASTER and connected again. The other (target) controller must be
+        SLAVE and connected, unless it cannot be reached at all (fault D6: the destination
+        died during the transaction): then it is a warning, not a failure, because the
+        source's MASTER role request (newer generation_id) makes the switch demote every
+        other connection, so an unreachable controller cannot hold the switch."""
         restored = self.client.query_role(restored_controller, dpid, self.timeout_seconds)
-        other = self.client.query_role(other_controller, dpid, self.timeout_seconds)
         restored_role = restored.get("reply_role", "UNKNOWN")
-        other_role = other.get("reply_role", "UNKNOWN")
         restored_state = self.client.state(restored_controller)
-        other_state = self.client.state(other_controller)
         restored_switch = self._switch_state(restored_state, dpid)
-        other_switch = self._switch_state(other_state, dpid)
         restored_connected = bool(restored_switch and restored_switch.get("connected") is True)
-        other_connected = bool(other_switch and other_switch.get("connected") is True)
-        reasons = []
+        reasons, warnings = [], []
         if restored_role != "MASTER":
             reasons.append("restored_controller_not_MASTER")
-        if other_role != "SLAVE":
-            reasons.append("other_controller_not_SLAVE")
         if not restored_connected:
             reasons.append("restored_controller_disconnected")
-        if not other_connected:
-            reasons.append("other_controller_disconnected")
-        return VerificationResult(ok=not reasons, source_role=restored_role, target_role=other_role, source_connected=restored_connected, target_connected=other_connected, packet_in_verified=False, flow_mod_verified=False, reasons=reasons)
+        try:
+            other = self.client.query_role(other_controller, dpid, self.timeout_seconds)
+            other_state = self.client.state(other_controller)
+        except UNREACHABLE as exc:
+            other_role, other_connected = "UNREACHABLE", False
+            warnings.append(f"other_controller_unreachable:{type(exc).__name__}")
+        else:
+            other_role = other.get("reply_role", "UNKNOWN")
+            other_switch = self._switch_state(other_state, dpid)
+            other_connected = bool(other_switch and other_switch.get("connected") is True)
+            if other_role != "SLAVE":
+                reasons.append("other_controller_not_SLAVE")
+            if not other_connected:
+                reasons.append("other_controller_disconnected")
+        return VerificationResult(ok=not reasons, source_role=restored_role, target_role=other_role, source_connected=restored_connected, target_connected=other_connected, packet_in_verified=False, flow_mod_verified=False, reasons=reasons, warnings=warnings)

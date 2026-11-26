@@ -8,6 +8,8 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Literal
 
+from src.experiments.workloads.scale import scale_for
+
 
 RangePolicy = Literal["reject", "clamp"]
 
@@ -186,6 +188,8 @@ class CapacityWorkloadMapper:
 			utilization = float(target_utilization)
 		except (TypeError, ValueError) as exc:
 			raise ValueError("target_utilization must be numeric") from exc
+		# campaign load scale (NDT_WORKLOAD_SCALE, scale.py); 1.0 when unset
+		utilization *= scale_for(controller_id)
 
         # workload burst need U = 1.10 -- U = 1.05 (based on real workload) -- U = 1.0 (based on real workload) -- U = 0.95 (based on real workload)
 		if not math.isfinite(utilization) or utilization < 0.0:

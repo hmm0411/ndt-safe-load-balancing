@@ -215,6 +215,19 @@ class NotReadyReasonTest(unittest.TestCase):
         self.assertEqual((runtime.model_version, runtime.deployed_model),
                          ("post-migration-v1", "hybrid_xgb"))
 
+    def test_analytical_override_uses_its_own_margins(self) -> None:
+        """Campaign ablation "no learned part" (configs/decision/methods.yaml)."""
+        root = Path("data/models/outcome/post-migration-v2")
+        runtime = p._load_runtime(root, "analytical")
+        self.assertEqual((runtime.deployed_model, runtime.models), ("analytical", {}))
+        self.assertAlmostEqual(runtime.m_u, 0.2843255101902358)
+        rows = [{"analytical_u_src_post": 0.7, "analytical_u_dst_post": 0.6,
+                 "analytical_r_src95_post": 0.8, "analytical_r_dst95_post": 0.9}]
+        out = runtime.predict(rows)
+        self.assertEqual((out["u_dst_post"], out["r95_post"]), ([0.6], [0.9]))
+        with self.assertRaises(ValueError):
+            p._load_runtime(root, "oracle")
+
     def test_unknown_artifact_version_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = _write_artifact(Path(tmp), model_version="post-migration-v9")

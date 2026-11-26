@@ -208,5 +208,17 @@ class MonitorOnlyFeaturesTest(unittest.TestCase):
         )
 
 
+
+class OneSidedCoverageTest(unittest.TestCase):
+    def test_only_under_forecasts_beyond_the_margin_miss(self) -> None:
+        from src.twin.forecasting.margin import coverage, coverage_one_sided
+
+        y_true = [1.0, 0.5, 0.9, 0.2]
+        y_pred = [0.8, 0.5, 1.2, 0.2]      # errors +0.2, 0, -0.3, 0
+        self.assertEqual(coverage_one_sided(y_true, y_pred, 0.1), 0.75)   # only +0.2 misses
+        self.assertEqual(coverage(y_true, y_pred, 0.1), 0.5)              # |-0.3| misses too
+        with self.assertRaises(ValueError):
+            coverage_one_sided([], [], 0.1)
+
 if __name__ == "__main__":
     unittest.main()

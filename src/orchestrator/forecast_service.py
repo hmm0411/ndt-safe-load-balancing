@@ -13,6 +13,8 @@ from typing import Any, Mapping
 
 from src.orchestrator.current_state import CurrentStateStore
 from src.telemetry.writer import JsonlWriter
+from src.twin.calibration.feedback import ForecastFeedback
+from src.twin.calibration.online_margin import TrackerConfig
 from src.twin.forecasting.predictor import RuntimeForecaster
 
 MODEL_NOT_LOADED = "MODEL_NOT_LOADED"
@@ -39,6 +41,19 @@ class ForecastService:
         self.enabled = enabled
         self.load_error = load_error
         self.last_error: str | None = None
+        self.feedback: ForecastFeedback | None = None
+
+    def configure_margins(self, mode: str, config: TrackerConfig) -> None:
+        """Campaign margin mode for m_f: fixed (validation, as before), adaptive (feedback,
+        online quantile tracking per controller) or zero (ablation). Call once at start."""
+        if self.forecaster is None:
+            return
+        margins = self.forecaster.margin
+        steps = int(self.forecaster.card.get("horizon_steps") or 0)
+        self.feedback = ForecastFeedback(
+            {str(k): float(v) for k, v in margins["controllers"].items()},
+            float(margins["global"]), steps, mode, config)
+        self.forecaster.margin_override = self.feedback.margin
 
     @classmethod
     def from_config(
@@ -68,6 +83,8 @@ class ForecastService:
         start = time.perf_counter_ns()
         try:
             predictions = self.forecaster.update(twin_state)
+            if self.feedback is not None:
+                self.feedback.observe(predictions)
             # Whole decision-side cost of one snapshot (rows, history, features,
             # OOD gate, predict for every controller): input to write_horizon.py.
             service_ms = (time.perf_counter_ns() - start) / 1e6
@@ -84,6 +101,8 @@ class ForecastService:
                 "service_time_ms": service_ms,
                 "controllers": [p.to_dict() for p in predictions],
             }
+            if self.feedback is not None:
+                payload["margin_feedback"] = self.feedback.to_dict()
             self.store.set_forecast(payload)
             if self.writer is not None and self.output_dir is not None:
                 self.writer.append(self.output_dir / f"{run_id}.jsonl", payload)

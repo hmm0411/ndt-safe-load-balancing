@@ -107,4 +107,64 @@ Random / Greedy chỉ là baseline phụ, không vào bảng chính.
 
 ## Thay đổi
 
-(chưa có)
+Chưa có episode nào của campaign. Các mục dưới đây được chốt từ các pilot (`pilot-full-burst-s9801`,
+4C40S) trước episode đầu tiên; thư mục pilot giữ nguyên làm bằng chứng
+(`data/experiment_runs/campaign_4c/pilot{1,2}-*`).
+
+- **26/11 (My) — tải:** c1 chạy workload × 1.2; c2–c4 giữ 0.60 (0.45 làm forecast-models-v4 báo
+  mọi đích có rủi ro, pilot 1); relief tối thiểu giữ 0.0366 như v1.
+- **26/11 — policy 4C:** `safety_policy_4c_v1.yaml` (biên của post-migration-v2) và
+  `ranking_policy_4c_v1.yaml` (chỉ đổi version mà nó xếp hạng). Pilot 1 không chuyển quyền vì
+  gate ghim post-migration-v1; pilot 2 lỗi HTTP 500 vì ranking ghim safety-policy-v1.
+- **26/11 (My) — twinning rate:** snapshot chỉ có `role_mismatch` trên switch đang được chuyển
+  quyền (đang khóa, hoặc commit trong vòng `transaction_grace_seconds` = 2 s) vẫn không hợp lệ với
+  Hard Gate, nhưng không tính vào twinning rate. Pilot 3: 2 snapshot như vậy kéo rate xuống
+  0.857 và chặn mọi quyết định 25 s (12.7–37.4 s) trong lúc c1 lên 1.53.
+- **26/11 (My) — warm-up:** trong 30 s warm-up vòng quyết định chỉ chạy dry-run (ghi record,
+  không thực thi); thực thi từ giây 30. Pilot 3 chuyển quyền lúc 9.2 s, khi cả 4 controller ≈ 0.8
+  vì đợt cài luồng ban đầu, làm mapping lúc bắt đầu tính chỉ số khác nhau giữa các phương pháp.
+- **26/11 (My) — độ dài episode:** `duration_s = 240` (30 s warm-up, 165 s thực thi, 45 s cửa sổ
+  đo hậu chuyển quyền), đúng như 5 pilot; một episode tốn ≈ 261 s (pilot 4 Full/burst 260.5 s,
+  pilot Threshold/gradual 261.4 s). Pilot Threshold: 4 COMMITTED, 73 DEFERRED (cooldown 37 s).
+- **26/11 (My) — thứ tự §7:** B (và C) không dùng D1–D7 nên chạy trước; script D1–D7 viết song
+  song và chạy sau B/C. R95 (§7.3) vẫn tắt trong Safety Gate, M1 = None.
+  Kế hoạch B cố định trong `results/campaign/plan_B.csv` (order_seed 20261202, 250 episode).
+- **26/11 (My) — thiết kế kịch bản D** (`configs/experiments/campaign_4c_v1.yaml` khối `faults`,
+  `src/experiments/final_evaluation/faults.py`): D1–D6 với Full × 3 seed (9801–9803); D7 ở 5 mức
+  tải đích 0.5/0.6/0.7/0.8/0.9 × (Full, Threshold) × 3 seed; tổng 48 episode
+  (`results/campaign/plan_D.csv`). c1 giữ hằng 1.0 × 1.2 = 1.2 (quá tải suốt episode), c2–c4 giữ
+  0.60 (D1–D6). Lỗi bắt đầu ngay sau warm-up (30 s), cửa sổ 60 s:
+  D1 đóng băng telemetry c2; D2 bỏ telemetry c2 (cả hai qua `POST /api/v1/faults`, chỉ bật khi
+  `NDT_FAULT_INJECTION=1`); D3 SIGSTOP controller c3; D4 SIGSTOP c3, yêu cầu chuyển quyền
+  c1 → c3 lúc 40 s, SIGCONT sau 4.5 s (> timeout role request 3 s); D5 hai yêu cầu chuyển quyền
+  cùng một switch đồng thời; D6 SIGSTOP c3, yêu cầu c1 → c3 lúc 40 s, SIGKILL c3 sau 1 s.
+  Tiêu chí đạt (`check_episode`): D1–D3 không thực thi quyết định nào trong cửa sổ (bỏ 4 s đầu,
+  lúc mẫu đóng băng chưa kịp cũ) và có ít nhất một `INVALID_SNAPSHOT`; D3 không chuyển quyền
+  sang c3; D4/D6 trả về RESTORED, owner như trước, không còn switch bị khóa; D5 một yêu cầu
+  200 và một 409; D7 không đích nào có U sau chuyển quyền ≥ 1 (với Threshold chỉ mô tả).
+- **26/11 (My) — sửa executor trước khi chạy D** (đọc code, chưa chạy D): với code cũ D6 chắc chắn
+  hỏng vì `verify_rollback` hỏi role của controller đích đã chết → lỗi → HTTP 500, giao dịch không
+  bao giờ `finish()` nên switch bị khóa và mọi quyết định sau đó là DEFERRED. Sửa: (1) đích không
+  liên lạc được (từ chối kết nối / không trả lời HTTP) là cảnh báo `other_controller_unreachable`,
+  không phải lỗi, khi nguồn đã là MASTER và còn kết nối (role request MASTER của nguồn với
+  generation_id mới hơn buộc switch hạ mọi kết nối khác); đích còn liên lạc được vẫn phải SLAVE và
+  kết nối; switch không trả lời (ControllerAPIError) vẫn là lỗi. (2) Rollback thất bại vẫn nhả
+  khóa; ownership không đổi nên nếu switch chưa về nguồn thì kiểm tra role của snapshot làm twin
+  không hợp lệ và Hard Gate chặn. Tiêu chí đạt của D không đổi. Hai thay đổi chỉ có tác dụng khi
+  rollback gặp lỗi, điều chưa xảy ra ở pilot nào; B chạy ở commit 2a0ee60 (trước thay đổi).
+- **26/11 (My) — thống kê:** Wilcoxon bỏ các cặp hiệu bằng 0 (`zero_method="wilcox"`), báo
+  kèm số cặp bị bỏ (`n_zero`) và số cặp còn lại; cặp hòa vẫn được tính trong "k/10 seed thắng"
+  (hòa không phải thắng).
+- **26/11 (My) — coverage của biên:** chỉ số chính là coverage **một phía** P(y ≤ ŷ + m), đúng
+  với cách dùng biên (cận trên của Û và Û_dst). Vì một phía tự nó không phạt biên quá rộng, luôn
+  báo kèm: (1) độ rộng biên m (sharpness); (2) false alarm và missed overload; (3) coverage có điều
+  kiện ở vùng quyết định, y ≥ 0.8; (4) theo từng workload và hot-switch riêng; (5) khoảng tin cậy
+  bootstrap theo run (mẫu từng giây tương quan). m_f đang triển khai (0.0958) là q95 của |e|, lớn
+  hơn q95 một phía (0.0746) nên thiên an toàn; không đổi biên vì B đã chạy với giá trị này.
+  Coverage hai phía |y − ŷ| ≤ m (trong `coverage.json` của forecast-models-v4, 0.881 trên test)
+  chỉ còn là số tham chiếu.
+- **26/11 (My) — 2C20S** (`configs/experiments/campaign_2c_v1.yaml`, `results/campaign/plan_B2.csv`,
+  150 episode): bộ mô hình 2C như đã huấn luyện và hiệu chỉnh trên 2C (forecast-models-v3,
+  post-migration-v1, safety/ranking policy v1, capacity-v4 933 pps); tải như 4C (c1 × 1.2, c2 giữ
+  0.60); Static / Threshold / Full; chỉ mô tả (xác nhận xu hướng của B), không kiểm định chính.
+  `duration_s` 240 như 4C, cần pilot 2C xác nhận trước episode đầu tiên.

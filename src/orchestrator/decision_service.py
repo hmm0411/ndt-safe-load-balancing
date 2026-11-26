@@ -9,6 +9,9 @@ verification, rollback stay there). Every plan/execute writes one decision recor
 
 from __future__ import annotations
 
+import dataclasses
+import os
+import random
 import time
 from collections import Counter, OrderedDict
 from dataclasses import dataclass
@@ -30,11 +33,20 @@ from src.schemas.decision import (
     SafetyDecision,
 )
 from src.schemas.twin import TwinState
+from src.twin.calibration.feedback import OutcomeMargin
+from src.twin.calibration.online_margin import TrackerConfig
 from src.twin.decision import closed_loop as cl
+from src.twin.decision import heuristic
 from src.twin.decision.candidate_generator import CandidateGeneration, generate_candidates
 from src.twin.decision.candidate_precheck import PrecheckContext, PrecheckResult, precheck_all
 from src.twin.decision.decision_context import DRY_RUN, EXECUTE, DecisionContext
-from src.twin.decision.ranking import RankingContext, rank_candidates
+from src.twin.decision.methods import MethodSpec, load_method
+from src.twin.decision.ranking import (
+    NO_SAFE_ACTION,
+    RAW_NAMES,
+    RankingContext,
+    rank_candidates,
+)
 from src.twin.decision.ranking_policy import RankingPolicy, load_ranking_policy
 from src.twin.decision.safety_gate import GateContext, SafetyGate
 from src.twin.decision.safety_policy import SafetyPolicy, load_safety_policy
@@ -83,12 +95,26 @@ class DecisionService:
         loop_config: cl.ClosedLoopConfig | None = None,
         executor: Executor | None = None,
         record_root: Path | None = None,
+        method: MethodSpec | None = None,
+        seed: int | None = None,
     ) -> None:
         self.store = store
         self.forecast_payload = forecast_payload
-        self.predictor = predictor
         self.transactions = transactions
+        # Campaign method (configs/decision/methods.yaml); default = the pipeline as before.
+        self.method = method or load_method()
         self.policy = policy or load_safety_policy()
+        if self.method.cooldown_seconds is not None:  # ablation: cooldown = 0
+            self.policy = dataclasses.replace(self.policy, cooldown_seconds=dataclasses.replace(
+                self.policy.cooldown_seconds, value=self.method.cooldown_seconds,
+                source=f"method {self.method.name}"))
+        fb = self.method.feedback
+        self.outcome_margin = OutcomeMargin(predictor, self.method.margins,
+                                            TrackerConfig(fb.alpha, fb.gamma_outcome))
+        self.predictor: Any = self.outcome_margin
+        # Random ranking (ablation) is seeded per episode: NDT_EPISODE_SEED or ``seed``.
+        self.rng = random.Random(seed if seed is not None
+                                 else int(os.environ.get("NDT_EPISODE_SEED") or 0))
         self.gate = SafetyGate(self.policy)
         self.clock = clock
         self.ranking_policy = ranking_policy or load_ranking_policy()
@@ -256,6 +282,12 @@ class DecisionService:
                 record = self._cache.get(window.decision_id)
                 if record is not None:
                     record["actual_post"] = actual
+                    selected = record.get("selected") or {}
+                    if selected.get("selector") != "heuristic":  # feedback: m_U
+                        covered = self.outcome_margin.observe_outcome(
+                            selected.get("predicted_dst_utilization"), actual.get("u_dst"))
+                        record["margin_feedback"] = {
+                            "covered": covered, **self.outcome_margin.to_dict()}
                     self._save(record)
 
     def _save(self, record: dict[str, Any]) -> None:
@@ -286,6 +318,8 @@ class DecisionService:
         return {
             **ctx.to_dict(),
             "loop_version": self.loop_config.version,
+            "method": self.method.name,
+            "methods_version": self.method.version,
             "safety_policy_version": self.policy.version,
             "ranking_policy_version": self.ranking_policy.version,
             "status": cl.NOT_READY,
@@ -324,17 +358,25 @@ class DecisionService:
             return stop(cl.DEFERRED, reasons={ACTIVE_TRANSACTION_CONFLICT: 1})
         if not twin.quality.valid:  # Hard Gate: nothing runs on an invalid snapshot
             return stop(INVALID_SNAPSHOT, reasons={INVALID_SNAPSHOT: 1})
-        forecast = self.forecast_payload()
-        record["forecast_snapshot_id"] = forecast.get("snapshot_id")
-        record["forecast_model_version"] = forecast.get("model_version")
-        if forecast.get("status") != OK:
-            return stop(cl.NOT_READY, f"FORECAST_NOT_READY:{forecast.get('status')}")
-        if forecast.get("snapshot_id") != twin.snapshot_id:
-            return stop(cl.NOT_READY, "FORECAST_SNAPSHOT_MISMATCH")
-        record["timings_ms"]["forecast"] = float(forecast.get("service_time_ms") or 0.0)
-
-        started = time.perf_counter()
-        risk = self._risk(forecast)
+        if not self.method.migrates:  # Static baseline: same records, never an action
+            return stop(cl.NO_RISK, f"method {self.method.name}: never migrates")
+        forecast: dict[str, Any] = {}
+        if self.method.trigger == "measured":  # Threshold baseline: measured U, no forecast
+            started = time.perf_counter()
+            level = self.method.trigger_utilization
+            risk: dict[str, bool | None] = {c.controller_id: c.utilization >= level
+                                            for c in twin.controllers}
+        else:
+            forecast = self.forecast_payload()
+            record["forecast_snapshot_id"] = forecast.get("snapshot_id")
+            record["forecast_model_version"] = forecast.get("model_version")
+            if forecast.get("status") != OK:
+                return stop(cl.NOT_READY, f"FORECAST_NOT_READY:{forecast.get('status')}")
+            if forecast.get("snapshot_id") != twin.snapshot_id:
+                return stop(cl.NOT_READY, "FORECAST_SNAPSHOT_MISMATCH")
+            record["timings_ms"]["forecast"] = float(forecast.get("service_time_ms") or 0.0)
+            started = time.perf_counter()
+            risk = self._risk(forecast)
         at_risk = sorted(cid for cid, value in risk.items() if value is True)
         record["timings_ms"]["risk"] = _ms(started)
         record["at_risk"] = at_risk
@@ -347,6 +389,8 @@ class DecisionService:
             return stop(cl.DEFERRED, f"cooldown {elapsed:.1f}/{cooldown:.0f} s",
                         {COOLDOWN_ACTIVE: 1})
 
+        if self.method.selector == "heuristic":
+            return self._heuristic(record, ctx, twin, at_risk, simulate_failure, stop)
         run = self._pipeline(twin, forecast)
         items: list[tuple[SafetyDecision, EvaluatedCandidate | None]] = []
         for cand in run.eligible:
@@ -368,6 +412,13 @@ class DecisionService:
             ),
             self.ranking_policy,
         )
+        if self.method.ranking == "random" and ranking.selected_candidate_id is not None:
+            # Ablation: any beneficial safe candidate, uniformly (seeded per episode); the
+            # NO_MIGRATION rule (nothing safe / nothing beneficial) is kept as it is.
+            pool = [r for r in ranking.ranked if all(
+                getattr(r, RAW_NAMES[m]) > 0 for m in self.ranking_policy.require_positive)]
+            ranking = dataclasses.replace(ranking,
+                                          selected_candidate_id=self.rng.choice(pool).candidate_id)
         rejections = self._rejections(run)
         reasons = Counter(rejections["precheck"])
         reasons.update(rejections["safety"])
@@ -399,6 +450,44 @@ class DecisionService:
         if ctx.mode == DRY_RUN:
             return stop(cl.SELECTED)
         return self._execute_selected(record, candidate, simulate_failure, stop)
+
+    def _heuristic(self, record: dict[str, Any], ctx: DecisionContext, twin: TwinState,
+                   at_risk: list[str], simulate_failure: str,
+                   stop: Callable[..., dict[str, Any]]) -> dict[str, Any]:
+        """Threshold / Forecast-only: same candidates and pre-check as the pipeline, then
+        the heaviest switch to the least loaded destination with a room check (heuristic.py);
+        no outcome model, no Safety Gate, no ranking."""
+        started = time.perf_counter()
+        now = self.clock()
+        generated = generate_candidates(twin, at_risk, now)
+        precheck = precheck_all(generated.candidates, twin, PrecheckContext(
+            at_risk=frozenset(at_risk), role_matrix=self.store.role_matrix(),
+            locked_switches=frozenset(self.transactions.locked_switches()),
+            last_migration_finished_at=self.transactions.last_finished_at(),
+            cooldown_seconds=self.policy.cooldown_seconds.value, now=now))
+        eligible = [c for c, r in zip(generated.candidates, precheck) if r.eligible]
+        capacity = {c.controller_id: c.safe_capacity_pps for c in twin.controllers}
+        choice = heuristic.choose(eligible, capacity, self.method.room_limit)
+        record["timings_ms"]["candidate"] = _ms(started)
+        record["funnel"] = {"raw": len(generated.candidates), "eligible": len(eligible),
+                            "evaluated": 0, "safe": 0}
+        record["reasons"] = dict(Counter(x for r in precheck for x in r.reasons))
+        if choice.candidate is None:
+            return stop(NO_SAFE_ACTION, f"heuristic: {choice.reason}",
+                        {**record["reasons"], str(choice.reason): 1})
+        cand = choice.candidate
+        record["selected"] = {
+            "candidate_id": cand.candidate_id, "switch_id": cand.switch_id,
+            "source_controller": cand.source_controller,
+            "target_controller": cand.target_controller, "total_score": None,
+            "predicted_src_utilization": choice.predicted_src_utilization,
+            "predicted_dst_utilization": choice.predicted_dst_utilization,
+            "predicted_imbalance": None, "utilization_margin": None,
+            "selector": "heuristic",
+        }
+        if ctx.mode == DRY_RUN:
+            return stop(cl.SELECTED)
+        return self._execute_selected(record, cand, simulate_failure, stop)
 
     def _execute_selected(self, record: dict[str, Any], candidate: MigrationCandidate,
                           simulate_failure: str, stop: Callable[..., dict[str, Any]]) -> dict[str, Any]:

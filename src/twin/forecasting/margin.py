@@ -83,6 +83,17 @@ def coverage(y_true: Any, y_pred: Any, margin: Any) -> float:
     return float(np.mean(e <= np.asarray(margin, dtype=float)))
 
 
+def coverage_one_sided(y_true: Any, y_pred: Any, margin: Any) -> float:
+    """Share of samples with U <= U_hat + m_f: the upper bound the Safety Gate and the
+    overload detector use (protocol 6, chosen 26/11). ``coverage`` above is the two-sided
+    |U - U_hat| <= m_f of the frozen artifacts; with the same m_f the one-sided value is
+    never lower."""
+    e = _errors(y_true, y_pred)
+    if e.size == 0:
+        raise ValueError("inputs must not be empty")
+    return float(np.mean(e <= np.asarray(margin, dtype=float)))
+
+
 def overload_confusion(
     y_true: Any,
     upper_bound: Any,
@@ -111,10 +122,11 @@ def overload_confusion(
 def coverage_by_group(
     y_true: Any,
     y_pred: Any,
-    margins: Sequence[float],
+    margins: Any,
     groups: Sequence[str],
 ) -> dict[str, dict[str, float]]:
-    """Coverage and sample count per group label (controller or workload)."""
+    """Coverage and sample count per group label (controller or workload); the three arrays
+    are anything np.asarray takes (lists or 1-D arrays)."""
     true = np.asarray(y_true, dtype=float).reshape(-1)
     pred = np.asarray(y_pred, dtype=float).reshape(-1)
     m = np.asarray(margins, dtype=float).reshape(-1)

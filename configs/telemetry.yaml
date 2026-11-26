@@ -6,5 +6,9 @@ twin_quality:
   twinning_window_seconds: 60
   min_twinning_rate: 0.95
   min_completeness_ratio: 1.0
+  # A snapshot whose only conflicts are role mismatches on a switch being migrated (locked,
+  # or committed less than this long before the snapshot: the role poll can predate the
+  # commit) is left out of the twinning rate; it stays invalid (26/11, pilot 3).
+  transaction_grace_seconds: 2.0
 raw_data_dir: "data/raw"
 snapshot_data_dir: "data/snapshots"

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import dataclasses
 import math
+import os
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
@@ -140,7 +141,15 @@ def parse_ranking_policy(data: Mapping[str, Any]) -> RankingPolicy:
     return RankingPolicy(version, safety, components, positive, sensitivity)
 
 
-def load_ranking_policy(path: Path = POLICY_PATH) -> RankingPolicy:
+POLICY_ENV = "NDT_RANKING_POLICY"
+
+
+def load_ranking_policy(path: Path | None = None) -> RankingPolicy:
+    """The policy at ``path``, else NDT_RANKING_POLICY (relative to the repo), else v1."""
+    if path is None:
+        env = os.environ.get(POLICY_ENV)
+        path = (Path(env) if Path(env).is_absolute() else REPO_ROOT / env) if env \
+            else POLICY_PATH
     data = yaml.safe_load(Path(path).read_text(encoding="utf-8")) or {}
     if not isinstance(data, Mapping):
         raise ValueError(f"{path}: expected a mapping")

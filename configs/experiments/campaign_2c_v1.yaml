@@ -1,0 +1,26 @@
+# Closed-loop campaign on 2C20S (docs/evaluation-protocol-v1.md, scenario B: "2C20S: Static /
+# Threshold / Full x 5 x 10 to confirm the trend"). Decided 26/11 (My): the 2C stack as it was
+# trained and calibrated on 2C (forecast-models-v3, post-migration-v1, safety and ranking
+# policy v1, capacity-v4); load as in 4C (c1 x 1.2, the destination c2 at 0.60).
+# Fixed before any 2C campaign episode runs; a change after results = protocol "Thay doi".
+version: campaign-2c-v1
+topology: 2C20S
+controllers_config: configs/controllers_2c20s.yaml
+capacity: data/benchmarks/controller_capacity.json
+forecast_config: configs/forecasting/runtime.yaml
+outcome_config: configs/outcome/runtime.yaml
+safety_policy: configs/decision/safety_policy_v1.yaml
+ranking_policy: configs/decision/ranking_policy_v1.yaml
+capacity_runs: data/benchmarks/capacity_runs.csv
+out_root: data/experiment_runs/campaign_2c
+load:
+  scaled_controller: c1
+  scale: 1.2
+  other_level: 0.60
+seeds: [9801, 9802, 9803, 9804, 9805, 9806, 9807, 9808, 9809, 9810]
+order_seed: 20261205
+warmup_s: 30
+duration_s: 240        # as 4C; to be confirmed by the 2C pilot (protocol 7.5)
+workloads: [stable, gradual, burst, oscillating, hot_switch]
+scenarios:
+  B2: [static, threshold, full]                                                # 150 episodes

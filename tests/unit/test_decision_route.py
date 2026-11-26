@@ -39,7 +39,9 @@ class DecisionRouteTest(unittest.TestCase):
     def test_service_is_wired_to_the_live_components(self) -> None:
         service = orchestrator.decision_service
         self.assertIs(service.store, orchestrator.store)
-        self.assertIs(service.predictor, orchestrator.outcome_service.predictor)
+        # the decision sees the outcome predictor through the campaign's margin wrapper
+        self.assertIs(service.outcome_margin.predictor, orchestrator.outcome_service.predictor)
+        self.assertIs(service.predictor, service.outcome_margin)
         self.assertIs(service.transactions, orchestrator.transaction_manager)
 
     def test_route_has_no_side_effects(self) -> None:
@@ -53,6 +55,17 @@ class DecisionRouteTest(unittest.TestCase):
         self.assertEqual(dict(orchestrator.ownership_manager.snapshot_mapping()), ownership)
         self.assertEqual(orchestrator.ownership_manager.version, version)
         self.assertEqual(list(orchestrator.transaction_manager.locked_switches()), locked)
+
+    def test_fault_route_is_off_without_the_env(self) -> None:
+        """B and C episodes never set NDT_FAULT_INJECTION: the D1/D2 route refuses (403)."""
+        from fastapi import HTTPException
+
+        self.assertFalse(orchestrator.fault_injector.enabled)
+        with self.assertRaises(HTTPException) as ctx:
+            orchestrator.inject_fault(orchestrator.FaultRequest(
+                kind="freeze_telemetry", controller_id="c1", seconds=10))
+        self.assertEqual(ctx.exception.status_code, 403)
+        self.assertEqual(orchestrator.list_faults(), {"enabled": False, "active": []})
 
 
 if __name__ == "__main__":

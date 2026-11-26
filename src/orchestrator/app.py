@@ -4,7 +4,7 @@ import json
 import os
 import threading
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import yaml
@@ -19,8 +19,11 @@ from src.execution.verification import MigrationVerifier
 from src.orchestrator.current_state import CurrentStateStore
 from src.orchestrator.decision_service import DecisionService
 from src.orchestrator.forecast_service import ForecastService
+from src.twin.calibration.online_margin import TrackerConfig
+from src.twin.decision.methods import load_method
 from src.orchestrator.outcome_service import OutcomeService
 from src.orchestrator.ownership_manager import OwnershipManager
+from src.orchestrator.fault_injection import FaultInjector
 from src.orchestrator.transaction_manager import TransactionConflict, TransactionManager
 from src.telemetry.collector import TelemetryCollector
 from src.telemetry.snapshot_builder import SnapshotBuilder
@@ -31,7 +34,7 @@ from src.twin.state.builder import TwinStateBuilder
 from src.twin.state.setup_probe_store import SetupProbeStore, SetupStats
 from src.twin.state.quality import TwinQualityAssessor
 from src.twin.state.quality_score import validate_config
-from src.twin.state.twinning_rate import TwinningRateTracker
+from src.twin.state.twinning_rate import TwinningRateTracker, migration_transient
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -96,6 +99,7 @@ quality_cfg = telemetry_cfg["twin_quality"]
 twinning_tracker = TwinningRateTracker(
     window_seconds=float(quality_cfg["twinning_window_seconds"]),
 )
+TRANSACTION_GRACE = timedelta(seconds=float(quality_cfg["transaction_grace_seconds"]))
 quality_assessor = TwinQualityAssessor(
     expected_controller_ids=set(CONTROLLERS),
     expected_switch_ids=set(SWITCHES),
@@ -110,13 +114,26 @@ twin_state_builder = TwinStateBuilder(
     quality_provider=quality_assessor.assess,
 )
 store = CurrentStateStore()
+# Fault scenarios D1/D2 only; off (and never consulted) unless NDT_FAULT_INJECTION=1.
+fault_injector = FaultInjector(os.environ.get("NDT_FAULT_INJECTION") == "1", CONTROLLERS)
 setup_probe_store = SetupProbeStore(float(telemetry_cfg["freshness_max_age_ms"]))
 writer = JsonlWriter()
 forecast_service = ForecastService.from_config(forecast_cfg, ROOT, store, writer)
 outcome_service = OutcomeService.from_config(outcome_cfg, ROOT, store)
+# Campaign method (NDT_DECISION_METHOD, configs/decision/methods.yaml); default
+# ndt_no_feedback = the decision pipeline as before. The method also sets the m_f mode of
+# the forecaster and, for the "no learned part" ablation, the outcome model.
+decision_method = load_method()
+forecast_service.configure_margins(
+    decision_method.margins,
+    TrackerConfig(decision_method.feedback.alpha, decision_method.feedback.gamma_forecast))
+if decision_method.outcome == "analytical":
+    outcome_service.predictor.override = "analytical"
 decision_service = DecisionService(
-    store, forecast_service.payload, outcome_service.predictor, transaction_manager
+    store, forecast_service.payload, outcome_service.predictor, transaction_manager,
+    method=decision_method,
 )
+print(f"[decision] method={decision_method.name} ({decision_method.version})", flush=True)
 # Decision records of plan/execute: one directory per decision (gitignored data).
 decision_service.record_root = ROOT / decision_service.loop_config.record_dir
 stop_event = threading.Event()
@@ -147,6 +164,12 @@ class DecisionRequest(BaseModel):
     simulate_failure: str = "none"
 
 
+class FaultRequest(BaseModel):
+    kind: str
+    controller_id: str
+    seconds: float
+
+
 class KillSwitchRequest(BaseModel):
     enabled: bool
 
@@ -170,6 +193,10 @@ class SetupProbeRequest(BaseModel):
 
 def collect_once(run_id: str):
     for controller_id in CONTROLLERS:
+        if fault_injector.enabled and fault_injector.skip_poll(controller_id):  # D1/D2 only
+            if fault_injector.take_drop(controller_id):
+                store.forget_controller(controller_id)
+            continue
         try:
             collection = collector.collect_controller(controller_id)
             store.update_collection(
@@ -210,10 +237,14 @@ def build_snapshot(run_id: str):
     )
     snapshot = setup_probe_store.overlay(snapshot)
     try:
-        twinning_tracker.record(
-            success=snapshot.quality.valid,
-            observed_at=snapshot.created_at,
-        )
+        moving = transaction_manager.switches_in_flight(snapshot.created_at - TRANSACTION_GRACE)
+        if migration_transient(snapshot.quality, moving):
+            twinning_tracker.skip()
+        else:
+            twinning_tracker.record(
+                success=snapshot.quality.valid,
+                observed_at=snapshot.created_at,
+            )
         twin_state = twin_state_builder.build(snapshot)
         store.set_snapshot(snapshot)
         store.set_twin_state(twin_state)
@@ -320,6 +351,7 @@ def state():
         "locked_switches": transaction_manager.locked_switches(),
         "transactions": transaction_manager.list_all(),
         "telemetry_errors": store.errors(),
+        "twinning_skipped": twinning_tracker.skipped,
         "latest_snapshot": store.snapshot_dict(),
     }
 
@@ -372,6 +404,22 @@ def twin_decision_execute(request: DecisionRequest):
     if failure_mode not in {"none", "flow_mod"}:
         raise HTTPException(400, "simulate_failure must be 'none' or 'flow_mod'")
     return decision_service.execute(request.scenario, failure_mode)
+
+
+@app.post("/api/v1/faults")
+def inject_fault(request: FaultRequest):
+    """Telemetry fault of the D1/D2 episodes; 403 unless NDT_FAULT_INJECTION=1."""
+    try:
+        return fault_injector.inject(request.kind, request.controller_id, request.seconds)
+    except PermissionError as exc:
+        raise HTTPException(403, str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+
+@app.get("/api/v1/faults")
+def list_faults():
+    return {"enabled": fault_injector.enabled, "active": fault_injector.active()}
 
 
 @app.post("/api/v1/twin/decision/kill-switch")
@@ -584,6 +632,11 @@ def migrate(request: MigrationRequest):
 
         except Exception as rollback_error:
             transaction_manager.fail(tx, str(rollback_error))
+            # Release the lock (26/11, fault D6): a transaction left locked kept every later
+            # decision DEFERRED for good. Ownership was never committed, so if the switch is
+            # not back with the source, the snapshot's role check marks the twin invalid
+            # and the Hard Gate stops any decision on it.
+            transaction_manager.finish(tx)
             raise HTTPException(
                 status_code=500,
                 detail={
