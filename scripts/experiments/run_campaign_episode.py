@@ -6,10 +6,12 @@ a fresh orchestrator (ownership, twin, history, margins), a fresh Mininet networ
 
   1. orchestrator with the episode's method (NDT_DECISION_METHOD) and seed;
   2. runtime_4c40s.py --forecast <workload>: c1 runs the workload scaled by
-     NDT_WORKLOAD_SCALE (c1=1.2, decided 26/11), c2-c4 constant 0.45;
-  3. once the workload has started, one decision request per second for
-     duration - post_window seconds (the last migrations still get their observed post
-     window inside the workload);
+     NDT_WORKLOAD_SCALE (c1=1.2, decided 26/11), c2-c4 constant 0.60;
+  3. once the workload has started, one decision request per second until
+     duration - post_window seconds after the workload start (the last migrations still
+     get their observed post window inside the workload): dry-run decisions (recorded,
+     never executed) during the warm-up, execute after it (decided 26/11, My: every method
+     then starts from the initial mapping at the end of the warm-up);
   4. everything is stopped, and the episode keeps: meta.json, the orchestrator's snapshots
      and forecasts of the run, its decision records (scenario label = episode id), logs.
 
@@ -98,6 +100,17 @@ def setup(cfg: Mapping[str, Any], episode: PlannedEpisode, duration_s: float,
     topo_env = {"NDT_WORKLOAD_SCALE": scale, "NDT_HOT_SWITCH_CHECK_LOAD": "0"}
     return EpisodeSetup(episode, duration_s, duration_s - post_window_s, scale,
                         float(load["other_level"]), orch_env, cmd, topo_env)
+
+
+def loop_phases(warmup_s: float, loop_s: float, since_start_s: float) -> tuple[float, float]:
+    """(dry-run seconds, execute seconds) of a decision loop starting ``since_start_s``
+    after the workload start; both phases end at fixed times after that start."""
+    if loop_s <= warmup_s:
+        raise ValueError("the decision loop must outlast the warm-up")
+    if since_start_s < 0:
+        raise ValueError("the loop cannot start before the workload")
+    return (max(0.0, warmup_s - since_start_s),
+            max(0.0, loop_s - max(since_start_s, warmup_s)))
 
 
 def episode_from_plan(plan: Path, episode_id: str) -> PlannedEpisode:
@@ -192,6 +205,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     status = "FAILED"
     started_at: str | None = None
     summary: dict[str, Any] = {}
+    warmup_summary: dict[str, Any] = {}
     load_before = os.getloadavg()
     episode_start = datetime.now(timezone.utc)
     try:
@@ -221,7 +235,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         started_at = json.loads(meta_path.read_text(encoding="utf-8"))["started_at"]
         print(f"[{episode.episode_id}] workload started {started_at}; loop {st.loop_s:.0f} s",
               flush=True)
-        summary = run_loop(http_post(url), episode.episode_id, "execute", st.loop_s, 1.0)
+        since = (datetime.now(timezone.utc)
+                 - datetime.fromisoformat(started_at.replace("Z", "+00:00"))).total_seconds()
+        dry_s, execute_s = loop_phases(float(cfg["warmup_s"]), st.loop_s, max(0.0, since))
+        if dry_s > 0:
+            warmup_summary = run_loop(http_post(url), episode.episode_id, "dry_run", dry_s, 1.0)
+        summary = run_loop(http_post(url), episode.episode_id, "execute", execute_s, 1.0)
         code = topo.wait(st.duration_s + 120.0)
         if code != 0:
             raise RuntimeError(f"topology exit code {code} (topology.log)")
@@ -248,6 +267,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             "workload_scale": st.workload_scale, "other_level": st.other_level,
             "config": str(args.config), "config_version": cfg["version"], "git_commit": git,
             "decisions_copied": len(records), "loop_summary": summary,
+            "warmup_summary": warmup_summary,
             "load_before": load_before, "load_after": os.getloadavg(),
             "finished_at": datetime.now(timezone.utc).isoformat()}
     (out / "meta.json").write_text(json.dumps(meta, indent=2) + "\n", encoding="utf-8")

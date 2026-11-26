@@ -46,6 +46,15 @@ class SetupTest(unittest.TestCase):
 
 
 class PlanAndRecordsTest(unittest.TestCase):
+    def test_loop_phases_dry_run_until_the_warmup_ends(self) -> None:
+        self.assertEqual(rce.loop_phases(30.0, 195.0, 2.0), (28.0, 165.0))
+        self.assertEqual(rce.loop_phases(30.0, 195.0, 40.0), (0.0, 155.0))
+        self.assertEqual(rce.loop_phases(30.0, 195.0, 0.0), (30.0, 165.0))
+        with self.assertRaises(ValueError):
+            rce.loop_phases(30.0, 30.0, 0.0)
+        with self.assertRaises(ValueError):
+            rce.loop_phases(30.0, 195.0, -1.0)
+
     def test_episode_from_plan_and_records_of(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             plan = Path(tmp) / "plan.csv"

@@ -59,6 +59,13 @@ class TransactionManager:
             times = [tx.finished_at for tx in self._transactions.values() if tx.finished_at]
             return max(times) if times else None
 
+    def switches_in_flight(self, since: datetime) -> set[str]:
+        """Switches locked now or whose transaction finished at or after ``since``."""
+        with self._lock:
+            recent = {tx.switch_id for tx in self._transactions.values()
+                      if tx.finished_at is not None and tx.finished_at >= since}
+            return recent | set(self._locked_switches)
+
     def active_count(self) -> int:
         """Number of switches currently locked by an in-flight transaction."""
         with self._lock:

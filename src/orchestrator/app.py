@@ -4,7 +4,7 @@ import json
 import os
 import threading
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import yaml
@@ -33,7 +33,7 @@ from src.twin.state.builder import TwinStateBuilder
 from src.twin.state.setup_probe_store import SetupProbeStore, SetupStats
 from src.twin.state.quality import TwinQualityAssessor
 from src.twin.state.quality_score import validate_config
-from src.twin.state.twinning_rate import TwinningRateTracker
+from src.twin.state.twinning_rate import TwinningRateTracker, migration_transient
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -98,6 +98,7 @@ quality_cfg = telemetry_cfg["twin_quality"]
 twinning_tracker = TwinningRateTracker(
     window_seconds=float(quality_cfg["twinning_window_seconds"]),
 )
+TRANSACTION_GRACE = timedelta(seconds=float(quality_cfg["transaction_grace_seconds"]))
 quality_assessor = TwinQualityAssessor(
     expected_controller_ids=set(CONTROLLERS),
     expected_switch_ids=set(SWITCHES),
@@ -223,10 +224,14 @@ def build_snapshot(run_id: str):
     )
     snapshot = setup_probe_store.overlay(snapshot)
     try:
-        twinning_tracker.record(
-            success=snapshot.quality.valid,
-            observed_at=snapshot.created_at,
-        )
+        moving = transaction_manager.switches_in_flight(snapshot.created_at - TRANSACTION_GRACE)
+        if migration_transient(snapshot.quality, moving):
+            twinning_tracker.skip()
+        else:
+            twinning_tracker.record(
+                success=snapshot.quality.valid,
+                observed_at=snapshot.created_at,
+            )
         twin_state = twin_state_builder.build(snapshot)
         store.set_snapshot(snapshot)
         store.set_twin_state(twin_state)
@@ -333,6 +338,7 @@ def state():
         "locked_switches": transaction_manager.locked_switches(),
         "transactions": transaction_manager.list_all(),
         "telemetry_errors": store.errors(),
+        "twinning_skipped": twinning_tracker.skipped,
         "latest_snapshot": store.snapshot_dict(),
     }
 

@@ -107,4 +107,19 @@ Random / Greedy chỉ là baseline phụ, không vào bảng chính.
 
 ## Thay đổi
 
-(chưa có)
+Chưa có episode nào của campaign. Các mục dưới đây được chốt từ các pilot (`pilot-full-burst-s9801`,
+4C40S) trước episode đầu tiên; thư mục pilot giữ nguyên làm bằng chứng
+(`data/experiment_runs/campaign_4c/pilot{1,2}-*`).
+
+- **26/11 (My) — tải:** c1 chạy workload × 1.2; c2–c4 giữ 0.60 (0.45 làm forecast-models-v4 báo
+  mọi đích có rủi ro, pilot 1); relief tối thiểu giữ 0.0366 như v1.
+- **26/11 — policy 4C:** `safety_policy_4c_v1.yaml` (biên của post-migration-v2) và
+  `ranking_policy_4c_v1.yaml` (chỉ đổi version mà nó xếp hạng). Pilot 1 không chuyển quyền vì
+  gate ghim post-migration-v1; pilot 2 lỗi HTTP 500 vì ranking ghim safety-policy-v1.
+- **26/11 (My) — twinning rate:** snapshot chỉ có `role_mismatch` trên switch đang được chuyển
+  quyền (đang khóa, hoặc commit trong vòng `transaction_grace_seconds` = 2 s) vẫn không hợp lệ với
+  Hard Gate, nhưng không tính vào twinning rate. Pilot 3: 2 snapshot như vậy kéo rate xuống
+  0.857 và chặn mọi quyết định 25 s (12.7–37.4 s) trong lúc c1 lên 1.53.
+- **26/11 (My) — warm-up:** trong 30 s warm-up vòng quyết định chỉ chạy dry-run (ghi record,
+  không thực thi); thực thi từ giây 30. Pilot 3 chuyển quyền lúc 9.2 s, khi cả 4 controller ≈ 0.8
+  vì đợt cài luồng ban đầu, làm mapping lúc bắt đầu tính chỉ số khác nhau giữa các phương pháp.
