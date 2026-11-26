@@ -4,6 +4,10 @@
 #   scripts/experiments/run_campaign_queue.sh results/campaign/plan_B.csv [--limit N] [--shutdown]
 # Needs: ports 6653-6656, 8081-8084, 9000 free (stop any other orchestrator/controller
 # first), duration_s set in configs/experiments/campaign_4c_v1.yaml (after the pilot).
+# Start it with `tmux new -d -s campaignB '...'` and never `tmux kill-session` first: a
+# second start then fails on the duplicate session, and the lock below refuses a second
+# queue (26/11: a doubled start killed the first queue and the second shut the VM down).
+# --shutdown powers the VM off only when the whole plan was gone through.
 set -uo pipefail
 cd "$(git rev-parse --show-toplevel)"
 PLAN="${1:?plan CSV}"; shift
@@ -20,6 +24,10 @@ source ~/ndt-venv/bin/activate
 export PYTHONPATH="$PWD"
 OUT_ROOT="${OUT_ROOT:-data/experiment_runs/campaign_4c}"
 mkdir -p "$OUT_ROOT"
+# One queue at a time. The lock is inherited by the episode's processes, so it also stays
+# held by an orphaned episode (controllers or Mininet left behind by a killed queue).
+exec 9>"$OUT_ROOT/.queue.lock"
+flock -n 9 || { echo "!! another queue (or an orphaned episode) holds $OUT_ROOT/.queue.lock: STOP"; exit 1; }
 LOG="$OUT_ROOT/queue_$(date -u +%Y%m%dT%H%M%SZ).log"
 exec > >(tee -a "$LOG") 2>&1
 GIT_COMMIT="$(git rev-parse HEAD)"; GIT_BRANCH="$(git branch --show-current)"
@@ -36,14 +44,14 @@ clean_leftover_links() {  # never mn -c (it would kill someone else's run)
     for bridge in $bridges; do sudo ovs-vsctl --if-exists del-br "$bridge"; done
 }
 
-DONE=0; FAILED=0; CONSECUTIVE=0
+DONE=0; FAILED=0; CONSECUTIVE=0; STOPPED=0
 while IFS=, read -r order episode_id method workload seed; do
     [[ "$order" == "order" ]] && continue
     if [[ -e "$OUT_ROOT/$episode_id" ]]; then echo "SKIP existing: $episode_id"; continue; fi
     if [[ "$(git rev-parse HEAD)" != "$GIT_COMMIT" || "$(git branch --show-current)" != "$GIT_BRANCH" ]]; then
-        echo "!! the worktree moved: queue ABORTED"; break
+        echo "!! the worktree moved: queue ABORTED"; STOPPED=1; break
     fi
-    (( LIMIT > 0 && DONE + FAILED >= LIMIT )) && { echo "limit $LIMIT reached"; break; }
+    (( LIMIT > 0 && DONE + FAILED >= LIMIT )) && { echo "limit $LIMIT reached"; STOPPED=1; break; }
     echo "-- [$order] $episode_id $(date -u +%T)"
     clean_leftover_links
     if python3 scripts/experiments/run_campaign_episode.py --plan "$PLAN" \
@@ -53,10 +61,12 @@ while IFS=, read -r order episode_id method workload seed; do
         FAILED=$((FAILED + 1)); CONSECUTIVE=$((CONSECUTIVE + 1)); echo "!! FAIL: $episode_id"
         sudo pkill -f "mininet:[hp][0-9]+" 2>/dev/null
         clean_leftover_links
-        (( CONSECUTIVE >= 3 )) && { echo "!! 3 episodes failed in a row: queue ABORTED"; break; }
+        (( CONSECUTIVE >= 3 )) && { echo "!! 3 episodes failed in a row: queue ABORTED"; STOPPED=1; break; }
     fi
 done < "$PLAN"
 echo "== summary $(date -u +%FT%TZ): passed $DONE failed $FAILED"
-if [[ "$SHUTDOWN" -eq 1 ]]; then
+if [[ "$SHUTDOWN" -eq 1 && "$STOPPED" -eq 1 ]]; then
+    echo "queue stopped before the end of the plan: the VM stays on"
+elif [[ "$SHUTDOWN" -eq 1 ]]; then
     echo "shutting the VM down in 5 minutes (cancel: sudo shutdown -c)"; sudo shutdown -h +5
 fi
