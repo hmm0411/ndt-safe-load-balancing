@@ -111,10 +111,11 @@ def overload_confusion(
 def coverage_by_group(
     y_true: Any,
     y_pred: Any,
-    margins: Sequence[float],
+    margins: Any,
     groups: Sequence[str],
 ) -> dict[str, dict[str, float]]:
-    """Coverage and sample count per group label (controller or workload)."""
+    """Coverage and sample count per group label (controller or workload); the three arrays
+    are anything np.asarray takes (lists or 1-D arrays)."""
     true = np.asarray(y_true, dtype=float).reshape(-1)
     pred = np.asarray(y_pred, dtype=float).reshape(-1)
     m = np.asarray(margins, dtype=float).reshape(-1)

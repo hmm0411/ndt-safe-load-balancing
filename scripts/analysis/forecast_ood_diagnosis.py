@@ -81,7 +81,7 @@ def diagnose(rows: Sequence[Mapping[str, Any]], predict: Predict, margins: Mappi
     x = records_to_matrix(ordered, names)
     lo, hi = ranges._bounds()
     outside = ~((x >= lo) & (x <= hi))                       # (rows, features), NaN = outside
-    keep = np.asarray([n not in set(ignore) for n in names])
+    keep = np.asarray([n not in set(ignore) for n in names], dtype=bool)
     sequences = [str(r["sequence_id"]) for r in ordered]
     active = {
         "no_gate": np.zeros(len(ordered), dtype=bool),
