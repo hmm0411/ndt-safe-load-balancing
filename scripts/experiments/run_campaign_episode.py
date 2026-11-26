@@ -269,6 +269,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             "decisions_copied": len(records), "loop_summary": summary,
             "warmup_summary": warmup_summary,
             "load_before": load_before, "load_after": os.getloadavg(),
+            "episode_started_at": episode_start.isoformat(),
+            "wall_s": round((datetime.now(timezone.utc) - episode_start).total_seconds(), 1),
             "finished_at": datetime.now(timezone.utc).isoformat()}
     (out / "meta.json").write_text(json.dumps(meta, indent=2) + "\n", encoding="utf-8")
     print(f"[{episode.episode_id}] {status}: {len(records)} decision records -> {out}")
