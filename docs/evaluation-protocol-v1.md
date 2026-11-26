@@ -123,3 +123,9 @@ Chưa có episode nào của campaign. Các mục dưới đây được chốt 
 - **26/11 (My) — warm-up:** trong 30 s warm-up vòng quyết định chỉ chạy dry-run (ghi record,
   không thực thi); thực thi từ giây 30. Pilot 3 chuyển quyền lúc 9.2 s, khi cả 4 controller ≈ 0.8
   vì đợt cài luồng ban đầu, làm mapping lúc bắt đầu tính chỉ số khác nhau giữa các phương pháp.
+- **26/11 (My) — độ dài episode:** `duration_s = 240` (30 s warm-up, 165 s thực thi, 45 s cửa sổ
+  đo hậu chuyển quyền), đúng như 5 pilot; một episode tốn ≈ 261 s (pilot 4 Full/burst 260.5 s,
+  pilot Threshold/gradual 261.4 s). Pilot Threshold: 4 COMMITTED, 73 DEFERRED (cooldown 37 s).
+- **26/11 (My) — thứ tự §7:** B (và C) không dùng D1–D7 nên chạy trước; script D1–D7 viết song
+  song và chạy sau B/C. R95 (§7.3) vẫn tắt trong Safety Gate, M1 = None.
+  Kế hoạch B cố định trong `results/campaign/plan_B.csv` (order_seed 20261202, 250 episode).

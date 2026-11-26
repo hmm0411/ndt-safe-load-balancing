@@ -23,7 +23,7 @@ load:
 seeds: [9801, 9802, 9803, 9804, 9805, 9806, 9807, 9808, 9809, 9810]   # protocol 5
 order_seed: 20261202          # shuffles the run order (protocol 5), declared here
 warmup_s: 30                  # protocol 5 (24/11)
-duration_s: null              # set from the pilot (protocol 7.5), before episode 1
+duration_s: 240               # chot 26/11 (My) tu pilot: 30 s warm-up + 165 s execute + 45 s post
 workloads: [stable, gradual, burst, oscillating, hot_switch]
 scenarios:
   B: [static, threshold, forecast_only, ndt_no_feedback, full]                 # 250 episodes
