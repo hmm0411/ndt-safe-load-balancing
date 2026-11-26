@@ -2,6 +2,8 @@
 # Closed-loop campaign queue on the VM: every episode of a plan, in the plan's (shuffled)
 # order, unattended. Existing episode folders are skipped, so the same command resumes.
 #   scripts/experiments/run_campaign_queue.sh results/campaign/plan_B.csv [--limit N] [--shutdown]
+#   CONFIG=configs/experiments/campaign_2c_v1.yaml scripts/experiments/run_campaign_queue.sh \
+#       results/campaign/plan_B2.csv     (2C20S; episodes go to the config's out_root)
 # Needs: ports 6653-6656, 8081-8084, 9000 free (stop any other orchestrator/controller
 # first), duration_s set in configs/experiments/campaign_4c_v1.yaml (after the pilot).
 # Start it with `tmux new -d -s campaignB '...'` and never `tmux kill-session` first: a
@@ -22,16 +24,21 @@ done
 # shellcheck disable=SC1090
 source ~/ndt-venv/bin/activate
 export PYTHONPATH="$PWD"
-OUT_ROOT="${OUT_ROOT:-data/experiment_runs/campaign_4c}"
+CONFIG="${CONFIG:-configs/experiments/campaign_4c_v1.yaml}"
+[[ -f "$CONFIG" ]] || { echo "!! no config $CONFIG"; exit 2; }
+CONFIG_OUT=$(python3 -c "import sys, yaml; print(yaml.safe_load(open(sys.argv[1])).get('out_root') or '')" "$CONFIG")
+OUT_ROOT="${OUT_ROOT:-${CONFIG_OUT:-data/experiment_runs/campaign_4c}}"
 mkdir -p "$OUT_ROOT"
-# One queue at a time. The lock is inherited by the episode's processes, so it also stays
-# held by an orphaned episode (controllers or Mininet left behind by a killed queue).
-exec 9>"$OUT_ROOT/.queue.lock"
-flock -n 9 || { echo "!! another queue (or an orphaned episode) holds $OUT_ROOT/.queue.lock: STOP"; exit 1; }
+# One queue at a time, whatever the topology (they share ports). The lock is inherited by
+# the episode's processes, so it also stays held by an orphaned episode (controllers or
+# Mininet left behind by a killed queue).
+LOCK=data/experiment_runs/.campaign_queue.lock
+exec 9>"$LOCK"
+flock -n 9 || { echo "!! another queue (or an orphaned episode) holds $LOCK: STOP"; exit 1; }
 LOG="$OUT_ROOT/queue_$(date -u +%Y%m%dT%H%M%SZ).log"
 exec > >(tee -a "$LOG") 2>&1
 GIT_COMMIT="$(git rev-parse HEAD)"; GIT_BRANCH="$(git branch --show-current)"
-echo "== queue $(date -u +%FT%TZ) plan $PLAN git ${GIT_COMMIT:0:7} $GIT_BRANCH"
+echo "== queue $(date -u +%FT%TZ) plan $PLAN config $CONFIG out $OUT_ROOT git ${GIT_COMMIT:0:7} $GIT_BRANCH"
 [[ -z "$(git status --porcelain --untracked-files=no)" ]] || { echo "!! tracked files changed: STOP"; exit 1; }
 
 clean_leftover_links() {  # never mn -c (it would kill someone else's run)
@@ -54,7 +61,7 @@ while IFS=, read -r order episode_id method workload seed; do
     (( LIMIT > 0 && DONE + FAILED >= LIMIT )) && { echo "limit $LIMIT reached"; STOPPED=1; break; }
     echo "-- [$order] $episode_id $(date -u +%T)"
     clean_leftover_links
-    if python3 scripts/experiments/run_campaign_episode.py --plan "$PLAN" \
+    if python3 scripts/experiments/run_campaign_episode.py --config "$CONFIG" --plan "$PLAN" \
             --episode-id "$episode_id" --out-root "$OUT_ROOT"; then
         DONE=$((DONE + 1)); CONSECUTIVE=0; echo "PASS: $episode_id"
     else

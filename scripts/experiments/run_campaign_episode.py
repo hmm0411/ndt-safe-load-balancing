@@ -61,6 +61,20 @@ OUT_ROOT = REPO_ROOT / "data/experiment_runs/campaign_4c"
 CONTROLLER_PORTS = {"c1": (6653, 8081), "c2": (6654, 8082), "c3": (6655, 8083),
                     "c4": (6656, 8084)}
 ORCH_PORT = 9000
+TOPOLOGY_MODULES = {"4C40S": "src.experiments.topologies.runtime_4c40s",
+                    "2C20S": "src.experiments.topologies.runtime_2c20s"}
+
+
+def controller_ports(cfg: Mapping[str, Any]) -> dict[str, tuple[int, int]]:
+    """{controller: (OpenFlow port, REST port)} of the campaign's controllers_config."""
+    data = yaml.safe_load((REPO_ROOT / str(cfg["controllers_config"])).read_text(
+        encoding="utf-8"))
+    out = {}
+    for cid, c in data["controllers"].items():
+        rest = int(str(c["rest_url"]).rstrip("/").rsplit(":", 1)[1])
+        out[str(cid)] = (int(c["openflow_port"]), rest)
+    return out
+
 START_TIMEOUT_S = 40.0
 WORKLOAD_START_TIMEOUT_S = 180.0
 
@@ -85,8 +99,14 @@ def setup(cfg: Mapping[str, Any], episode: PlannedEpisode, duration_s: float,
         raise ValueError("duration must exceed warm-up + post window")
     load = cfg["load"]
     scale = f"{load['scaled_controller']}={float(load['scale'])}"
-    others = [c for c in CONTROLLER_PORTS if c != load["scaled_controller"]]
-    fault = fault_spec(episode.workload, cfg["faults"]) if episode.workload[:1] == "d" else None
+    topology = str(cfg.get("topology", "4C40S"))
+    if topology not in TOPOLOGY_MODULES:
+        raise ValueError(f"unknown topology {topology!r}")
+    others = [c for c in controller_ports(cfg) if c != load["scaled_controller"]]
+    is_fault = episode.workload[:1] == "d"
+    if is_fault and topology != "4C40S":
+        raise ValueError("fault scenarios D run on 4C40S only (protocol 4.D)")
+    fault = fault_spec(episode.workload, cfg["faults"]) if is_fault else None
     other_level = float(load["other_level"]) if fault is None else fault.dst_level
     workload = episode.workload if fault is None else "stable"
     profiles = {cid: f"constant:{other_level}" for cid in others}
@@ -103,14 +123,17 @@ def setup(cfg: Mapping[str, Any], episode: PlannedEpisode, duration_s: float,
                 "NDT_EPISODE_SEED": str(episode.seed)}
     if fault is not None:
         orch_env["NDT_FAULT_INJECTION"] = "1"
+    # 4C40S: --forecast <workload>; 2C20S: --forecast-<workload> (its own flags)
+    chosen = (["--forecast", workload] if topology == "4C40S"
+              else [f"--forecast-{workload.replace('_', '-')}"])
     cmd = ["sudo", "-E", "env", f"PYTHONPATH={REPO_ROOT}", python, "-m",
-           "src.experiments.topologies.runtime_4c40s", "--forecast", workload,
+           TOPOLOGY_MODULES[topology], *chosen,
            "--seed", str(episode.seed), "--run-id", episode.episode_id,
            "--output-dir", str(out_dir / "workload"),
            "--capacity-runs", str(cfg["capacity_runs"]),
            "--controller-capacity", str(cfg["capacity"]),
            "--duration", str(duration_s), "--experiment-type", str(cfg["version"])]
-    for experiment in cfg["capacity_experiments"]:
+    for experiment in cfg.get("capacity_experiments") or []:
         cmd += ["--capacity-experiment", str(experiment)]
     for cid, profile in profiles.items():
         cmd += ["--profile", f"{cid}={profile}"]
@@ -220,7 +243,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     ap.add_argument("--pilot", nargs=3, metavar=("METHOD", "WORKLOAD", "SEED"))
     ap.add_argument("--duration", type=float, help="seconds (default: config duration_s)")
     ap.add_argument("--post-window", type=float, default=45.0)
-    ap.add_argument("--out-root", type=Path, default=OUT_ROOT)
+    ap.add_argument("--out-root", type=Path,
+                    help="default: the config's out_root, else data/experiment_runs/campaign_4c")
     ap.add_argument("--dry-run", action="store_true", help="print the setup, start nothing")
     args = ap.parse_args(argv)
     cfg = yaml.safe_load(args.config.read_text(encoding="utf-8"))
@@ -234,7 +258,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     duration = args.duration or cfg.get("duration_s")
     if not duration:
         ap.error("no duration: pass --duration (the pilot fixes duration_s in the config)")
-    out = args.out_root / episode.episode_id
+    out_root = args.out_root or (REPO_ROOT / str(cfg["out_root"]) if cfg.get("out_root")
+                                 else OUT_ROOT)
+    out = out_root / episode.episode_id
     st = setup(cfg, episode, float(duration), args.post_window, out, sys.executable)
     if args.dry_run:
         print(json.dumps(asdict(st), indent=2, default=str))
@@ -259,14 +285,15 @@ def main(argv: Sequence[str] | None = None) -> int:
     load_before = os.getloadavg()
     episode_start = datetime.now(timezone.utc)
     try:
-        for cid in CONTROLLER_PORTS:
+        ports = controller_ports(cfg)
+        for cid in ports:
             p = ProcessGroup([f"./scripts/start_{cid}.sh"], cwd=REPO_ROOT, env=base_env,
                              log_path=out / "logs" / f"{cid}.log")
             p.start()
             procs.append(p)
             controllers[cid] = p
-        wait_until(lambda: all(_port_open(rest) for _, rest in CONTROLLER_PORTS.values()),
-                   START_TIMEOUT_S, "controllers c1-c4")
+        wait_until(lambda: all(_port_open(rest) for _, rest in ports.values()),
+                   START_TIMEOUT_S, "controllers")
         orch = ProcessGroup(["./scripts/start_orchestrator.sh"], cwd=REPO_ROOT,
                             env={**base_env, **st.orchestrator_env},
                             log_path=out / "logs" / "orchestrator.log")

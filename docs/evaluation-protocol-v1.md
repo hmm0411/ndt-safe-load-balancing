@@ -163,3 +163,8 @@ Chưa có episode nào của campaign. Các mục dưới đây được chốt 
   hơn q95 một phía (0.0746) nên thiên an toàn; không đổi biên vì B đã chạy với giá trị này.
   Coverage hai phía |y − ŷ| ≤ m (trong `coverage.json` của forecast-models-v4, 0.881 trên test)
   chỉ còn là số tham chiếu.
+- **26/11 (My) — 2C20S** (`configs/experiments/campaign_2c_v1.yaml`, `results/campaign/plan_B2.csv`,
+  150 episode): bộ mô hình 2C như đã huấn luyện và hiệu chỉnh trên 2C (forecast-models-v3,
+  post-migration-v1, safety/ranking policy v1, capacity-v4 933 pps); tải như 4C (c1 × 1.2, c2 giữ
+  0.60); Static / Threshold / Full; chỉ mô tả (xác nhận xu hướng của B), không kiểm định chính.
+  `duration_s` 240 như 4C, cần pilot 2C xác nhận trước episode đầu tiên.

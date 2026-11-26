@@ -63,6 +63,33 @@ class SetupTest(unittest.TestCase):
                                           if x == "--profile"])
         self.assertEqual(st7.other_level, 0.9)
 
+    def test_2c20s_episode(self) -> None:
+        cfg2 = yaml.safe_load((rce.REPO_ROOT / "configs/experiments/campaign_2c_v1.yaml")
+                              .read_text(encoding="utf-8"))
+        self.assertEqual(rce.controller_ports(cfg2), {"c1": (6653, 8081), "c2": (6654, 8082)})
+        ep = PlannedEpisode(1, "B2-full-hot-switch-s9801", "full", "hot_switch", 9801)
+        st = rce.setup(cfg2, ep, 240.0, 45.0, Path("/tmp/ep"))
+        cmd = st.topology_cmd
+        self.assertIn("src.experiments.topologies.runtime_2c20s", cmd)
+        self.assertIn("--forecast-hot-switch", cmd)
+        self.assertNotIn("--forecast", cmd)
+        self.assertNotIn("--capacity-experiment", cmd)
+        self.assertEqual([cmd[i + 1] for i, x in enumerate(cmd) if x == "--profile"],
+                         ["c2=constant:0.6"])
+        env = st.orchestrator_env
+        self.assertEqual(Path(env["NDT_CONTROLLERS_CONFIG"]).name, "controllers_2c20s.yaml")
+        self.assertEqual(Path(env["NDT_SAFETY_POLICY"]).name, "safety_policy_v1.yaml")
+        self.assertEqual(Path(env["NDT_OUTCOME_CONFIG"]).name, "runtime.yaml")
+        for key in ("capacity", "capacity_runs", "controllers_config", "forecast_config",
+                    "outcome_config", "safety_policy", "ranking_policy"):
+            self.assertTrue((rce.REPO_ROOT / cfg2[key]).is_file(), key)
+        with self.assertRaises(ValueError):   # D runs on 4C only
+            rce.setup(cfg2, PlannedEpisode(2, "x", "full", "d1", 9801), 240.0, 45.0,
+                      Path("/tmp/ep"))
+
+    def test_4c_ports_from_config(self) -> None:
+        self.assertEqual(rce.controller_ports(CFG), rce.CONTROLLER_PORTS)
+
     def test_signal_controller_without_process(self) -> None:
         self.assertEqual(rce.signal_controller(None, "STOP"), [])
 

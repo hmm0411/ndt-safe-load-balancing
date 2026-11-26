@@ -9,6 +9,7 @@ Input: the episode CSV of ``campaign_episodes.py collect --prefix B-`` (or C-). 
      confirmatory test is M2 = overload_time_s on the 50 workload x seed pairs, Wilcoxon
      signed-rank (zero pairs dropped), Holm over the 4 baselines; every other metric and
      every per-workload number is descriptive (k/10 seeds won, ties are not wins).
+  B2 (2C20S): Full vs Static and Threshold, descriptive (it confirms the trend of B).
   C (ablation): Full vs each ablation, all descriptive (protocol 6).
 
     python3 scripts/analysis/campaign_report.py --scenario B \
@@ -52,6 +53,8 @@ METRICS: dict[str, tuple[str, bool]] = {
 SCENARIOS: dict[str, dict[str, Any]] = {
     "B": {"full": "full", "others": ["static", "threshold", "forecast_only", "ndt_no_feedback"],
           "confirmatory": True},
+    # 2C20S confirms the trend of B (protocol 4.B): descriptive, no confirmatory test
+    "B2": {"full": "full", "others": ["static", "threshold"], "confirmatory": False},
     "C": {"full": "full", "others": ["full_analytical", "full_zero_margin", "full_random_rank",
                                      "full_no_cooldown"], "confirmatory": False},
 }

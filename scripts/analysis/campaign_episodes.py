@@ -59,7 +59,7 @@ def cmd_plan(args: argparse.Namespace) -> int:
         return 0
     methods = cfg["scenarios"][args.scenario]
     plan = cp.plan_episodes(methods, cfg["workloads"], cfg["seeds"],
-                            int(cfg["order_seed"]) + ord(args.scenario), f"{args.scenario}")
+                            int(cfg["order_seed"]) + sum(map(ord, args.scenario)), f"{args.scenario}")
     write_csv(args.out, [vars(e) for e in plan])
     print(f"{len(plan)} episodes ({len(methods)} methods x {len(cfg['workloads'])} workloads"
           f" x {len(cfg['seeds'])} seeds) -> {args.out}")

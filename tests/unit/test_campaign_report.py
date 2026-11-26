@@ -71,8 +71,10 @@ class CampaignReportTest(unittest.TestCase):
             self.assertIn("Incomplete campaign: 3 episodes missing",
                           (out / "report.md").read_text())
 
-    def test_c_is_descriptive(self) -> None:
+    def test_c_and_b2_are_descriptive(self) -> None:
         self.assertFalse(cr.SCENARIOS["C"]["confirmatory"])
+        self.assertFalse(cr.SCENARIOS["B2"]["confirmatory"])
+        self.assertEqual(cr.SCENARIOS["B2"]["others"], ["static", "threshold"])
         self.assertEqual(cr._value(" nan "), None)
         self.assertEqual(cr._value("1.5"), 1.5)
 
