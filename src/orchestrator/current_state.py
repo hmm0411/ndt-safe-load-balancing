@@ -25,6 +25,14 @@ class CurrentStateStore:
             self._runtime_states[controller_id] = dict(runtime_state)
             self._errors.pop(controller_id, None)
 
+    def forget_controller(self, controller_id: str) -> None:
+        """Drop the controller's telemetry, switch samples and role state (fault D2)."""
+        with self._lock:
+            self._controllers.pop(controller_id, None)
+            self._runtime_states.pop(controller_id, None)
+            for key in [k for k in self._switches if k[1] == controller_id]:
+                del self._switches[key]
+
     def mark_error(self, controller_id: str, error: Exception | str):
         with self._lock:
             self._errors[controller_id] = str(error)

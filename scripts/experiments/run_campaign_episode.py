@@ -29,9 +29,11 @@ import csv
 import json
 import os
 import shutil
+import signal
 import socket
 import subprocess
 import sys
+import threading
 import time
 from collections.abc import Mapping, Sequence
 from dataclasses import asdict, dataclass
@@ -47,6 +49,12 @@ if str(REPO_ROOT) not in sys.path:
 
 from scripts.decision.run_closed_loop import http_post, run as run_loop  # noqa: E402
 from src.experiments.final_evaluation.campaign import PlannedEpisode  # noqa: E402
+from src.experiments.final_evaluation.fault_runner import FaultRunner, http_json  # noqa: E402
+from src.experiments.final_evaluation.faults import (  # noqa: E402
+    FaultSpec,
+    check_episode,
+    fault_spec,
+)
 
 CONFIG = REPO_ROOT / "configs/experiments/campaign_4c_v1.yaml"
 OUT_ROOT = REPO_ROOT / "data/experiment_runs/campaign_4c"
@@ -67,6 +75,7 @@ class EpisodeSetup:
     orchestrator_env: dict[str, str]
     topology_cmd: list[str]
     topology_env: dict[str, str]
+    fault: FaultSpec | None = None   # D episodes (plan workload d1..d6, d7-uNNN)
 
 
 def setup(cfg: Mapping[str, Any], episode: PlannedEpisode, duration_s: float,
@@ -77,6 +86,12 @@ def setup(cfg: Mapping[str, Any], episode: PlannedEpisode, duration_s: float,
     load = cfg["load"]
     scale = f"{load['scaled_controller']}={float(load['scale'])}"
     others = [c for c in CONTROLLER_PORTS if c != load["scaled_controller"]]
+    fault = fault_spec(episode.workload, cfg["faults"]) if episode.workload[:1] == "d" else None
+    other_level = float(load["other_level"]) if fault is None else fault.dst_level
+    workload = episode.workload if fault is None else "stable"
+    profiles = {cid: f"constant:{other_level}" for cid in others}
+    if fault is not None:  # D: the scaled controller holds a constant overload
+        profiles[load["scaled_controller"]] = f"constant:{fault.c1_level}"
     orch_env = {"RUN_ID": episode.episode_id,
                 "NDT_CONTROLLERS_CONFIG": str(cfg["controllers_config"]),
                 "NDT_CAPACITY_FILE": str(cfg["capacity"]),
@@ -86,8 +101,10 @@ def setup(cfg: Mapping[str, Any], episode: PlannedEpisode, duration_s: float,
                 "NDT_RANKING_POLICY": str(cfg["ranking_policy"]),
                 "NDT_DECISION_METHOD": episode.method,
                 "NDT_EPISODE_SEED": str(episode.seed)}
+    if fault is not None:
+        orch_env["NDT_FAULT_INJECTION"] = "1"
     cmd = ["sudo", "-E", "env", f"PYTHONPATH={REPO_ROOT}", python, "-m",
-           "src.experiments.topologies.runtime_4c40s", "--forecast", episode.workload,
+           "src.experiments.topologies.runtime_4c40s", "--forecast", workload,
            "--seed", str(episode.seed), "--run-id", episode.episode_id,
            "--output-dir", str(out_dir / "workload"),
            "--capacity-runs", str(cfg["capacity_runs"]),
@@ -95,11 +112,11 @@ def setup(cfg: Mapping[str, Any], episode: PlannedEpisode, duration_s: float,
            "--duration", str(duration_s), "--experiment-type", str(cfg["version"])]
     for experiment in cfg["capacity_experiments"]:
         cmd += ["--capacity-experiment", str(experiment)]
-    for cid in others:
-        cmd += ["--profile", f"{cid}=constant:{float(load['other_level'])}"]
+    for cid, profile in profiles.items():
+        cmd += ["--profile", f"{cid}={profile}"]
     topo_env = {"NDT_WORKLOAD_SCALE": scale, "NDT_HOT_SWITCH_CHECK_LOAD": "0"}
     return EpisodeSetup(episode, duration_s, duration_s - post_window_s, scale,
-                        float(load["other_level"]), orch_env, cmd, topo_env)
+                        other_level, orch_env, cmd, topo_env, fault)
 
 
 def loop_phases(warmup_s: float, loop_s: float, since_start_s: float) -> tuple[float, float]:
@@ -135,6 +152,36 @@ def records_of(record_root: Path, episode_id: str, since: datetime) -> list[Path
         except (OSError, ValueError):
             continue
     return out
+
+
+def signal_controller(group: Any, name: str) -> list[int]:
+    """SIGSTOP / SIGCONT / SIGKILL to a controller's process group (faults D3, D4, D6)."""
+    if group is None or group.proc is None:
+        return []
+    try:
+        os.killpg(group.proc.pid, getattr(signal, f"SIG{name}"))
+    except ProcessLookupError:
+        return []
+    return [int(group.proc.pid)]
+
+
+def start_faults(spec: FaultSpec, url: str, controllers: Mapping[str, Any],
+                 events: list[dict[str, Any]], path: Path,
+                 workload_start: float) -> threading.Thread:
+    """The D episode's actions in a background thread; every event to ``path`` (jsonl)."""
+    lock = threading.Lock()
+
+    def log(event: dict[str, Any]) -> None:
+        with lock:
+            events.append(event)
+            with path.open("a", encoding="utf-8") as handle:
+                handle.write(json.dumps(event, default=str) + "\n")
+
+    runner = FaultRunner(spec, http_json(url),
+                         lambda cid, name: signal_controller(controllers.get(cid), name), log)
+    thread = threading.Thread(target=runner.run, args=(workload_start,), daemon=True)
+    thread.start()
+    return thread
 
 
 def _port_open(port: int) -> bool:
@@ -206,6 +253,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     started_at: str | None = None
     summary: dict[str, Any] = {}
     warmup_summary: dict[str, Any] = {}
+    controllers: dict[str, Any] = {}
+    fault_events: list[dict[str, Any]] = []
+    fault_thread: threading.Thread | None = None
     load_before = os.getloadavg()
     episode_start = datetime.now(timezone.utc)
     try:
@@ -214,6 +264,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                              log_path=out / "logs" / f"{cid}.log")
             p.start()
             procs.append(p)
+            controllers[cid] = p
         wait_until(lambda: all(_port_open(rest) for _, rest in CONTROLLER_PORTS.values()),
                    START_TIMEOUT_S, "controllers c1-c4")
         orch = ProcessGroup(["./scripts/start_orchestrator.sh"], cwd=REPO_ROOT,
@@ -238,6 +289,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         since = (datetime.now(timezone.utc)
                  - datetime.fromisoformat(started_at.replace("Z", "+00:00"))).total_seconds()
         dry_s, execute_s = loop_phases(float(cfg["warmup_s"]), st.loop_s, max(0.0, since))
+        if st.fault is not None:
+            fault_thread = start_faults(st.fault, url, controllers, fault_events,
+                                        out / "faults.jsonl", time.monotonic() - since)
         if dry_s > 0:
             warmup_summary = run_loop(http_post(url), episode.episode_id, "dry_run", dry_s, 1.0)
         summary = run_loop(http_post(url), episode.episode_id, "execute", execute_s, 1.0)
@@ -248,6 +302,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     except (RuntimeError, OSError, KeyError, ValueError) as exc:
         print(f"!! {episode.episode_id}: {exc}", flush=True)
     finally:
+        if fault_thread is not None:
+            fault_thread.join(timeout=30.0)
+        for p in controllers.values():  # a controller left stopped (SIGSTOP) cannot exit
+            signal_controller(p, "CONT")
         for p in reversed(procs):
             p.stop()
     copies = {"snapshots.jsonl": REPO_ROOT / "data/snapshots" / f"{episode.episode_id}.jsonl",
@@ -260,6 +318,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         dest = out / "decisions" / path.parent.name
         dest.mkdir(parents=True, exist_ok=True)
         shutil.copy2(path, dest / "record.json")
+    fault_check = None
+    if st.fault is not None and started_at is not None:
+        fault_check = check_episode(
+            st.fault, fault_events, [json.loads(p.read_text(encoding="utf-8")) for p in records],
+            datetime.fromisoformat(started_at.replace("Z", "+00:00")).timestamp())
     git = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True,
                          cwd=REPO_ROOT).stdout.strip()
     meta = {**asdict(episode), "status": status, "workload_started_at": started_at,
@@ -268,6 +331,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             "config": str(args.config), "config_version": cfg["version"], "git_commit": git,
             "decisions_copied": len(records), "loop_summary": summary,
             "warmup_summary": warmup_summary,
+            "fault": None if st.fault is None else asdict(st.fault),
+            "fault_check": fault_check,
             "load_before": load_before, "load_after": os.getloadavg(),
             "episode_started_at": episode_start.isoformat(),
             "wall_s": round((datetime.now(timezone.utc) - episode_start).total_seconds(), 1),

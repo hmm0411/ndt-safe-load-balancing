@@ -129,3 +129,16 @@ Chưa có episode nào của campaign. Các mục dưới đây được chốt 
 - **26/11 (My) — thứ tự §7:** B (và C) không dùng D1–D7 nên chạy trước; script D1–D7 viết song
   song và chạy sau B/C. R95 (§7.3) vẫn tắt trong Safety Gate, M1 = None.
   Kế hoạch B cố định trong `results/campaign/plan_B.csv` (order_seed 20261202, 250 episode).
+- **26/11 (My) — thiết kế kịch bản D** (`configs/experiments/campaign_4c_v1.yaml` khối `faults`,
+  `src/experiments/final_evaluation/faults.py`): D1–D6 với Full × 3 seed (9801–9803); D7 ở 5 mức
+  tải đích 0.5/0.6/0.7/0.8/0.9 × (Full, Threshold) × 3 seed; tổng 48 episode
+  (`results/campaign/plan_D.csv`). c1 giữ hằng 1.0 × 1.2 = 1.2 (quá tải suốt episode), c2–c4 giữ
+  0.60 (D1–D6). Lỗi bắt đầu ngay sau warm-up (30 s), cửa sổ 60 s:
+  D1 đóng băng telemetry c2; D2 bỏ telemetry c2 (cả hai qua `POST /api/v1/faults`, chỉ bật khi
+  `NDT_FAULT_INJECTION=1`); D3 SIGSTOP controller c3; D4 SIGSTOP c3, yêu cầu chuyển quyền
+  c1 → c3 lúc 40 s, SIGCONT sau 4.5 s (> timeout role request 3 s); D5 hai yêu cầu chuyển quyền
+  cùng một switch đồng thời; D6 SIGSTOP c3, yêu cầu c1 → c3 lúc 40 s, SIGKILL c3 sau 1 s.
+  Tiêu chí đạt (`check_episode`): D1–D3 không thực thi quyết định nào trong cửa sổ (bỏ 4 s đầu,
+  lúc mẫu đóng băng chưa kịp cũ) và có ít nhất một `INVALID_SNAPSHOT`; D3 không chuyển quyền
+  sang c3; D4/D6 trả về RESTORED, owner như trước, không còn switch bị khóa; D5 một yêu cầu
+  200 và một 409; D7 không đích nào có U sau chuyển quyền ≥ 1 (với Threshold chỉ mô tả).

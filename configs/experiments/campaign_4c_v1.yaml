@@ -28,3 +28,20 @@ workloads: [stable, gradual, burst, oscillating, hot_switch]
 scenarios:
   B: [static, threshold, forecast_only, ndt_no_feedback, full]                 # 250 episodes
   C: [full_analytical, full_zero_margin, full_random_rank, full_no_cooldown]  # 200 episodes
+# Fault scenarios D (protocol 4.D, src/experiments/final_evaluation/faults.py). Decided 26/11
+# (My): D1-D6 with Full x 3 seeds; D7 at 5 destination levels x (Full, Threshold) x 3 seeds;
+# 48 episodes. c1 holds constant 1.0 (x 1.2 scale = 1.2, overloaded all episode); c2-c4 hold
+# dst_level (D1-D6) or each d7 level. The orchestrator of a D episode runs with
+# NDT_FAULT_INJECTION=1 (D1/D2); D3-D6 are signals and requests made by the runner.
+faults:
+  seeds: [9801, 9802, 9803]
+  order_seed: 20261203
+  c1_level: 1.0
+  dst_level: 0.60
+  start_s: 30            # end of the warm-up
+  window_s: 60
+  effect_grace_s: 4.0    # a frozen sample is stale only after 2.5 s (+ one snapshot)
+  migrate_at_s: 40       # D4-D6: the injected migration
+  timeout_freeze_s: 4.5  # D4: > role_request_timeout_seconds (3.0)
+  d7_levels: [0.5, 0.6, 0.7, 0.8, 0.9]
+  d7_methods: [full, threshold]

@@ -23,6 +23,7 @@ from src.twin.calibration.online_margin import TrackerConfig
 from src.twin.decision.methods import load_method
 from src.orchestrator.outcome_service import OutcomeService
 from src.orchestrator.ownership_manager import OwnershipManager
+from src.orchestrator.fault_injection import FaultInjector
 from src.orchestrator.transaction_manager import TransactionConflict, TransactionManager
 from src.telemetry.collector import TelemetryCollector
 from src.telemetry.snapshot_builder import SnapshotBuilder
@@ -113,6 +114,8 @@ twin_state_builder = TwinStateBuilder(
     quality_provider=quality_assessor.assess,
 )
 store = CurrentStateStore()
+# Fault scenarios D1/D2 only; off (and never consulted) unless NDT_FAULT_INJECTION=1.
+fault_injector = FaultInjector(os.environ.get("NDT_FAULT_INJECTION") == "1", CONTROLLERS)
 setup_probe_store = SetupProbeStore(float(telemetry_cfg["freshness_max_age_ms"]))
 writer = JsonlWriter()
 forecast_service = ForecastService.from_config(forecast_cfg, ROOT, store, writer)
@@ -161,6 +164,12 @@ class DecisionRequest(BaseModel):
     simulate_failure: str = "none"
 
 
+class FaultRequest(BaseModel):
+    kind: str
+    controller_id: str
+    seconds: float
+
+
 class KillSwitchRequest(BaseModel):
     enabled: bool
 
@@ -184,6 +193,10 @@ class SetupProbeRequest(BaseModel):
 
 def collect_once(run_id: str):
     for controller_id in CONTROLLERS:
+        if fault_injector.enabled and fault_injector.skip_poll(controller_id):  # D1/D2 only
+            if fault_injector.take_drop(controller_id):
+                store.forget_controller(controller_id)
+            continue
         try:
             collection = collector.collect_controller(controller_id)
             store.update_collection(
@@ -391,6 +404,22 @@ def twin_decision_execute(request: DecisionRequest):
     if failure_mode not in {"none", "flow_mod"}:
         raise HTTPException(400, "simulate_failure must be 'none' or 'flow_mod'")
     return decision_service.execute(request.scenario, failure_mode)
+
+
+@app.post("/api/v1/faults")
+def inject_fault(request: FaultRequest):
+    """Telemetry fault of the D1/D2 episodes; 403 unless NDT_FAULT_INJECTION=1."""
+    try:
+        return fault_injector.inject(request.kind, request.controller_id, request.seconds)
+    except PermissionError as exc:
+        raise HTTPException(403, str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+
+@app.get("/api/v1/faults")
+def list_faults():
+    return {"enabled": fault_injector.enabled, "active": fault_injector.active()}
 
 
 @app.post("/api/v1/twin/decision/kill-switch")

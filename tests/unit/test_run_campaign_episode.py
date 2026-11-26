@@ -40,6 +40,32 @@ class SetupTest(unittest.TestCase):
                          "outcome_config", "safety_policy", "ranking_policy"):
             self.assertTrue((rce.REPO_ROOT / CFG[path_key]).is_file(), path_key)
 
+    def test_b_episode_has_no_fault(self) -> None:
+        st = rce.setup(CFG, EP, 240.0, 45.0, Path("/tmp/ep"))
+        self.assertIsNone(st.fault)
+        self.assertNotIn("NDT_FAULT_INJECTION", st.orchestrator_env)
+
+    def test_d_episodes(self) -> None:
+        d1 = PlannedEpisode(1, "D-full-d1-s9801", "full", "d1", 9801)
+        st = rce.setup(CFG, d1, 240.0, 45.0, Path("/tmp/ep"))
+        assert st.fault is not None
+        self.assertEqual(st.fault.scenario, "d1")
+        self.assertEqual(st.orchestrator_env["NDT_FAULT_INJECTION"], "1")
+        cmd = st.topology_cmd
+        self.assertEqual(cmd[cmd.index("--forecast") + 1], "stable")
+        profiles = [cmd[i + 1] for i, x in enumerate(cmd) if x == "--profile"]
+        self.assertEqual(profiles, ["c2=constant:0.6", "c3=constant:0.6", "c4=constant:0.6",
+                                    "c1=constant:1.0"])
+        d7 = PlannedEpisode(2, "D-threshold-d7-u090-s9802", "threshold", "d7-u090", 9802)
+        st7 = rce.setup(CFG, d7, 240.0, 45.0, Path("/tmp/ep"))
+        cmd7 = st7.topology_cmd
+        self.assertIn("c4=constant:0.9", [cmd7[i + 1] for i, x in enumerate(cmd7)
+                                          if x == "--profile"])
+        self.assertEqual(st7.other_level, 0.9)
+
+    def test_signal_controller_without_process(self) -> None:
+        self.assertEqual(rce.signal_controller(None, "STOP"), [])
+
     def test_duration_must_cover_warmup_and_post_window(self) -> None:
         with self.assertRaises(ValueError):
             rce.setup(CFG, EP, 70.0, 45.0, Path("/tmp/ep"))

@@ -56,6 +56,17 @@ class DecisionRouteTest(unittest.TestCase):
         self.assertEqual(orchestrator.ownership_manager.version, version)
         self.assertEqual(list(orchestrator.transaction_manager.locked_switches()), locked)
 
+    def test_fault_route_is_off_without_the_env(self) -> None:
+        """B and C episodes never set NDT_FAULT_INJECTION: the D1/D2 route refuses (403)."""
+        from fastapi import HTTPException
+
+        self.assertFalse(orchestrator.fault_injector.enabled)
+        with self.assertRaises(HTTPException) as ctx:
+            orchestrator.inject_fault(orchestrator.FaultRequest(
+                kind="freeze_telemetry", controller_id="c1", seconds=10))
+        self.assertEqual(ctx.exception.status_code, 403)
+        self.assertEqual(orchestrator.list_faults(), {"enabled": False, "active": []})
+
 
 if __name__ == "__main__":
     unittest.main()
