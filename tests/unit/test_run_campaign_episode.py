@@ -31,7 +31,7 @@ class SetupTest(unittest.TestCase):
         self.assertEqual(cmd[4], "/venv/bin/python3")
         self.assertEqual(cmd[cmd.index("--forecast") + 1], "hot_switch")
         profiles = [cmd[i + 1] for i, x in enumerate(cmd) if x == "--profile"]
-        self.assertEqual(profiles, ["c2=constant:0.45", "c3=constant:0.45", "c4=constant:0.45"])
+        self.assertEqual(profiles, ["c2=constant:0.6", "c3=constant:0.6", "c4=constant:0.6"])
         self.assertEqual(Path(st.orchestrator_env["NDT_SAFETY_POLICY"]).name,
                          "safety_policy_4c_v1.yaml")
         for path_key in ("capacity", "capacity_runs", "controllers_config", "forecast_config",

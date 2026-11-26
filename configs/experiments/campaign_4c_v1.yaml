@@ -10,11 +10,15 @@ safety_policy: configs/decision/safety_policy_4c_v1.yaml   # post-migration-v2 (
 capacity_runs: data/benchmarks/capacity_runs_4c40s.csv
 capacity_experiments: [capacity-4c40s-coarse, capacity-4c40s-noprobe-fine]   # probe-off mapping
 # Load (decided 26/11, My): c1 runs the workload with its target utilization x 1.2 (same
-# shapes; gradual peaks ~1.14), the other controllers hold 0.45 so destinations have room.
+# shapes; gradual peaks ~1.14). The other controllers hold 0.60, the level of the stable
+# workload in the forecast training data. First chosen 0.45; the pilot of 26/11 showed
+# forecast-models-v4 predicting U ~0.9-1.1 for controllers flat at 0.42 (a sustained flat
+# low level never occurs in its training data, where low flat U precedes a rise), which
+# marked every destination at risk; 0.60 + one switch + m_U still stays below 1.
 load:
   scaled_controller: c1
   scale: 1.2
-  other_level: 0.45
+  other_level: 0.60
 seeds: [9801, 9802, 9803, 9804, 9805, 9806, 9807, 9808, 9809, 9810]   # protocol 5
 order_seed: 20261202          # shuffles the run order (protocol 5), declared here
 warmup_s: 30                  # protocol 5 (24/11)
