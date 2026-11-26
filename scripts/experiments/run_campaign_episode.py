@@ -80,6 +80,7 @@ def setup(cfg: Mapping[str, Any], episode: PlannedEpisode, duration_s: float,
                 "NDT_CAPACITY_FILE": str(cfg["capacity"]),
                 "NDT_FORECAST_CONFIG": str(cfg["forecast_config"]),
                 "NDT_OUTCOME_CONFIG": str(cfg["outcome_config"]),
+                "NDT_SAFETY_POLICY": str(cfg["safety_policy"]),
                 "NDT_DECISION_METHOD": episode.method,
                 "NDT_EPISODE_SEED": str(episode.seed)}
     cmd = ["sudo", "-E", "env", f"PYTHONPATH={REPO_ROOT}", python, "-m",
@@ -107,12 +108,15 @@ def episode_from_plan(plan: Path, episode_id: str) -> PlannedEpisode:
     raise ValueError(f"{episode_id} is not in {plan}")
 
 
-def records_of(record_root: Path, episode_id: str) -> list[Path]:
-    """Decision records written for this episode (scenario label = episode id)."""
+def records_of(record_root: Path, episode_id: str, since: datetime) -> list[Path]:
+    """Decision records of this episode: scenario label = episode id, decided after the
+    episode started (a rerun of the same id never picks up an older run's records)."""
     out = []
     for path in sorted(record_root.glob("*/record.json")):
         try:
-            if json.loads(path.read_text(encoding="utf-8")).get("scenario") == episode_id:
+            rec = json.loads(path.read_text(encoding="utf-8"))
+            decided = datetime.fromisoformat(str(rec.get("decided_at")).replace("Z", "+00:00"))
+            if rec.get("scenario") == episode_id and decided >= since:
                 out.append(path)
         except (OSError, ValueError):
             continue
@@ -188,6 +192,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     started_at: str | None = None
     summary: dict[str, Any] = {}
     load_before = os.getloadavg()
+    episode_start = datetime.now(timezone.utc)
     try:
         for cid in CONTROLLER_PORTS:
             p = ProcessGroup([f"./scripts/start_{cid}.sh"], cwd=REPO_ROOT, env=base_env,
@@ -230,7 +235,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     for name, src in copies.items():
         if src.is_file():
             shutil.copy2(src, out / name)
-    records = records_of(REPO_ROOT / "data/decision_runs", episode.episode_id)
+    records = records_of(REPO_ROOT / "data/decision_runs", episode.episode_id, episode_start)
     for path in records:
         dest = out / "decisions" / path.parent.name
         dest.mkdir(parents=True, exist_ok=True)

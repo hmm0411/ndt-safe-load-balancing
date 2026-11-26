@@ -4,6 +4,7 @@ import csv
 import json
 import tempfile
 import unittest
+from datetime import datetime, timezone
 from pathlib import Path
 
 import yaml
@@ -31,8 +32,10 @@ class SetupTest(unittest.TestCase):
         self.assertEqual(cmd[cmd.index("--forecast") + 1], "hot_switch")
         profiles = [cmd[i + 1] for i, x in enumerate(cmd) if x == "--profile"]
         self.assertEqual(profiles, ["c2=constant:0.45", "c3=constant:0.45", "c4=constant:0.45"])
+        self.assertEqual(Path(st.orchestrator_env["NDT_SAFETY_POLICY"]).name,
+                         "safety_policy_4c_v1.yaml")
         for path_key in ("capacity", "capacity_runs", "controllers_config", "forecast_config",
-                         "outcome_config"):
+                         "outcome_config", "safety_policy"):
             self.assertTrue((rce.REPO_ROOT / CFG[path_key]).is_file(), path_key)
 
     def test_duration_must_cover_warmup_and_post_window(self) -> None:
@@ -52,12 +55,18 @@ class PlanAndRecordsTest(unittest.TestCase):
             with self.assertRaises(ValueError):
                 rce.episode_from_plan(plan, "B-nope")
             root = Path(tmp) / "records"
-            for i, scenario in enumerate((EP.episode_id, "other", EP.episode_id)):
+            rows = ((EP.episode_id, "2026-12-02T01:00:05+00:00"),
+                    ("other", "2026-12-02T01:00:05+00:00"),
+                    (EP.episode_id, "2026-12-02T01:00:09+00:00"),
+                    (EP.episode_id, "2026-12-01T09:00:00+00:00"))   # an older run, same id
+            for i, (scenario, decided) in enumerate(rows):
                 (root / f"d{i}").mkdir(parents=True)
-                (root / f"d{i}" / "record.json").write_text(json.dumps({"scenario": scenario}))
+                (root / f"d{i}" / "record.json").write_text(
+                    json.dumps({"scenario": scenario, "decided_at": decided}))
             (root / "bad").mkdir()
             (root / "bad" / "record.json").write_text("{")
-            self.assertEqual([p.parent.name for p in rce.records_of(root, EP.episode_id)],
+            since = datetime(2026, 12, 2, 1, 0, tzinfo=timezone.utc)
+            self.assertEqual([p.parent.name for p in rce.records_of(root, EP.episode_id, since)],
                              ["d0", "d2"])
 
 

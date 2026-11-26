@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import math
+import os
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
@@ -136,7 +137,15 @@ def parse_safety_policy(data: Mapping[str, Any]) -> SafetyPolicy:
     )
 
 
-def load_safety_policy(path: Path = POLICY_PATH) -> SafetyPolicy:
+POLICY_ENV = "NDT_SAFETY_POLICY"
+
+
+def load_safety_policy(path: Path | None = None) -> SafetyPolicy:
+    """The policy at ``path``, else NDT_SAFETY_POLICY (relative to the repo), else v1."""
+    if path is None:
+        env = os.environ.get(POLICY_ENV)
+        path = (Path(env) if Path(env).is_absolute() else REPO_ROOT / env) if env \
+            else POLICY_PATH
     data = yaml.safe_load(Path(path).read_text(encoding="utf-8")) or {}
     if not isinstance(data, Mapping):
         raise ValueError(f"{path}: expected a mapping")
