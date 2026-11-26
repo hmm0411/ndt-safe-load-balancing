@@ -81,6 +81,7 @@ def setup(cfg: Mapping[str, Any], episode: PlannedEpisode, duration_s: float,
                 "NDT_FORECAST_CONFIG": str(cfg["forecast_config"]),
                 "NDT_OUTCOME_CONFIG": str(cfg["outcome_config"]),
                 "NDT_SAFETY_POLICY": str(cfg["safety_policy"]),
+                "NDT_RANKING_POLICY": str(cfg["ranking_policy"]),
                 "NDT_DECISION_METHOD": episode.method,
                 "NDT_EPISODE_SEED": str(episode.seed)}
     cmd = ["sudo", "-E", "env", f"PYTHONPATH={REPO_ROOT}", python, "-m",

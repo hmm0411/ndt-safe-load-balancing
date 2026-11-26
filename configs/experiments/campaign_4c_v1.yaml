@@ -7,6 +7,7 @@ capacity: data/benchmarks/controller_capacity_v5_noprobe.json
 forecast_config: configs/forecasting/runtime_4c40s.yaml
 outcome_config: configs/outcome/runtime_4c40s.yaml
 safety_policy: configs/decision/safety_policy_4c_v1.yaml   # post-migration-v2 (pilot 26/11)
+ranking_policy: configs/decision/ranking_policy_4c_v1.yaml # ranks safety-policy-4c-v1
 capacity_runs: data/benchmarks/capacity_runs_4c40s.csv
 capacity_experiments: [capacity-4c40s-coarse, capacity-4c40s-noprobe-fine]   # probe-off mapping
 # Load (decided 26/11, My): c1 runs the workload with its target utilization x 1.2 (same

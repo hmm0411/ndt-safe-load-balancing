@@ -4,10 +4,12 @@ from __future__ import annotations
 import os
 import unittest
 from pathlib import Path
+from typing import Any
 from unittest import mock
 
 import yaml
 
+from src.twin.decision.ranking_policy import load_ranking_policy
 from src.twin.decision.safety_policy import (
     POLICY_ENV,
     REPO_ROOT,
@@ -53,6 +55,36 @@ class Policy4CTest(unittest.TestCase):
         with mock.patch.dict(os.environ, env, clear=True):
             self.assertEqual(load_safety_policy().version, "safety-policy-v1")
         self.assertTrue(Path(C4).is_file())
+
+    def test_ranking_4c_differs_from_v1_only_in_versions(self) -> None:
+        r1 = REPO_ROOT / "configs/decision/ranking_policy_v1.yaml"
+        r4 = REPO_ROOT / "configs/decision/ranking_policy_4c_v1.yaml"
+        a = flat(yaml.safe_load(r1.read_text(encoding="utf-8")))
+        b = flat(yaml.safe_load(r4.read_text(encoding="utf-8")))
+        self.assertEqual({k for k in a.keys() | b.keys() if a.get(k) != b.get(k)},
+                         {"version", "safety_policy_version"})
+        self.assertEqual(load_ranking_policy(r4).safety_policy_version,
+                         load_safety_policy(C4).version)
+
+    def test_a_4c_decision_runs_end_to_end(self) -> None:
+        """The pilots of 26/11 failed on version pins (gate, then ranking): run the whole
+        pipeline with both 4C policies and a v2 prediction."""
+        import dataclasses
+
+        from test_decision_plan import make
+        from test_decision_service import FakePredictor
+
+        class V2(FakePredictor):
+            def predict_batch(self, *args: Any, **kwargs: Any) -> list[Any]:
+                return [dataclasses.replace(p, model_version="post-migration-v2")
+                        for p in super().predict_batch(*args, **kwargs)]
+
+        r4 = REPO_ROOT / "configs/decision/ranking_policy_4c_v1.yaml"
+        service, _ = make(predictor=V2(), policy=load_safety_policy(C4),
+                          ranking_policy=load_ranking_policy(r4))
+        out = service.plan("burst")
+        self.assertEqual(out["status"], "SELECTED")
+        self.assertGreater(out["funnel"]["safe"], 0)
 
 
 if __name__ == "__main__":

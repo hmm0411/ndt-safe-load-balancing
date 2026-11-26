@@ -32,10 +32,12 @@ class SetupTest(unittest.TestCase):
         self.assertEqual(cmd[cmd.index("--forecast") + 1], "hot_switch")
         profiles = [cmd[i + 1] for i, x in enumerate(cmd) if x == "--profile"]
         self.assertEqual(profiles, ["c2=constant:0.6", "c3=constant:0.6", "c4=constant:0.6"])
+        self.assertEqual(Path(st.orchestrator_env["NDT_RANKING_POLICY"]).name,
+                         "ranking_policy_4c_v1.yaml")
         self.assertEqual(Path(st.orchestrator_env["NDT_SAFETY_POLICY"]).name,
                          "safety_policy_4c_v1.yaml")
         for path_key in ("capacity", "capacity_runs", "controllers_config", "forecast_config",
-                         "outcome_config", "safety_policy"):
+                         "outcome_config", "safety_policy", "ranking_policy"):
             self.assertTrue((rce.REPO_ROOT / CFG[path_key]).is_file(), path_key)
 
     def test_duration_must_cover_warmup_and_post_window(self) -> None:
