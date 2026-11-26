@@ -632,6 +632,11 @@ def migrate(request: MigrationRequest):
 
         except Exception as rollback_error:
             transaction_manager.fail(tx, str(rollback_error))
+            # Release the lock (26/11, fault D6): a transaction left locked kept every later
+            # decision DEFERRED for good. Ownership was never committed, so if the switch is
+            # not back with the source, the snapshot's role check marks the twin invalid
+            # and the Hard Gate stops any decision on it.
+            transaction_manager.finish(tx)
             raise HTTPException(
                 status_code=500,
                 detail={

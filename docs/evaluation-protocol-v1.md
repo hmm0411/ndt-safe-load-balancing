@@ -142,3 +142,13 @@ Chưa có episode nào của campaign. Các mục dưới đây được chốt 
   lúc mẫu đóng băng chưa kịp cũ) và có ít nhất một `INVALID_SNAPSHOT`; D3 không chuyển quyền
   sang c3; D4/D6 trả về RESTORED, owner như trước, không còn switch bị khóa; D5 một yêu cầu
   200 và một 409; D7 không đích nào có U sau chuyển quyền ≥ 1 (với Threshold chỉ mô tả).
+- **26/11 (My) — sửa executor trước khi chạy D** (đọc code, chưa chạy D): với code cũ D6 chắc chắn
+  hỏng vì `verify_rollback` hỏi role của controller đích đã chết → lỗi → HTTP 500, giao dịch không
+  bao giờ `finish()` nên switch bị khóa và mọi quyết định sau đó là DEFERRED. Sửa: (1) đích không
+  liên lạc được (từ chối kết nối / không trả lời HTTP) là cảnh báo `other_controller_unreachable`,
+  không phải lỗi, khi nguồn đã là MASTER và còn kết nối (role request MASTER của nguồn với
+  generation_id mới hơn buộc switch hạ mọi kết nối khác); đích còn liên lạc được vẫn phải SLAVE và
+  kết nối; switch không trả lời (ControllerAPIError) vẫn là lỗi. (2) Rollback thất bại vẫn nhả
+  khóa; ownership không đổi nên nếu switch chưa về nguồn thì kiểm tra role của snapshot làm twin
+  không hợp lệ và Hard Gate chặn. Tiêu chí đạt của D không đổi. Hai thay đổi chỉ có tác dụng khi
+  rollback gặp lỗi, điều chưa xảy ra ở pilot nào; B chạy ở commit 2a0ee60 (trước thay đổi).
