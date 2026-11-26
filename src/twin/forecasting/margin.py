@@ -83,6 +83,17 @@ def coverage(y_true: Any, y_pred: Any, margin: Any) -> float:
     return float(np.mean(e <= np.asarray(margin, dtype=float)))
 
 
+def coverage_one_sided(y_true: Any, y_pred: Any, margin: Any) -> float:
+    """Share of samples with U <= U_hat + m_f: the upper bound the Safety Gate and the
+    overload detector use (protocol 6, chosen 26/11). ``coverage`` above is the two-sided
+    |U - U_hat| <= m_f of the frozen artifacts; with the same m_f the one-sided value is
+    never lower."""
+    e = _errors(y_true, y_pred)
+    if e.size == 0:
+        raise ValueError("inputs must not be empty")
+    return float(np.mean(e <= np.asarray(margin, dtype=float)))
+
+
 def overload_confusion(
     y_true: Any,
     upper_bound: Any,

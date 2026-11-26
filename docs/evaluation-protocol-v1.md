@@ -152,3 +152,14 @@ Chưa có episode nào của campaign. Các mục dưới đây được chốt 
   khóa; ownership không đổi nên nếu switch chưa về nguồn thì kiểm tra role của snapshot làm twin
   không hợp lệ và Hard Gate chặn. Tiêu chí đạt của D không đổi. Hai thay đổi chỉ có tác dụng khi
   rollback gặp lỗi, điều chưa xảy ra ở pilot nào; B chạy ở commit 2a0ee60 (trước thay đổi).
+- **26/11 (My) — thống kê:** Wilcoxon bỏ các cặp hiệu bằng 0 (`zero_method="wilcox"`), báo
+  kèm số cặp bị bỏ (`n_zero`) và số cặp còn lại; cặp hòa vẫn được tính trong "k/10 seed thắng"
+  (hòa không phải thắng).
+- **26/11 (My) — coverage của biên:** chỉ số chính là coverage **một phía** P(y ≤ ŷ + m), đúng
+  với cách dùng biên (cận trên của Û và Û_dst). Vì một phía tự nó không phạt biên quá rộng, luôn
+  báo kèm: (1) độ rộng biên m (sharpness); (2) false alarm và missed overload; (3) coverage có điều
+  kiện ở vùng quyết định, y ≥ 0.8; (4) theo từng workload và hot-switch riêng; (5) khoảng tin cậy
+  bootstrap theo run (mẫu từng giây tương quan). m_f đang triển khai (0.0958) là q95 của |e|, lớn
+  hơn q95 một phía (0.0746) nên thiên an toàn; không đổi biên vì B đã chạy với giá trị này.
+  Coverage hai phía |y − ŷ| ≤ m (trong `coverage.json` của forecast-models-v4, 0.881 trên test)
+  chỉ còn là số tham chiếu.
