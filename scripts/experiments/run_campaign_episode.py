@@ -28,6 +28,7 @@ import argparse
 import csv
 import json
 import os
+import gzip
 import shutil
 import signal
 import socket
@@ -175,6 +176,38 @@ def records_of(record_root: Path, episode_id: str, since: datetime) -> list[Path
         except (OSError, ValueError):
             continue
     return out
+
+
+def _gzip(path: Path) -> None:
+    with path.open("rb") as src, gzip.open(path.with_name(path.name + ".gz"), "wb") as dst:
+        shutil.copyfileobj(src, dst)
+    path.unlink()
+
+
+def archive_episode(root: Path, out: Path, episode_id: str, records: list[Path]) -> list[Path]:
+    """Move (never copy) what the run left under data/ into the episode, then gzip the
+    bulky text nobody reads in the analysis (27/11: copies plus ~117 MB of plain logs per
+    episode filled the 97 GB disk after 20 episodes). Kept plain: snapshots.jsonl,
+    forecast.jsonl and decisions/*/record.json, which collect reads. Returns the moved
+    record paths."""
+    moves = {root / "data/snapshots" / f"{episode_id}.jsonl": out / "snapshots.jsonl",
+             root / "data/raw/forecast" / f"{episode_id}.jsonl": out / "forecast.jsonl"}
+    for src, dst in moves.items():
+        if src.is_file():
+            shutil.move(str(src), str(dst))
+    moved = []
+    for path in records:
+        dest = out / "decisions" / path.parent.name
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        shutil.move(str(path.parent), str(dest))
+        moved.append(dest / path.name)
+    raw = root / "data/raw" / episode_id   # per-run raw telemetry (controllers/switches.jsonl)
+    if raw.is_dir():
+        shutil.move(str(raw), str(out / "raw"))
+    for pattern in ("logs/*.log", "raw/*.jsonl"):
+        for path in sorted(out.glob(pattern)):
+            _gzip(path)
+    return moved
 
 
 def signal_controller(group: Any, name: str) -> list[int]:
@@ -335,16 +368,9 @@ def main(argv: Sequence[str] | None = None) -> int:
             signal_controller(p, "CONT")
         for p in reversed(procs):
             p.stop()
-    copies = {"snapshots.jsonl": REPO_ROOT / "data/snapshots" / f"{episode.episode_id}.jsonl",
-              "forecast.jsonl": REPO_ROOT / "data/raw/forecast" / f"{episode.episode_id}.jsonl"}
-    for name, src in copies.items():
-        if src.is_file():
-            shutil.copy2(src, out / name)
-    records = records_of(REPO_ROOT / "data/decision_runs", episode.episode_id, episode_start)
-    for path in records:
-        dest = out / "decisions" / path.parent.name
-        dest.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(path, dest / "record.json")
+    records = archive_episode(REPO_ROOT, out, episode.episode_id,
+                              records_of(REPO_ROOT / "data/decision_runs", episode.episode_id,
+                                         episode_start))
     fault_check = None
     if st.fault is not None and started_at is not None:
         fault_check = check_episode(

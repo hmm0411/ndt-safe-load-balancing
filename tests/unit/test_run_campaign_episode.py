@@ -90,6 +90,37 @@ class SetupTest(unittest.TestCase):
     def test_4c_ports_from_config(self) -> None:
         self.assertEqual(rce.controller_ports(CFG), rce.CONTROLLER_PORTS)
 
+    def test_archive_moves_and_gzips(self) -> None:
+        import gzip
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root, out, eid = Path(tmp) / "repo", Path(tmp) / "ep", "B-full-burst-s9801"
+            for rel, text in ((f"data/snapshots/{eid}.jsonl", "snap"),
+                              (f"data/raw/forecast/{eid}.jsonl", "fc"),
+                              (f"data/raw/{eid}/switches.jsonl", "sw"),
+                              ("data/decision_runs/dec-1/record.json", "{}"),
+                              ("data/decision_runs/dec-1/extra.json", "x"),
+                              ("data/snapshots/other.jsonl", "keep")):
+                (root / rel).parent.mkdir(parents=True, exist_ok=True)
+                (root / rel).write_text(text)
+            (out / "logs").mkdir(parents=True)
+            (out / "logs" / "c1.log").write_text("line\n" * 100)
+            moved = rce.archive_episode(root, out, eid,
+                                        [root / "data/decision_runs/dec-1/record.json"])
+            self.assertEqual(moved, [out / "decisions/dec-1/record.json"])
+            self.assertEqual((out / "snapshots.jsonl").read_text(), "snap")
+            self.assertEqual((out / "forecast.jsonl").read_text(), "fc")
+            self.assertTrue((out / "decisions/dec-1/extra.json").is_file())
+            self.assertFalse((root / f"data/snapshots/{eid}.jsonl").exists())   # moved
+            self.assertFalse((root / "data/decision_runs/dec-1").exists())
+            self.assertTrue((root / "data/snapshots/other.jsonl").exists())     # untouched
+            self.assertFalse((out / "logs/c1.log").exists())
+            with gzip.open(out / "logs/c1.log.gz", "rt") as handle:
+                self.assertEqual(handle.read(), "line\n" * 100)
+            with gzip.open(out / "raw/switches.jsonl.gz", "rt") as handle:
+                self.assertEqual(handle.read(), "sw")
+
     def test_signal_controller_without_process(self) -> None:
         self.assertEqual(rce.signal_controller(None, "STOP"), [])
 
