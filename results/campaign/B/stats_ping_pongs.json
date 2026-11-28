@@ -1,0 +1,571 @@
+{
+  "alpha": 0.05,
+  "baselines": [
+    "static",
+    "threshold",
+    "forecast_only",
+    "ndt_no_feedback"
+  ],
+  "comparisons": {
+    "forecast_only": {
+      "dropped_pairs": [],
+      "improvement": {
+        "max": 0.0,
+        "median": 0.0,
+        "min": 0.0,
+        "n": 50
+      },
+      "p_holm": null,
+      "per_workload": {
+        "burst": {
+          "forecast_only": {
+            "max": 0.0,
+            "median": 0.0,
+            "min": 0.0,
+            "n": 10
+          },
+          "full": {
+            "max": 0.0,
+            "median": 0.0,
+            "min": 0.0,
+            "n": 10
+          },
+          "improvement": {
+            "max": 0.0,
+            "median": 0.0,
+            "min": 0.0,
+            "n": 10
+          },
+          "seeds": 10,
+          "seeds_tied": 10,
+          "seeds_won": 0
+        },
+        "gradual": {
+          "forecast_only": {
+            "max": 0.0,
+            "median": 0.0,
+            "min": 0.0,
+            "n": 10
+          },
+          "full": {
+            "max": 0.0,
+            "median": 0.0,
+            "min": 0.0,
+            "n": 10
+          },
+          "improvement": {
+            "max": 0.0,
+            "median": 0.0,
+            "min": 0.0,
+            "n": 10
+          },
+          "seeds": 10,
+          "seeds_tied": 10,
+          "seeds_won": 0
+        },
+        "hot_switch": {
+          "forecast_only": {
+            "max": 0.0,
+            "median": 0.0,
+            "min": 0.0,
+            "n": 10
+          },
+          "full": {
+            "max": 0.0,
+            "median": 0.0,
+            "min": 0.0,
+            "n": 10
+          },
+          "improvement": {
+            "max": 0.0,
+            "median": 0.0,
+            "min": 0.0,
+            "n": 10
+          },
+          "seeds": 10,
+          "seeds_tied": 10,
+          "seeds_won": 0
+        },
+        "oscillating": {
+          "forecast_only": {
+            "max": 0.0,
+            "median": 0.0,
+            "min": 0.0,
+            "n": 10
+          },
+          "full": {
+            "max": 0.0,
+            "median": 0.0,
+            "min": 0.0,
+            "n": 10
+          },
+          "improvement": {
+            "max": 0.0,
+            "median": 0.0,
+            "min": 0.0,
+            "n": 10
+          },
+          "seeds": 10,
+          "seeds_tied": 10,
+          "seeds_won": 0
+        },
+        "stable": {
+          "forecast_only": {
+            "max": 0.0,
+            "median": 0.0,
+            "min": 0.0,
+            "n": 10
+          },
+          "full": {
+            "max": 0.0,
+            "median": 0.0,
+            "min": 0.0,
+            "n": 10
+          },
+          "improvement": {
+            "max": 0.0,
+            "median": 0.0,
+            "min": 0.0,
+            "n": 10
+          },
+          "seeds": 10,
+          "seeds_tied": 10,
+          "seeds_won": 0
+        }
+      },
+      "significant_holm": null,
+      "test": {
+        "method": "none",
+        "n_pairs": 50,
+        "n_used": 0,
+        "n_zero": 50,
+        "p_value": null,
+        "rank_biserial": null,
+        "t_minus": 0.0,
+        "t_plus": 0.0
+      }
+    },
+    "ndt_no_feedback": {
+      "dropped_pairs": [],
+      "improvement": {
+        "max": 0.0,
+        "median": 0.0,
+        "min": 0.0,
+        "n": 50
+      },
+      "p_holm": null,
+      "per_workload": {
+        "burst": {
+          "full": {
+            "max": 0.0,
+            "median": 0.0,
+            "min": 0.0,
+            "n": 10
+          },
+          "improvement": {
+            "max": 0.0,
+            "median": 0.0,
+            "min": 0.0,
+            "n": 10
+          },
+          "ndt_no_feedback": {
+            "max": 0.0,
+            "median": 0.0,
+            "min": 0.0,
+            "n": 10
+          },
+          "seeds": 10,
+          "seeds_tied": 10,
+          "seeds_won": 0
+        },
+        "gradual": {
+          "full": {
+            "max": 0.0,
+            "median": 0.0,
+            "min": 0.0,
+            "n": 10
+          },
+          "improvement": {
+            "max": 0.0,
+            "median": 0.0,
+            "min": 0.0,
+            "n": 10
+          },
+          "ndt_no_feedback": {
+            "max": 0.0,
+            "median": 0.0,
+            "min": 0.0,
+            "n": 10
+          },
+          "seeds": 10,
+          "seeds_tied": 10,
+          "seeds_won": 0
+        },
+        "hot_switch": {
+          "full": {
+            "max": 0.0,
+            "median": 0.0,
+            "min": 0.0,
+            "n": 10
+          },
+          "improvement": {
+            "max": 0.0,
+            "median": 0.0,
+            "min": 0.0,
+            "n": 10
+          },
+          "ndt_no_feedback": {
+            "max": 0.0,
+            "median": 0.0,
+            "min": 0.0,
+            "n": 10
+          },
+          "seeds": 10,
+          "seeds_tied": 10,
+          "seeds_won": 0
+        },
+        "oscillating": {
+          "full": {
+            "max": 0.0,
+            "median": 0.0,
+            "min": 0.0,
+            "n": 10
+          },
+          "improvement": {
+            "max": 0.0,
+            "median": 0.0,
+            "min": 0.0,
+            "n": 10
+          },
+          "ndt_no_feedback": {
+            "max": 0.0,
+            "median": 0.0,
+            "min": 0.0,
+            "n": 10
+          },
+          "seeds": 10,
+          "seeds_tied": 10,
+          "seeds_won": 0
+        },
+        "stable": {
+          "full": {
+            "max": 0.0,
+            "median": 0.0,
+            "min": 0.0,
+            "n": 10
+          },
+          "improvement": {
+            "max": 0.0,
+            "median": 0.0,
+            "min": 0.0,
+            "n": 10
+          },
+          "ndt_no_feedback": {
+            "max": 0.0,
+            "median": 0.0,
+            "min": 0.0,
+            "n": 10
+          },
+          "seeds": 10,
+          "seeds_tied": 10,
+          "seeds_won": 0
+        }
+      },
+      "significant_holm": null,
+      "test": {
+        "method": "none",
+        "n_pairs": 50,
+        "n_used": 0,
+        "n_zero": 50,
+        "p_value": null,
+        "rank_biserial": null,
+        "t_minus": 0.0,
+        "t_plus": 0.0
+      }
+    },
+    "static": {
+      "dropped_pairs": [],
+      "improvement": {
+        "max": 0.0,
+        "median": 0.0,
+        "min": 0.0,
+        "n": 50
+      },
+      "p_holm": null,
+      "per_workload": {
+        "burst": {
+          "full": {
+            "max": 0.0,
+            "median": 0.0,
+            "min": 0.0,
+            "n": 10
+          },
+          "improvement": {
+            "max": 0.0,
+            "median": 0.0,
+            "min": 0.0,
+            "n": 10
+          },
+          "seeds": 10,
+          "seeds_tied": 10,
+          "seeds_won": 0,
+          "static": {
+            "max": 0.0,
+            "median": 0.0,
+            "min": 0.0,
+            "n": 10
+          }
+        },
+        "gradual": {
+          "full": {
+            "max": 0.0,
+            "median": 0.0,
+            "min": 0.0,
+            "n": 10
+          },
+          "improvement": {
+            "max": 0.0,
+            "median": 0.0,
+            "min": 0.0,
+            "n": 10
+          },
+          "seeds": 10,
+          "seeds_tied": 10,
+          "seeds_won": 0,
+          "static": {
+            "max": 0.0,
+            "median": 0.0,
+            "min": 0.0,
+            "n": 10
+          }
+        },
+        "hot_switch": {
+          "full": {
+            "max": 0.0,
+            "median": 0.0,
+            "min": 0.0,
+            "n": 10
+          },
+          "improvement": {
+            "max": 0.0,
+            "median": 0.0,
+            "min": 0.0,
+            "n": 10
+          },
+          "seeds": 10,
+          "seeds_tied": 10,
+          "seeds_won": 0,
+          "static": {
+            "max": 0.0,
+            "median": 0.0,
+            "min": 0.0,
+            "n": 10
+          }
+        },
+        "oscillating": {
+          "full": {
+            "max": 0.0,
+            "median": 0.0,
+            "min": 0.0,
+            "n": 10
+          },
+          "improvement": {
+            "max": 0.0,
+            "median": 0.0,
+            "min": 0.0,
+            "n": 10
+          },
+          "seeds": 10,
+          "seeds_tied": 10,
+          "seeds_won": 0,
+          "static": {
+            "max": 0.0,
+            "median": 0.0,
+            "min": 0.0,
+            "n": 10
+          }
+        },
+        "stable": {
+          "full": {
+            "max": 0.0,
+            "median": 0.0,
+            "min": 0.0,
+            "n": 10
+          },
+          "improvement": {
+            "max": 0.0,
+            "median": 0.0,
+            "min": 0.0,
+            "n": 10
+          },
+          "seeds": 10,
+          "seeds_tied": 10,
+          "seeds_won": 0,
+          "static": {
+            "max": 0.0,
+            "median": 0.0,
+            "min": 0.0,
+            "n": 10
+          }
+        }
+      },
+      "significant_holm": null,
+      "test": {
+        "method": "none",
+        "n_pairs": 50,
+        "n_used": 0,
+        "n_zero": 50,
+        "p_value": null,
+        "rank_biserial": null,
+        "t_minus": 0.0,
+        "t_plus": 0.0
+      }
+    },
+    "threshold": {
+      "dropped_pairs": [],
+      "improvement": {
+        "max": 1.0,
+        "median": 0.0,
+        "min": 0.0,
+        "n": 50
+      },
+      "p_holm": 1.0,
+      "per_workload": {
+        "burst": {
+          "full": {
+            "max": 0.0,
+            "median": 0.0,
+            "min": 0.0,
+            "n": 10
+          },
+          "improvement": {
+            "max": 0.0,
+            "median": 0.0,
+            "min": 0.0,
+            "n": 10
+          },
+          "seeds": 10,
+          "seeds_tied": 10,
+          "seeds_won": 0,
+          "threshold": {
+            "max": 0.0,
+            "median": 0.0,
+            "min": 0.0,
+            "n": 10
+          }
+        },
+        "gradual": {
+          "full": {
+            "max": 0.0,
+            "median": 0.0,
+            "min": 0.0,
+            "n": 10
+          },
+          "improvement": {
+            "max": 0.0,
+            "median": 0.0,
+            "min": 0.0,
+            "n": 10
+          },
+          "seeds": 10,
+          "seeds_tied": 10,
+          "seeds_won": 0,
+          "threshold": {
+            "max": 0.0,
+            "median": 0.0,
+            "min": 0.0,
+            "n": 10
+          }
+        },
+        "hot_switch": {
+          "full": {
+            "max": 0.0,
+            "median": 0.0,
+            "min": 0.0,
+            "n": 10
+          },
+          "improvement": {
+            "max": 0.0,
+            "median": 0.0,
+            "min": 0.0,
+            "n": 10
+          },
+          "seeds": 10,
+          "seeds_tied": 10,
+          "seeds_won": 0,
+          "threshold": {
+            "max": 0.0,
+            "median": 0.0,
+            "min": 0.0,
+            "n": 10
+          }
+        },
+        "oscillating": {
+          "full": {
+            "max": 0.0,
+            "median": 0.0,
+            "min": 0.0,
+            "n": 10
+          },
+          "improvement": {
+            "max": 1.0,
+            "median": 0.0,
+            "min": 0.0,
+            "n": 10
+          },
+          "seeds": 10,
+          "seeds_tied": 9,
+          "seeds_won": 1,
+          "threshold": {
+            "max": 1.0,
+            "median": 0.0,
+            "min": 0.0,
+            "n": 10
+          }
+        },
+        "stable": {
+          "full": {
+            "max": 0.0,
+            "median": 0.0,
+            "min": 0.0,
+            "n": 10
+          },
+          "improvement": {
+            "max": 0.0,
+            "median": 0.0,
+            "min": 0.0,
+            "n": 10
+          },
+          "seeds": 10,
+          "seeds_tied": 10,
+          "seeds_won": 0,
+          "threshold": {
+            "max": 0.0,
+            "median": 0.0,
+            "min": 0.0,
+            "n": 10
+          }
+        }
+      },
+      "significant_holm": false,
+      "test": {
+        "method": "exact",
+        "n_pairs": 50,
+        "n_used": 1,
+        "n_zero": 49,
+        "p_value": 1.0,
+        "rank_biserial": 1.0,
+        "t_minus": 0,
+        "t_plus": 1.0
+      }
+    }
+  },
+  "confirmatory": false,
+  "full": "full",
+  "improvement_sign": "positive = Full better",
+  "lower_is_better": true,
+  "metric": "ping_pongs",
+  "missing": [],
+  "scenario": "B",
+  "zero_method": "wilcox"
+}

@@ -1,0 +1,256 @@
+{
+  "model_version": "forecast-models-v4",
+  "model_name": "xgboost",
+  "margin_method": "validation_abs_error_finite_sample_q95",
+  "m_f_global": 0.0958439860338387,
+  "one_sided_q95_validation": 0.07463173079265495,
+  "definition": "coverage = P(U <= U_hat + m_f); two-sided only as reference",
+  "splits": {
+    "validation": {
+      "all": {
+        "samples": 2672,
+        "runs": 4,
+        "coverage_one_sided": 0.968937125748503,
+        "coverage_one_sided_ci95_by_run": [
+          0.9528443113772455,
+          0.9775449101796407
+        ],
+        "coverage_two_sided_reference": 0.9520958083832335,
+        "coverage_one_sided_given_U_ge_0.8": 0.9321503131524008,
+        "samples_U_ge_0.8": 958,
+        "margin_mean": 0.09682515089375664,
+        "overload": {
+          "samples": 2672.0,
+          "actual_overload": 526.0,
+          "alarms": 753.0,
+          "missed_overload": 13.0,
+          "false_alarm": 240.0,
+          "missed_overload_rate": 0.024714828897338403,
+          "false_alarm_rate": 0.11183597390493942
+        }
+      },
+      "burst": {
+        "samples": 668,
+        "runs": 1,
+        "coverage_one_sided": 0.9446107784431138,
+        "coverage_one_sided_ci95_by_run": null,
+        "coverage_two_sided_reference": 0.9116766467065869,
+        "coverage_one_sided_given_U_ge_0.8": 0.6744186046511628,
+        "samples_U_ge_0.8": 86,
+        "margin_mean": 0.09682515089375662,
+        "overload": {
+          "samples": 668.0,
+          "actual_overload": 75.0,
+          "alarms": 64.0,
+          "missed_overload": 12.0,
+          "false_alarm": 1.0,
+          "missed_overload_rate": 0.16,
+          "false_alarm_rate": 0.0016863406408094434
+        }
+      },
+      "gradual": {
+        "samples": 668,
+        "runs": 1,
+        "coverage_one_sided": 0.9775449101796407,
+        "coverage_one_sided_ci95_by_run": null,
+        "coverage_two_sided_reference": 0.968562874251497,
+        "coverage_one_sided_given_U_ge_0.8": 0.9751332149200711,
+        "samples_U_ge_0.8": 563,
+        "margin_mean": 0.09682515089375662,
+        "overload": {
+          "samples": 668.0,
+          "actual_overload": 421.0,
+          "alarms": 522.0,
+          "missed_overload": 0.0,
+          "false_alarm": 101.0,
+          "missed_overload_rate": 0.0,
+          "false_alarm_rate": 0.4089068825910931
+        }
+      },
+      "oscillating": {
+        "samples": 668,
+        "runs": 1,
+        "coverage_one_sided": 0.9760479041916168,
+        "coverage_one_sided_ci95_by_run": null,
+        "coverage_two_sided_reference": 0.968562874251497,
+        "coverage_one_sided_given_U_ge_0.8": 0.9571428571428572,
+        "samples_U_ge_0.8": 280,
+        "margin_mean": 0.09682515089375662,
+        "overload": {
+          "samples": 668.0,
+          "actual_overload": 30.0,
+          "alarms": 167.0,
+          "missed_overload": 1.0,
+          "false_alarm": 138.0,
+          "missed_overload_rate": 0.03333333333333333,
+          "false_alarm_rate": 0.21630094043887146
+        }
+      },
+      "stable": {
+        "samples": 668,
+        "runs": 1,
+        "coverage_one_sided": 0.9775449101796407,
+        "coverage_one_sided_ci95_by_run": null,
+        "coverage_two_sided_reference": 0.9595808383233533,
+        "coverage_one_sided_given_U_ge_0.8": 0.6206896551724138,
+        "samples_U_ge_0.8": 29,
+        "margin_mean": 0.09682515089375662,
+        "overload": {
+          "samples": 668.0,
+          "actual_overload": 0.0,
+          "alarms": 0.0,
+          "missed_overload": 0.0,
+          "false_alarm": 0.0,
+          "missed_overload_rate": NaN,
+          "false_alarm_rate": 0.0
+        }
+      }
+    },
+    "test": {
+      "all": {
+        "samples": 2672,
+        "runs": 4,
+        "coverage_one_sided": 0.9472305389221557,
+        "coverage_one_sided_ci95_by_run": [
+          0.9333832335329342,
+          0.9614520958083832
+        ],
+        "coverage_two_sided_reference": 0.8809880239520959,
+        "coverage_one_sided_given_U_ge_0.8": 0.8769389865563598,
+        "samples_U_ge_0.8": 967,
+        "margin_mean": 0.09682515089375664,
+        "overload": {
+          "samples": 2672.0,
+          "actual_overload": 515.0,
+          "alarms": 768.0,
+          "missed_overload": 29.0,
+          "false_alarm": 282.0,
+          "missed_overload_rate": 0.05631067961165048,
+          "false_alarm_rate": 0.13073713490959665
+        }
+      },
+      "burst": {
+        "samples": 668,
+        "runs": 1,
+        "coverage_one_sided": 0.9266467065868264,
+        "coverage_one_sided_ci95_by_run": null,
+        "coverage_two_sided_reference": 0.8727544910179641,
+        "coverage_one_sided_given_U_ge_0.8": 0.5568181818181818,
+        "samples_U_ge_0.8": 88,
+        "margin_mean": 0.09682515089375662,
+        "overload": {
+          "samples": 668.0,
+          "actual_overload": 76.0,
+          "alarms": 62.0,
+          "missed_overload": 16.0,
+          "false_alarm": 2.0,
+          "missed_overload_rate": 0.21052631578947367,
+          "false_alarm_rate": 0.0033783783783783786
+        }
+      },
+      "gradual": {
+        "samples": 668,
+        "runs": 1,
+        "coverage_one_sided": 0.9535928143712575,
+        "coverage_one_sided_ci95_by_run": null,
+        "coverage_two_sided_reference": 0.937125748502994,
+        "coverage_one_sided_given_U_ge_0.8": 0.950354609929078,
+        "samples_U_ge_0.8": 564,
+        "margin_mean": 0.09682515089375662,
+        "overload": {
+          "samples": 668.0,
+          "actual_overload": 415.0,
+          "alarms": 510.0,
+          "missed_overload": 8.0,
+          "false_alarm": 103.0,
+          "missed_overload_rate": 0.01927710843373494,
+          "false_alarm_rate": 0.40711462450592883
+        }
+      },
+      "oscillating": {
+        "samples": 668,
+        "runs": 1,
+        "coverage_one_sided": 0.9401197604790419,
+        "coverage_one_sided_ci95_by_run": null,
+        "coverage_two_sided_reference": 0.7619760479041916,
+        "coverage_one_sided_given_U_ge_0.8": 0.8912280701754386,
+        "samples_U_ge_0.8": 285,
+        "margin_mean": 0.09682515089375662,
+        "overload": {
+          "samples": 668.0,
+          "actual_overload": 22.0,
+          "alarms": 196.0,
+          "missed_overload": 3.0,
+          "false_alarm": 177.0,
+          "missed_overload_rate": 0.13636363636363635,
+          "false_alarm_rate": 0.2739938080495356
+        }
+      },
+      "stable": {
+        "samples": 668,
+        "runs": 1,
+        "coverage_one_sided": 0.968562874251497,
+        "coverage_one_sided_ci95_by_run": null,
+        "coverage_two_sided_reference": 0.9520958083832335,
+        "coverage_one_sided_given_U_ge_0.8": 0.3,
+        "samples_U_ge_0.8": 30,
+        "margin_mean": 0.09682515089375662,
+        "overload": {
+          "samples": 668.0,
+          "actual_overload": 2.0,
+          "alarms": 0.0,
+          "missed_overload": 2.0,
+          "false_alarm": 0.0,
+          "missed_overload_rate": 1.0,
+          "false_alarm_rate": 0.0
+        }
+      }
+    },
+    "unseen": {
+      "all": {
+        "samples": 3340,
+        "runs": 5,
+        "coverage_one_sided": 0.9068862275449102,
+        "coverage_one_sided_ci95_by_run": [
+          0.8985029940119761,
+          0.9149700598802395
+        ],
+        "coverage_two_sided_reference": 0.38562874251497004,
+        "coverage_one_sided_given_U_ge_0.8": 0.9068862275449102,
+        "samples_U_ge_0.8": 3340,
+        "margin_mean": 0.09682515089375662,
+        "overload": {
+          "samples": 3340.0,
+          "actual_overload": 233.0,
+          "alarms": 2352.0,
+          "missed_overload": 58.0,
+          "false_alarm": 2177.0,
+          "missed_overload_rate": 0.24892703862660945,
+          "false_alarm_rate": 0.7006758931445124
+        }
+      },
+      "hot-switch": {
+        "samples": 3340,
+        "runs": 5,
+        "coverage_one_sided": 0.9068862275449102,
+        "coverage_one_sided_ci95_by_run": [
+          0.8985029940119761,
+          0.9149700598802395
+        ],
+        "coverage_two_sided_reference": 0.38562874251497004,
+        "coverage_one_sided_given_U_ge_0.8": 0.9068862275449102,
+        "samples_U_ge_0.8": 3340,
+        "margin_mean": 0.09682515089375662,
+        "overload": {
+          "samples": 3340.0,
+          "actual_overload": 233.0,
+          "alarms": 2352.0,
+          "missed_overload": 58.0,
+          "false_alarm": 2177.0,
+          "missed_overload_rate": 0.24892703862660945,
+          "false_alarm_rate": 0.7006758931445124
+        }
+      }
+    }
+  }
+}
