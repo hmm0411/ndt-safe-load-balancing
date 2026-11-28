@@ -168,3 +168,13 @@ Chưa có episode nào của campaign. Các mục dưới đây được chốt 
   post-migration-v1, safety/ranking policy v1, capacity-v4 933 pps); tải như 4C (c1 × 1.2, c2 giữ
   0.60); Static / Threshold / Full; chỉ mô tả (xác nhận xu hướng của B), không kiểm định chính.
   `duration_s` 240 như 4C, cần pilot 2C xác nhận trước episode đầu tiên.
+- **26–28/11 — sự cố khi chạy B (không đổi thiết kế):** đĩa 97 GB đầy sau 20 episode (mỗi episode
+  ~150 MB, 117 MB là log thường, cộng bản sao để lại dưới `data/`); episode 20
+  (`B-ndt_no_feedback-oscillating-s9805`) hỏng khi chép snapshot. Runner được sửa (commit 343b3f1)
+  để chuyển file vào episode và nén log/raw telemetry (~33 MB/episode). 19 episode đầu chạy ở
+  commit 2a0ee60, phần còn lại ở 343b3f1; giữa hai commit không có thay đổi nào tới đường quyết
+  định của B (chỉ cách lưu file, rollback khi đích không liên lạc được — không xảy ra trong B — và
+  tiêm lỗi D, mặc định tắt). Episode 20 chạy lại hai lần: lần thứ nhất trùng 2–3 phút với tiến
+  trình nén dữ liệu cũ (tranh CPU) nên bị loại
+  (`data/experiment_runs_invalid/campaign_4c/concurrent-gzip-*`); bản dùng trong phân tích chạy
+  lại riêng ngày 28/11 khi VM không có tải khác. B đủ 250/250 episode OK.
