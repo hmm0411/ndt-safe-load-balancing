@@ -25,13 +25,15 @@ def rec(t: float, status: str, target: str | None = None, u_dst: float | None = 
 
 
 class PlanTest(unittest.TestCase):
-    def test_48_episodes_as_decided(self) -> None:
+    def test_118_episodes_as_decided(self) -> None:
         plan = F.plan_fault_episodes(CFG, int(CFG["order_seed"]))
-        self.assertEqual(len(plan), 48)
-        self.assertEqual(len({e.episode_id for e in plan}), 48)
+        self.assertEqual(len(plan), 118)          # 6 x 3 + 5 x 2 x 10 (28/11)
+        self.assertEqual(len({e.episode_id for e in plan}), 118)
         by = Counter((e.method, e.workload[:2]) for e in plan)
-        self.assertEqual(by[("full", "d7")], 15)
-        self.assertEqual(by[("threshold", "d7")], 15)
+        self.assertEqual(by[("full", "d7")], 50)
+        self.assertEqual(by[("threshold", "d7")], 50)
+        d7 = {(e.method, e.workload, e.seed) for e in plan if e.workload.startswith("d7")}
+        self.assertIn(("threshold", "d7-u090", 9810), d7)
         for s in F.SCENARIOS:
             self.assertEqual(by[("full", s)], 3)
         self.assertIn("D-threshold-d7-u080-s9802", {e.episode_id for e in plan})

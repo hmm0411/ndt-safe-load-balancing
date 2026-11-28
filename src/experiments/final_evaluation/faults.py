@@ -112,13 +112,16 @@ def fault_spec(workload: str, cfg: Mapping[str, Any]) -> FaultSpec:
 
 
 def plan_fault_episodes(cfg: Mapping[str, Any], order_seed: int) -> list[PlannedEpisode]:
-    """D1-D6 with Full x seeds, D7 with d7_methods x d7_levels x seeds; shuffled order."""
+    """D1-D6 with Full x seeds, D7 with d7_methods x d7_levels x d7_seeds (default: seeds);
+    shuffled order."""
     seeds = [int(s) for s in cfg["seeds"]]
-    if not seeds or len(set(seeds)) != len(seeds):
-        raise ValueError("faults.seeds must be non-empty and unique")
+    d7_seeds = [int(s) for s in cfg.get("d7_seeds", seeds)]
+    for name, values in (("seeds", seeds), ("d7_seeds", d7_seeds)):
+        if not values or len(set(values)) != len(values):
+            raise ValueError(f"faults.{name} must be non-empty and unique")
     cells = [("full", s, seed) for s in SCENARIOS for seed in seeds]
     cells += [(m, workload_name("d7", float(level)), seed) for m in cfg["d7_methods"]
-              for level in cfg["d7_levels"] for seed in seeds]
+              for level in cfg["d7_levels"] for seed in d7_seeds]
     random.Random(order_seed).shuffle(cells)
     return [PlannedEpisode(i + 1, f"D-{m}-{w}-s{seed}", m, w, seed)
             for i, (m, w, seed) in enumerate(cells)]

@@ -178,3 +178,11 @@ Chưa có episode nào của campaign. Các mục dưới đây được chốt 
   trình nén dữ liệu cũ (tranh CPU) nên bị loại
   (`data/experiment_runs_invalid/campaign_4c/concurrent-gzip-*`); bản dùng trong phân tích chạy
   lại riêng ngày 28/11 khi VM không có tải khác. B đủ 250/250 episode OK.
+- **28/11 (My) — D7 tăng lên 10 seed** (sau khi có kết quả B, trước mọi episode D): B không đo được
+  lợi ích của Safety Gate (0 lần chuyển quyền không an toàn ở cả 5 phương pháp, vì đích ở 0.60 còn
+  dư chỗ), nên D7 là phép thử chính cho phần an toàn của RQ3. D7 = 5 mức tải đích × (Full,
+  Threshold) × seed 9801–9810 = 100 episode; D1–D6 giữ 3 seed; tổng D = 118 episode
+  (`results/campaign/plan_D.csv`, sinh lại với cùng order_seed). Chỉ số chính của D7 là S1 (số lần
+  chuyển quyền COMMITTED có U_dst sau ≥ 1, theo `check_episode`), so Full với Threshold ghép cặp
+  theo seed ở từng mức, Wilcoxon bỏ cặp hòa, Holm qua 5 mức; thời gian quá tải và U đỉnh của c1
+  là chỉ số phụ (cái giá của việc từ chối chuyển quyền).
